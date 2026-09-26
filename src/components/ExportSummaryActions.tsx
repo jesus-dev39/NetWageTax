@@ -9,7 +9,7 @@ import {
   type SummaryInput,
 } from '../lib/deduction-summary';
 import { formatUSD } from './CurrencyInput';
-import ExportPrepModal from './ExportPrepModal';
+import ExportAdModal, { type ExportFormat, type ExportRequest } from './ExportAdModal';
 import ExportToolbar from './ExportToolbar';
 import Logo from './Logo';
 
@@ -21,7 +21,7 @@ export default function ExportSummaryActions(props: Props) {
 
   const [generatedAt, setGeneratedAt] = useState(() => new Date());
   const [mounted, setMounted] = useState(false);
-  const [prepOpen, setPrepOpen] = useState(false);
+  const [request, setRequest] = useState<ExportRequest | null>(null);
 
   const summary = useMemo(
     () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, generatedAt),
@@ -45,25 +45,31 @@ export default function ExportSummaryActions(props: Props) {
 
   const fresh = () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, new Date());
 
+  // Every format opens the same modal; files are built from fresh data at click time.
+  function exportRequest(format: ExportFormat): ExportRequest {
+    const titles: Record<ExportFormat, string> = {
+      pdf: `Preparing your ${result.taxYear} Tips & Overtime PDF Worksheet`,
+      docx: `Preparing your ${result.taxYear} Tips & Overtime Word Worksheet`,
+      xlsx: `Preparing your ${result.taxYear} Tips & Overtime Excel Worksheet`,
+    };
+    const run: Record<ExportFormat, () => Promise<void> | void> = {
+      pdf: handlePrint,
+      docx: async () => (await import('../lib/deduction-summary-docx')).downloadSummaryDocx(fresh()),
+      xlsx: async () => (await import('../lib/deduction-summary-xlsx')).downloadDeductionXlsx(fresh()),
+    };
+    return { format, title: titles[format], run: run[format] };
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
       <ExportToolbar
         heading={`Save your ${result.taxYear} deduction summary`}
         canExport={canExport}
         disabledHint="Enter a qualifying tips or overtime amount to enable exports."
-        onPrint={() => setPrepOpen(true)}
-        onExport={{
-          docx: async () => (await import('../lib/deduction-summary-docx')).downloadSummaryDocx(fresh()),
-          xlsx: async () => (await import('../lib/deduction-summary-xlsx')).downloadDeductionXlsx(fresh()),
-        }}
+        onSelect={(format) => setRequest(exportRequest(format))}
       />
 
-      <ExportPrepModal
-        open={prepOpen}
-        taxYear={result.taxYear}
-        onPrint={handlePrint}
-        onClose={() => setPrepOpen(false)}
-      />
+      <ExportAdModal request={request} onClose={() => setRequest(null)} />
 
       {mounted && canExport && createPortal(<PrintVoucher summary={summary} />, document.body)}
     </div>

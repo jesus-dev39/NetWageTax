@@ -11,11 +11,11 @@
  * The loader script (adsbygoogle.js?client=…) is included once in BaseLayout's <head>.
  * Each format reserves its final height so the page does not shift when ads load (CLS).
  *
- * Policy note for the `export-interstitial` placement (ExportPrepModal): AdSense program
- * policies do not allow manually placed ad units inside pop-ups or dialogs, and a wait
- * imposed only to show an ad can be treated as an interstitial violation. Never give that
- * placement a slotId; use a direct sponsor / house ad there, or remove it and enable Auto
- * ads "vignette" interstitials, the Google-managed, policy-compliant format.
+ * Policy note for the `export-modal` placement (ExportAdModal): AdSense program policies do
+ * not allow manually placed ad units inside pop-ups or dialogs, and the Better Ads Standards
+ * prohibit prestitial ads with a countdown. Never give that placement a slotId: fill it with a
+ * direct sponsor / house creative, or rely on Auto ads "vignette" interstitials, the
+ * Google-managed, policy-compliant format.
  */
 import { useEffect, useRef } from 'react';
 import { ADSENSE_CLIENT } from '../lib/site';
@@ -30,6 +30,8 @@ interface Props {
   client?: string;
   /** Short placement name, exposed as data-ad-placement for reporting/QA. */
   placement: string;
+  /** Small caption above the unit, e.g. "Sponsored". */
+  label?: string;
   className?: string;
 }
 
@@ -55,7 +57,7 @@ const ADSENSE_FORMAT: Record<AdFormat, string> = {
   rectangle: 'rectangle',
 };
 
-export default function AdSlot({ format, slotId, client = ADSENSE_CLIENT, placement, className = '' }: Props) {
+export default function AdSlot({ format, slotId, client = ADSENSE_CLIENT, placement, label, className = '' }: Props) {
   const live = Boolean(slotId);
   const pushed = useRef(false);
 
@@ -80,6 +82,11 @@ export default function AdSlot({ format, slotId, client = ADSENSE_CLIENT, placem
       data-ad-placement={placement}
       className={`mx-auto flex w-full flex-col items-center print:hidden ${className}`}
     >
+      {label && (
+        <span className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+          {label}
+        </span>
+      )}
       {live ? (
         <ins
           className={`adsbygoogle block ${FORMAT_CLASSES[format]}`}

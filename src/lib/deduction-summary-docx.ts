@@ -19,7 +19,7 @@ import {
   VerticalAlignTable,
   WidthType,
 } from 'docx';
-import { saveAs } from 'file-saver';
+import { saveBlob } from './save-blob';
 import {
   DOCX_FILENAME,
   SUMMARY_DISCLAIMER,
@@ -187,5 +187,5 @@ export function buildSummaryDocument(summary: DeductionSummary): Document {
 
 export async function downloadSummaryDocx(summary: DeductionSummary): Promise<void> {
   const blob = await Packer.toBlob(buildSummaryDocument(summary));
-  saveAs(blob, DOCX_FILENAME);
+  saveBlob(blob, DOCX_FILENAME);
 }

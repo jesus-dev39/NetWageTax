@@ -4,7 +4,8 @@
  * Imported dynamically from ExportSummaryActions so SheetJS only loads on click.
  */
 
-import { utils, write, writeFile, type WorkBook } from 'xlsx';
+import { utils, write, type WorkBook } from 'xlsx';
+import { saveBlob } from './save-blob';
 import { SUMMARY_DISCLAIMER, SUMMARY_LEGAL_NOTICE, type DeductionSummary } from './deduction-summary';
 import { addr, buildSheet, usd, wide, type Cell } from './xlsx-sheet';
 
@@ -66,7 +67,8 @@ export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
 }
 
 export function downloadDeductionXlsx(s: DeductionSummary): void {
-  writeFile(buildDeductionWorkbook(s), XLSX_FILENAME, { compression: true });
+  const bytes = write(buildDeductionWorkbook(s), { type: 'array', bookType: 'xlsx', compression: true }) as ArrayBuffer;
+  saveBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), XLSX_FILENAME);
 }
 
 /** For tests: the workbook as bytes. */

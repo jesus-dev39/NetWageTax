@@ -4,7 +4,8 @@
  * Imported dynamically from PaycheckExportActions so SheetJS only loads on click.
  */
 
-import { utils, write, writeFile, type WorkBook } from 'xlsx';
+import { utils, write, type WorkBook } from 'xlsx';
+import { saveBlob } from './save-blob';
 import { PAYCHECK_DISCLAIMER, PAYCHECK_NOT_A_PAYSTUB, type PaycheckSummary } from './paycheck-summary';
 import { buildSheet, pctCell, usd, wide, type Cell } from './xlsx-sheet';
 
@@ -48,7 +49,8 @@ export function buildPaycheckWorkbook(s: PaycheckSummary): WorkBook {
 }
 
 export function downloadPaycheckXlsx(s: PaycheckSummary): void {
-  writeFile(buildPaycheckWorkbook(s), PAYCHECK_XLSX_FILENAME, { compression: true });
+  const bytes = write(buildPaycheckWorkbook(s), { type: 'array', bookType: 'xlsx', compression: true }) as ArrayBuffer;
+  saveBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), PAYCHECK_XLSX_FILENAME);
 }
 
 /** For tests: the workbook as bytes. */

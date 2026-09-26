@@ -18,7 +18,7 @@ import {
   VerticalAlignTable,
   WidthType,
 } from 'docx';
-import { saveAs } from 'file-saver';
+import { saveBlob } from './save-blob';
 import { formatUSDCents } from '../components/CurrencyInput';
 import { cellBorder, metaRow, MUTED, NAVY, noBorder, RULE, text, TOTAL_FILL, TOTAL_TEXT } from './deduction-summary-docx';
 import {
@@ -148,5 +148,5 @@ export function buildPaycheckDocument(s: PaycheckSummary): Document {
 
 export async function downloadPaycheckDocx(s: PaycheckSummary): Promise<void> {
   const blob = await Packer.toBlob(buildPaycheckDocument(s));
-  saveAs(blob, PAYCHECK_DOCX_FILENAME);
+  saveBlob(blob, PAYCHECK_DOCX_FILENAME);
 }

@@ -9,7 +9,7 @@ import {
   type PaycheckSummaryRow,
 } from '../lib/paycheck-summary';
 import { formatUSDCents } from './CurrencyInput';
-import ExportPrepModal from './ExportPrepModal';
+import ExportAdModal, { type ExportFormat, type ExportRequest } from './ExportAdModal';
 import ExportToolbar from './ExportToolbar';
 import Logo from './Logo';
 
@@ -22,7 +22,7 @@ export default function PaycheckExportActions({ input, result }: Props) {
   const canExport = result.grossAnnual > 0;
   const [generatedAt, setGeneratedAt] = useState(() => new Date());
   const [mounted, setMounted] = useState(false);
-  const [prepOpen, setPrepOpen] = useState(false);
+  const [request, setRequest] = useState<ExportRequest | null>(null);
 
   const summary = useMemo(() => buildPaycheckSummary(input, result, generatedAt), [input, result, generatedAt]);
 
@@ -43,26 +43,31 @@ export default function PaycheckExportActions({ input, result }: Props) {
 
   const fresh = () => buildPaycheckSummary(input, result, new Date());
 
+  // Every format opens the same modal; files are built from fresh data at click time.
+  function exportRequest(format: ExportFormat): ExportRequest {
+    const titles: Record<ExportFormat, string> = {
+      pdf: `Preparing your ${summary.taxYear} Paycheck PDF Estimate`,
+      docx: `Preparing your ${summary.taxYear} Paycheck Word Estimate`,
+      xlsx: `Preparing your ${summary.taxYear} Paycheck Excel Worksheet`,
+    };
+    const run: Record<ExportFormat, () => Promise<void> | void> = {
+      pdf: handlePrint,
+      docx: async () => (await import('../lib/paycheck-summary-docx')).downloadPaycheckDocx(fresh()),
+      xlsx: async () => (await import('../lib/paycheck-summary-xlsx')).downloadPaycheckXlsx(fresh()),
+    };
+    return { format, title: titles[format], run: run[format] };
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
       <ExportToolbar
-        heading="Save your paycheck estimate"
+        heading={"Save your paycheck estimate"}
         canExport={canExport}
         disabledHint="Enter your pay to enable exports."
-        onPrint={() => setPrepOpen(true)}
-        onExport={{
-          docx: async () => (await import('../lib/paycheck-summary-docx')).downloadPaycheckDocx(fresh()),
-          xlsx: async () => (await import('../lib/paycheck-summary-xlsx')).downloadPaycheckXlsx(fresh()),
-        }}
+        onSelect={(format) => setRequest(exportRequest(format))}
       />
 
-      <ExportPrepModal
-        open={prepOpen}
-        taxYear={summary.taxYear}
-        title={`Preparing Your ${summary.taxYear} Paycheck Estimate`}
-        onPrint={handlePrint}
-        onClose={() => setPrepOpen(false)}
-      />
+      <ExportAdModal request={request} onClose={() => setRequest(null)} />
 
       {mounted && canExport && createPortal(<PaycheckVoucher summary={summary} />, document.body)}
     </div>
