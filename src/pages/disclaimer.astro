@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE } from '../lib/site';
+---
+
+<BaseLayout
+  title="Financial & Tax Disclaimer"
+  description="NetWageTax is an independent educational calculation utility. It is not a CPA or tax advisor, does not file tax returns, and is not affiliated with the IRS."
+>
+  <div class="border-b border-slate-200 bg-white">
+    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Financial &amp; Tax Disclaimer</h1>
+      <p class="mt-4 text-sm text-slate-500">Effective and last updated: {LEGAL_EFFECTIVE_DATE}</p>
+    </div>
+  </div>
+
+  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900" role="note">
+      <p class="font-semibold">Please read before relying on any result.</p>
+      <p class="mt-2 text-sm leading-relaxed">
+        NetWageTax is an educational calculation utility. It is not a certified public accountant (CPA), enrolled
+        agent, tax attorney, or registered tax advisor. It does not prepare or file tax returns, and it is not
+        affiliated with, endorsed by, or acting on behalf of the Internal Revenue Service (IRS) or any other government
+        agency.
+      </p>
+    </div>
+
+    <h2 id="educational">Educational purposes only</h2>
+    <p>
+      All calculators, articles, explanations, and examples on NetWageTax are provided for general informational and
+      educational purposes. They are designed to help you understand how U.S. tax rules generally work, such as how a
+      deduction cap or an income phase-out is applied. They are not a substitute for individualized advice from a
+      qualified professional who knows your complete financial situation.
+    </p>
+
+    <h2 id="not-professional">Not a professional advisor</h2>
+    <p>
+      NetWageTax and its operators are not acting as your CPA, enrolled agent, attorney, financial planner, or
+      fiduciary. Using the Site does not create a professional-client, advisory, or fiduciary relationship of any
+      kind. Nothing on the Site is a recommendation to take, or not take, any particular tax position or financial
+      action.
+    </p>
+
+    <h2 id="not-irs">Not the IRS; no filing or representation</h2>
+    <ul>
+      <li>NetWageTax is an independent website and is <strong>not affiliated with the IRS</strong>, the U.S. Department of the Treasury, the Social Security Administration, or any state tax agency.</li>
+      <li>We <strong>do not prepare, sign, e-file, or submit</strong> tax returns, amended returns, or any other forms on your behalf.</li>
+      <li>We <strong>do not represent taxpayers</strong> before the IRS or any state tax authority, and we cannot respond to notices, audits, or correspondence for you.</li>
+      <li>Results are <strong>not official determinations</strong> of your tax liability, refund, or eligibility for any deduction or credit.</li>
+    </ul>
+
+    <h2 id="estimates">Results are estimates</h2>
+    <p>Calculator output is an estimate and may differ from your actual tax outcome because, among other things:</p>
+    <ul>
+      <li>Results depend entirely on the accuracy and completeness of the figures you enter.</li>
+      <li>
+        Our tools model specific rules (for example, the OBBBA qualified tips and overtime deductions) and may simplify
+        or omit interactions with other provisions, credits, alternative minimum tax, state and local taxes, or
+        unusual circumstances.
+      </li>
+      <li>
+        Tax law, IRS guidance, forms, and inflation adjustments change. New or recently enacted provisions may be
+        subject to regulations and interpretations that had not been issued when a tool was last updated.
+      </li>
+      <li>
+        Marginal-rate and savings estimates are approximations and do not account for every factor that determines
+        your final tax.
+      </li>
+    </ul>
+
+    <h2 id="accuracy">No guarantee of accuracy</h2>
+    <p>
+      We work to keep our calculators accurate and aligned with current law and IRS guidance, and we cite primary
+      sources where practical. However, we make no representations or warranties about the accuracy, completeness,
+      timeliness, or suitability of any content or result. See our <a href="/terms">Terms of Use</a> for the full
+      disclaimer of warranties and limitation of liability.
+    </p>
+
+    <h2 id="responsibility">Your responsibility</h2>
+    <p>
+      You are solely responsible for your tax filings and for any decisions you make based on information from this
+      Site. Before filing a return, adjusting your withholding, or making a financial decision, verify figures against
+      official sources such as <a href="https://www.irs.gov" rel="noopener noreferrer" target="_blank">IRS.gov</a>
+      and consult a qualified tax professional. NetWageTax is not responsible for any taxes, penalties, interest, or
+      other losses arising from reliance on the Site.
+    </p>
+
+    <h2 id="advertising">Advertising</h2>
+    <p>
+      NetWageTax is supported by advertising. Advertisements are provided by third parties and do not reflect our
+      endorsement of any product or service, including any tax preparation or financial product. Our calculations
+      are not influenced by advertisers.
+    </p>
+
+    <h2 id="report">Report an error</h2>
+    <p>
+      If you believe a calculation or explanation is incorrect or out of date, please let us know at
+      <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We review every report.
+    </p>
+  </article>
+</BaseLayout>

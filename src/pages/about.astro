@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL } from '../lib/site';
+
+const principles = [
+  {
+    title: 'Transparent',
+    body: 'Every result shows its work: the caps, thresholds, and phase-out steps behind the number, so you can check it against the law yourself.',
+  },
+  {
+    title: 'Private by design',
+    body: 'Our calculators run entirely in your browser. The figures you enter are never sent to or stored on our servers.',
+  },
+  {
+    title: 'Free and independent',
+    body: 'We are supported by advertising, not by selling your data or upselling tax products. No sign-up is ever required.',
+  },
+];
+---
+
+<BaseLayout
+  title="About Us"
+  description="NetWageTax builds free, transparent, client-side paycheck and workplace tax calculators for American workers. Learn about our mission and how we work."
+>
+  <div class="border-b border-slate-200 bg-white">
+    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">About NetWageTax</h1>
+      <p class="mt-4 text-lg leading-relaxed text-slate-600">
+        We build free, transparent calculators that help American workers understand their paychecks and the tax rules
+        that shape them.
+      </p>
+    </div>
+  </div>
+
+  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <h2 id="mission">Our mission</h2>
+    <p>
+      Tax rules that affect everyday workers, such as how tips are taxed, how overtime is treated, or what a new code
+      on your W-2 means, are often explained in dense legal language or buried behind paid software. NetWageTax exists
+      to close that gap. Our goal is to give every worker clear, accurate, and free answers to the paycheck and
+      workplace tax questions they actually have.
+    </p>
+    <p>
+      We focus on the moments that matter: when a new law changes what you can deduct, when a form shows up with an
+      unfamiliar box, or when you want to know what a raise or extra shift really means for your take-home pay.
+    </p>
+
+    <h2 id="principles">What we stand for</h2>
+    <ul class="!list-none !pl-0 grid gap-4 sm:grid-cols-3">
+      {
+        principles.map(({ title, body }) => (
+          <li class="!mt-0 rounded-xl bg-white p-5 ring-1 ring-slate-200">
+            <p class="font-semibold text-slate-900">{title}</p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2 id="how">How we build our calculators</h2>
+    <ul>
+      <li>
+        <strong>Primary sources first.</strong> Our tools are built from statutory text, IRS forms and instructions,
+        and official guidance, not from secondhand summaries.
+      </li>
+      <li>
+        <strong>Tested logic.</strong> Calculation engines are covered by automated tests for caps, filing statuses,
+        and phase-out edge cases before they go live.
+      </li>
+      <li>
+        <strong>Kept current.</strong> Tax parameters are stored by tax year so they can be updated when the IRS
+        publishes new figures or guidance.
+      </li>
+      <li>
+        <strong>Honest about limits.</strong> We tell you what a tool does not cover, such as FICA or state taxes, so an
+        estimate is never mistaken for a final answer.
+      </li>
+    </ul>
+
+    <h2 id="tools">Our tools</h2>
+    <p>
+      Our first calculator, the <a href="/tools/obbba-tax-calculator">2026 OBBBA Tips &amp; Overtime Calculator</a>,
+      estimates the new federal deductions for qualified tips and overtime created by the One Big Beautiful Bill Act,
+      and decodes the new W-2 Box 12 Codes TA, TP, and TT. We are expanding our library of paycheck and withholding
+      tools over time.
+    </p>
+
+    <h2 id="independence">Independence and funding</h2>
+    <p>
+      NetWageTax is an independent project. We are not affiliated with the IRS, any government agency, any employer,
+      or any tax preparation company. The Site is funded by advertising, and advertisers have no influence over our
+      calculations or content. NetWageTax is an educational tool and not a substitute for a qualified tax
+      professional. Please read our <a href="/disclaimer">Financial &amp; Tax Disclaimer</a> for details.
+    </p>
+
+    <h2 id="contact">Contact us</h2>
+    <p>
+      Found an error, have a question, or want to suggest a calculator? Email us at 
+      <a href={` mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We read every message, although we cannot provide
+      individual tax advice.
+    </p>
+  </article>
+</BaseLayout>

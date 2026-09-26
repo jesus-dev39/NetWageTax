@@ -148,44 +148,39 @@ export const PARAMS_BY_YEAR: Record<TaxYear, ObbbaYearParams> = {
 // ---------------------------------------------------------------------------
 
 export const FICA_STILL_OWED_NOTICE =
-  'Esta deducción reduce tu impuesto federal sobre la renta, pero no afecta ' +
-  'a los impuestos FICA (Seguro Social y Medicare), que se siguen pagando ' +
-  'sobre el 100% de tus propinas y horas extra.';
+  'FICA taxes (Social Security & Medicare) still apply to 100% of reported tips and overtime.';
 
 export const W2_CODE_EXPLANATIONS: W2CodeExplanation[] = [
   {
     code: 'TA',
     officialName: 'Employer contributions to Trump Accounts',
     description:
-      'Aportaciones del empleador (hasta $2,500/año) a una cuenta de inversión ' +
-      'tipo "Trump Account" a nombre de un hijo del empleado.',
+      'Contributions your employer made (up to $2,500 per year) to a Trump Account ' +
+      'investment account opened for your child.',
     taxpayerImplication:
-      'No afecta al cálculo de esta herramienta. Es puramente informativo: ' +
-      'no se relaciona con propinas ni horas extra.',
+      'Does not affect this calculator. It is informational only and is unrelated ' +
+      'to tips or overtime.',
   },
   {
     code: 'TP',
     officialName:
       'Total amount of tips subject to the "no tax on tips" deduction',
     description:
-      'Importe total de propinas cualificadas (voluntarias, en efectivo o ' +
-      'tarjeta) que el empleador identificó como elegibles para la ' +
-      'deducción del §224.',
+      'The total qualified tips (voluntary cash or card tips) that your employer ' +
+      'identified as eligible for the IRC §224 deduction.',
     taxpayerImplication:
-      'Input principal de la sección "Tips". El monto reportado por el ' +
-      'empleador no aplica el tope de $25,000 ni el phase-out por MAGI — ' +
-      'eso lo calcula el contribuyente en el Schedule 1-A.',
+      'Primary input for the Tips section. Your employer does not apply the $25,000 ' +
+      'cap or the MAGI phase-out; you calculate those on Schedule 1-A.',
   },
   {
     code: 'TT',
     officialName: 'Total amount of qualified overtime compensation',
     description:
-      'Importe de la PRIMA de horas extra (la mitad extra de "tiempo y ' +
-      'medio"), no el pago total de las horas extra, identificado como ' +
-      'cualificado bajo FLSA §7.',
+      'The overtime PREMIUM (the extra "half" of time-and-a-half), not your total ' +
+      'overtime pay, identified as qualified under FLSA §7.',
     taxpayerImplication:
-      'Input principal de la sección "Overtime". Error común: confundirlo ' +
-      'con el pago total de horas extra — solo la prima es deducible.',
+      'Primary input for the Overtime section. Common mistake: entering total ' +
+      'overtime pay. Only the premium portion is deductible.',
   },
 ];
 
@@ -196,8 +191,8 @@ export const W2_CODE_EXPLANATIONS: W2CodeExplanation[] = [
 export class ObbbaYearNotSupportedError extends Error {
   constructor(public readonly taxYear: number) {
     super(
-      `Esta deducción no existe para el año seleccionado (${taxYear}). ` +
-        `Años soportados: ${SUPPORTED_TAX_YEARS.join(', ')}.`,
+      `This deduction does not exist for the selected tax year (${taxYear}). ` +
+        `Supported years: ${SUPPORTED_TAX_YEARS.join(', ')}.`,
     );
     this.name = 'ObbbaYearNotSupportedError';
   }

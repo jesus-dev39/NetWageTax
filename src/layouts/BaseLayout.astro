@@ -1,0 +1,137 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Open Graph type: "website" for the home page, "article" for tool pages. */
+  ogType?: 'website' | 'article';
+}
+
+const { title, description, ogType = 'website' } = Astro.props;
+
+const SITE_NAME = 'NetWageTax';
+const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
+// Canonical/OG URLs require `site` in astro.config.mjs.
+const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+
+const navLinks = [
+  { href: '/#tools', label: 'Tools' },
+  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator' },
+  { href: '/about', label: 'About' },
+];
+
+const footerLinks = [
+  { href: '/about', label: 'About' },
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/terms', label: 'Terms of Use' },
+  { href: '/disclaimer', label: 'Disclaimer' },
+];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+
+    <slot name="head" />
+  </head>
+  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow"
+    >
+      Skip to main content
+    </a>
+
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
+        <a href="/" class="flex items-center gap-2.5" aria-label="NetWageTax home">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white" aria-hidden="true">
+            N
+          </span>
+          <span class="text-lg font-semibold tracking-tight text-slate-900">
+            NetWage<span class="text-navy-600">Tax</span>
+          </span>
+        </a>
+        <nav aria-label="Main">
+          <ul class="flex items-center gap-1 text-sm font-medium sm:gap-2">
+            {
+              navLinks.map(({ href, label }, i) => (
+                <li class={i === 2 ? 'hidden sm:block' : i === 1 ? 'hidden md:block' : ''}>
+                  <a
+                    href={href}
+                    aria-current={currentPath === href ? 'page' : undefined}
+                    class:list={[
+                      'rounded-md px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900',
+                      currentPath === href ? 'text-navy-700' : 'text-slate-600',
+                    ]}
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white">
+      <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div class="max-w-md">
+            <p class="font-semibold text-slate-900">NetWageTax</p>
+            <p class="mt-2 text-sm text-slate-600">
+              Free, independent calculators that help American workers understand their paychecks and taxes.
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {
+                footerLinks.map(({ href, label }) => (
+                  <li>
+                    <a href={href} class="text-slate-600 transition hover:text-navy-700">
+                      {label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+        </div>
+        <div class="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-500">
+          <p>
+            NetWageTax is an independent calculation tool and is not affiliated with the IRS or any government agency.
+            Results are estimates for educational purposes and do not constitute tax, legal, or financial advice.
+          </p>
+          <p class="mt-3">&copy; 2026 NetWageTax. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

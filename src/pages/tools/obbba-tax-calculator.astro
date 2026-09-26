@@ -1,0 +1,115 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import W2Decoder from '../../components/W2Decoder';
+import TaxCalculatorApp from '../../components/TaxCalculatorApp';
+
+const title = '2026 No Tax on Tips & Overtime Calculator (OBBBA)';
+const description =
+  'Estimate your 2026 federal deduction for qualified tips and overtime under the One Big Beautiful Bill Act. Decode W-2 Box 12 Codes TA, TP, and TT and see how the MAGI phase-out affects you.';
+
+// Answers are plain text so they can be reused verbatim in FAQPage structured data.
+const faqs = [
+  {
+    question: 'What is the OBBBA Tips and Overtime deduction?',
+    answer: [
+      'The One Big Beautiful Bill Act (OBBBA), signed into law on July 4, 2025, created two new federal income tax deductions for tax years 2025 through 2028: one for qualified tips (IRC §224) and one for qualified overtime compensation.',
+      'You can deduct up to $25,000 of qualified tips per return, and up to $12,500 of qualified overtime premium pay ($25,000 if married filing jointly). Both deductions are claimed on Schedule 1-A and are available whether you take the standard deduction or itemize. They reduce your taxable income, not your adjusted gross income.',
+      'To qualify, you need a valid Social Security number, and married couples must file jointly. Tips must be earned in an occupation on the Treasury Department’s list of jobs that customarily received tips, and overtime must be required under the Fair Labor Standards Act (FLSA).',
+    ],
+  },
+  {
+    question: 'What do Codes TA, TP, and TT mean on my W-2 Box 12?',
+    answer: [
+      'Code TA reports your employer’s contributions to a Trump Account for your child. It is informational only and does not affect the tips or overtime deduction.',
+      'Code TP reports the total qualified tips your employer identified as eligible for the “no tax on tips” deduction. Use this amount as the starting point for the tips portion of Schedule 1-A.',
+      'Code TT reports your qualified overtime compensation: only the premium portion of your overtime pay (the extra “half” in time-and-a-half), not your total overtime earnings. Use this amount as the starting point for the overtime portion of Schedule 1-A.',
+      'Your employer does not apply the deduction caps or the income phase-out. You calculate those when you file.',
+    ],
+  },
+  {
+    question: 'Does this deduction eliminate payroll (FICA) taxes?',
+    answer: [
+      'No. The OBBBA tips and overtime deductions only reduce your federal income tax. Social Security and Medicare taxes (FICA) still apply to 100% of your reported tips and overtime, and your employer will continue to withhold them from your paycheck.',
+      'State income tax treatment varies. Some states follow the federal deduction and others do not, so check your state’s rules separately.',
+    ],
+  },
+  {
+    question: 'What is the MAGI income phase-out limit for 2026?',
+    answer: [
+      'For 2026, both deductions begin to phase out when your modified adjusted gross income (MAGI) exceeds $150,000 for single and head of household filers, or $300,000 for married couples filing jointly.',
+      'For every full $1,000 of MAGI above the threshold, your deduction is reduced by $100. The qualified tips deduction is fully phased out at $400,000 of MAGI for single and head of household filers, and $550,000 for joint filers. The qualified overtime deduction is fully phased out at $275,000 for single and head of household filers, and $550,000 for joint filers.',
+      'For most taxpayers, MAGI is the same as the adjusted gross income on Form 1040, line 11. It can be higher if you exclude foreign earned income or income from U.S. territories.',
+    ],
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer.join(' ') },
+  })),
+};
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="border-b border-slate-200 bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <nav aria-label="Breadcrumb" class="text-sm text-slate-500">
+        <ol class="flex items-center gap-2">
+          <li><a href="/" class="hover:text-navy-700">Home</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a href="/#tools" class="hover:text-navy-700">Tools</a></li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" class="text-slate-700">Tips &amp; Overtime Calculator</li>
+        </ol>
+      </nav>
+      <h1 class="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+        2026 No Tax on Tips &amp; Overtime Calculator
+      </h1>
+      <p class="mt-4 max-w-3xl text-lg text-slate-600">
+        See how much of your tips and overtime you may be able to deduct from your federal taxable income under the
+        One Big Beautiful Bill Act (OBBBA), including caps and the income phase-out.
+      </p>
+      <ul class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Updated for tax year 2026</li>
+        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Follows the Schedule 1-A method</li>
+        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Free, no sign-up required</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
+    <W2Decoder client:load />
+    <TaxCalculatorApp client:load />
+  </div>
+
+  <section aria-labelledby="faq-heading" class="border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+      <h2 id="faq-heading" class="text-2xl font-semibold tracking-tight text-slate-900">Frequently asked questions</h2>
+      <div class="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+        {
+          faqs.map(({ question, answer }, i) => (
+            <details class="group py-5" open={i === 0}>
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+                <h3 class="text-lg">{question}</h3>
+                <span class="shrink-0 text-xl text-slate-400 transition group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <div class="mt-3 space-y-3 leading-relaxed text-slate-600">
+                {answer.map((p) => <p>{p}</p>)}
+              </div>
+            </details>
+          ))
+        }
+      </div>
+      <p class="mt-8 text-sm text-slate-500">
+        This calculator provides educational estimates and is not tax advice. Results are not a tax return. Verify your
+        figures with the official IRS Schedule 1-A instructions or a CPA or enrolled agent.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

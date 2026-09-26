@@ -120,7 +120,7 @@ export function calculateObbbaDeduction(input: ObbbaInput): ObbbaResult {
     throw new ObbbaYearNotSupportedError(input.taxYear);
   }
   if (input.magi < 0) {
-    throw new ObbbaInvalidInputError('magi debe ser >= 0.');
+    throw new ObbbaInvalidInputError('MAGI must be greater than or equal to 0.');
   }
 
   const yearParams = PARAMS_BY_YEAR[input.taxYear];

@@ -1,0 +1,152 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE, SITE_DOMAIN } from '../lib/site';
+---
+
+<BaseLayout
+  title="Terms of Use"
+  description="The terms that govern your use of NetWageTax's free tax and paycheck calculators, including fair use, disclaimers of warranty, and limitation of liability."
+>
+  <div class="border-b border-slate-200 bg-white">
+    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Terms of Use</h1>
+      <p class="mt-4 text-sm text-slate-500">Effective and last updated: {LEGAL_EFFECTIVE_DATE}</p>
+    </div>
+  </div>
+
+  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <p>
+      These Terms of Use (“Terms”) govern your access to and use of {SITE_DOMAIN} and the calculators, content, and
+      features offered on it (together, the “Service”), operated by NetWageTax (“NetWageTax,” “we,” “us,” or “our”).
+      By accessing or using the Service, you agree to be bound by these Terms and by our
+      <a href="/privacy">Privacy Policy</a>. If you do not agree, do not use the Service.
+    </p>
+
+    <h2 id="service">1. The Service</h2>
+    <p>
+      NetWageTax provides free, browser-based calculators and explanatory content about U.S. payroll and income tax
+      topics. The Service is provided for general informational and educational purposes only. We may add, change,
+      suspend, or discontinue any part of the Service at any time without notice or liability.
+    </p>
+
+    <h2 id="eligibility">2. Eligibility</h2>
+    <p>
+      You must be at least 13 years old to use the Service. If you use the Service on behalf of an organization, you
+      represent that you are authorized to accept these Terms on its behalf.
+    </p>
+
+    <h2 id="not-advice">3. Not tax, legal, or financial advice</h2>
+    <p>
+      The Service does not provide tax, legal, accounting, or financial advice, and no professional-client
+      relationship is created by your use of it. Results are estimates based on the information you enter and our
+      interpretation of published law and guidance, which may change. You are solely responsible for the accuracy of
+      your tax returns and for any decisions you make. Please read our full
+      <a href="/disclaimer">Financial &amp; Tax Disclaimer</a>, which forms part of these Terms.
+    </p>
+
+    <h2 id="fair-use">4. Acceptable and fair use</h2>
+    <p>
+      You may use the Service for your personal, non-commercial purposes, and professionals may use it as a reference
+      in their own work. You agree not to:
+    </p>
+    <ul>
+      <li>Use the Service in violation of any applicable law or regulation</li>
+      <li>
+        Scrape, crawl, or harvest content or results through automated means at a volume that burdens the Service,
+        except for search engines indexing public pages in accordance with our robots directives
+      </li>
+      <li>Attempt to interfere with, disrupt, overload, or gain unauthorized access to the Service or its infrastructure</li>
+      <li>Introduce malware, or probe, scan, or test the vulnerability of the Service without our written permission</li>
+      <li>
+        Frame, mirror, or republish the Service or substantial portions of its content as your own, or present it in a
+        way that suggests our endorsement
+      </li>
+      <li>
+        Generate invalid advertising impressions or clicks, or otherwise interfere with the advertising that supports
+        the Service
+      </li>
+      <li>Misrepresent the Service’s output as professional advice or as an official IRS determination</li>
+    </ul>
+    <p>
+      Brief quotations with attribution and a link back to the Service are welcome.
+    </p>
+
+    <h2 id="ip">5. Intellectual property</h2>
+    <p>
+      The Service, including its text, design, graphics, code, and the selection and arrangement of its content, is
+      owned by NetWageTax or its licensors and is protected by U.S. and international copyright, trademark, and other
+      laws. Subject to these Terms, we grant you a limited, non-exclusive, non-transferable, revocable license to access
+      and use the Service. All rights not expressly granted are reserved. Statutory text and official IRS materials
+      referenced on the Site remain in the public domain.
+    </p>
+
+    <h2 id="third-party">6. Third-party content, links, and advertising</h2>
+    <p>
+      The Service may display advertisements and link to third-party websites. We do not control and are not
+      responsible for third-party content, products, services, or privacy practices, and a link or advertisement does
+      not constitute an endorsement. Your dealings with advertisers are solely between you and them.
+    </p>
+
+    <h2 id="warranty">7. Disclaimer of warranties</h2>
+    <p class="uppercase text-sm tracking-wide">
+      The Service is provided “as is” and “as available,” without warranties of any kind, whether express, implied, or
+      statutory, including implied warranties of merchantability, fitness for a particular purpose, title,
+      non-infringement, and accuracy. We do not warrant that the Service will be uninterrupted, error-free, secure, or
+      current, or that any calculation, estimate, or content is accurate or complete.
+    </p>
+
+    <h2 id="liability">8. Limitation of liability</h2>
+    <p class="uppercase text-sm tracking-wide">
+      To the fullest extent permitted by law, NetWageTax and its owners, operators, contributors, and service
+      providers will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive
+      damages, or for any taxes, penalties, interest, lost profits, or lost data, arising out of or related to your use
+      of, or inability to use, the Service, even if advised of the possibility of such damages. Because the Service is
+      free, our total liability for any claim arising out of or relating to the Service will not exceed one hundred
+      U.S. dollars (US$100).
+    </p>
+    <p>
+      Some jurisdictions do not allow the exclusion of certain warranties or the limitation of certain damages, so
+      some of the above may not apply to you.
+    </p>
+
+    <h2 id="indemnity">9. Indemnification</h2>
+    <p>
+      You agree to indemnify and hold harmless NetWageTax and its owners and operators from any claims, losses,
+      liabilities, and expenses (including reasonable attorneys’ fees) arising from your violation of these Terms or
+      your misuse of the Service.
+    </p>
+
+    <h2 id="law">10. Governing law</h2>
+    <p>
+      These Terms are governed by the laws of the United States and the laws of the state in which NetWageTax is
+      organized, without regard to conflict-of-law principles. Any dispute arising under these Terms will be resolved
+      exclusively in the state or federal courts located in that state, and you consent to their personal
+      jurisdiction.
+    </p>
+
+    <h2 id="general">11. General</h2>
+    <ul>
+      <li>
+        <strong>Changes.</strong> We may revise these Terms at any time by posting an updated version and changing the
+        “last updated” date. Continued use of the Service after changes take effect constitutes acceptance.
+      </li>
+      <li>
+        <strong>Severability.</strong> If any provision is found unenforceable, the remaining provisions remain in full
+        force and effect.
+      </li>
+      <li>
+        <strong>No waiver.</strong> Our failure to enforce any right or provision is not a waiver of that right or
+        provision.
+      </li>
+      <li>
+        <strong>Entire agreement.</strong> These Terms, together with our Privacy Policy and Disclaimer, are the entire
+        agreement between you and NetWageTax regarding the Service.
+      </li>
+    </ul>
+
+    <h2 id="contact">12. Contact</h2>
+    <p>
+      Questions about these Terms can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+    </p>
+  </article>
+</BaseLayout>
