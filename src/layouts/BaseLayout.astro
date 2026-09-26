@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Logo from '../components/Logo';
 
 interface Props {
   title: string;
@@ -15,23 +16,26 @@ const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 // Canonical/OG URLs require `site` in astro.config.mjs.
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 
-// `hideBelow` keeps the bar on one line on small screens.
+// `hideBelow` keeps the bar on one line on small screens; `section` marks the link active on nested pages.
 const navLinks = [
-  { href: '/#tools', label: 'Tools', hideBelow: '' },
-  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator', hideBelow: 'hidden lg:block' },
-  { href: '/states', label: 'State Taxes', hideBelow: '' },
-  { href: '/about', label: 'About', hideBelow: 'hidden sm:block' },
+  { href: '/#tools', label: 'Calculators', hideBelow: '', section: '/tools' },
+  { href: '/state-taxes', label: 'State Taxes', hideBelow: 'hidden sm:block', section: '/state-taxes' },
+  { href: '/guides/w2-box-12-guide', label: 'W-2 Guide', hideBelow: 'hidden sm:block', section: '/guides' },
+  { href: '/about', label: 'About', hideBelow: 'hidden md:block', section: '/about' },
 ];
 
 const footerLinks = [
   { href: '/about', label: 'About' },
-  { href: '/states', label: 'State Income Tax Map' },
+  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator' },
+  { href: '/state-taxes', label: 'State Income Tax Map' },
+  { href: '/guides/w2-box-12-guide', label: 'W-2 Box 12 Guide' },
   { href: '/privacy', label: 'Privacy Policy' },
   { href: '/terms', label: 'Terms of Use' },
   { href: '/disclaimer', label: 'Disclaimer' },
 ];
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (section: string) => currentPath === section || currentPath.startsWith(`${section}/`);
 ---
 
 <!doctype html>
@@ -40,8 +44,9 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
@@ -81,25 +86,20 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 
     <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
       <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
-        <a href="/" class="flex items-center gap-2.5" aria-label="NetWageTax home">
-          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white" aria-hidden="true">
-            N
-          </span>
-          <span class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            NetWage<span class="text-navy-600 dark:text-navy-300">Tax</span>
-          </span>
+        <a href="/" class="shrink-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40" aria-label="NetWageTax home">
+          <Logo />
         </a>
         <nav aria-label="Main" class="ml-auto">
           <ul class="flex items-center gap-1 text-sm font-medium sm:gap-2">
             {
-              navLinks.map(({ href, label, hideBelow }) => (
+              navLinks.map(({ href, label, hideBelow, section }) => (
                 <li class={hideBelow}>
                   <a
                     href={href}
-                    aria-current={currentPath === href ? 'page' : undefined}
+                    aria-current={isActive(section) ? 'page' : undefined}
                     class:list={[
                       'whitespace-nowrap rounded-md px-3 py-2 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
-                      currentPath === href ? 'text-navy-700 dark:text-navy-300' : 'text-slate-600 dark:text-slate-400',
+                      isActive(section) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400',
                     ]}
                   >
                     {label}
@@ -137,7 +137,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
       <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div class="max-w-md">
-            <p class="font-semibold text-slate-900 dark:text-slate-100">NetWageTax</p>
+            <Logo />
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Free, independent calculators that help American workers understand their paychecks and taxes.
             </p>

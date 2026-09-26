@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { calculateObbbaDeduction } from '../lib/obbba-calculator';
-import type { CategoryResult, FilingStatus, IneligibilityReason } from '../lib/obbba-params';
+import { PARAMS_BY_YEAR, type CategoryResult, type FilingStatus, type IneligibilityReason } from '../lib/obbba-params';
 import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
@@ -32,6 +32,7 @@ const INELIGIBLE_COPY: Record<IneligibilityReason, string> = {
 export default function TaxCalculatorApp() {
   const [filingStatus, setFilingStatus] = useState<FilingStatus>('single');
   const [stateCode, setStateCode] = useState<StateCode | null>(null);
+  const [hasSsn, setHasSsn] = useState(false);
   const [magi, setMagi] = useState<number | null>(null);
 
   const [tipsEnabled, setTipsEnabled] = useState(true);
@@ -113,6 +114,69 @@ export default function TaxCalculatorApp() {
     [stateCode, magiValue],
   );
 
+  const phaseoutStart =
+    filingStatus === 'mfj'
+      ? PARAMS_BY_YEAR[TAX_YEAR].tips.phaseoutThresholdMfj
+      : PARAMS_BY_YEAR[TAX_YEAR].tips.phaseoutThresholdSingleOrHoh;
+
+  // Live status for the qualification checklist (informational; it doesn't change the math).
+  const checklist: CheckItem[] = [
+    {
+      key: 'ssn',
+      label: 'Valid Social Security number',
+      status: hasSsn ? 'pass' : 'pending',
+      detail: 'Required for both deductions. An SSN valid for employment; ITINs don’t qualify.',
+    },
+    {
+      key: 'filing',
+      label: 'Eligible filing status',
+      status: isMfs ? 'fail' : 'pass',
+      detail: isMfs ? 'Married couples must file jointly to claim either deduction.' : `${FILING_STATUSES.find((f) => f.value === filingStatus)!.label} can claim both deductions.`,
+    },
+    {
+      key: 'treasury',
+      label: 'Treasury tipped occupation list',
+      status: !tipsEnabled ? 'na' : occupationConfirmed ? 'pass' : 'pending',
+      detail: !tipsEnabled
+        ? 'Only needed if you claim tips.'
+        : occupationConfirmed
+          ? 'Your occupation customarily received tips on or before Dec 31, 2024.'
+          : 'Confirm your occupation is on the Treasury list (checkbox above).',
+    },
+    {
+      key: 'flsa',
+      label: 'FLSA non-exempt employee',
+      status: !overtimeEnabled ? 'na' : flsaNonExempt ? 'pass' : 'pending',
+      detail: !overtimeEnabled
+        ? 'Only needed if you claim overtime.'
+        : flsaNonExempt
+          ? 'Your overtime premium is required by FLSA §7.'
+          : 'Confirm you are entitled to FLSA overtime (checkbox above).',
+    },
+    {
+      key: 'magi',
+      label: 'Income phase-out',
+      status: magiValue <= 0 ? 'pending' : magiValue <= phaseoutStart ? 'pass' : result.totalCombinedDeduction > 0 ? 'warn' : baseTotal > 0 ? 'fail' : 'warn',
+      detail:
+        magiValue <= 0
+          ? 'Enter your MAGI above.'
+          : magiValue <= phaseoutStart
+            ? `Below the ${formatUSD(phaseoutStart)} phase-out threshold.`
+            : `Above ${formatUSD(phaseoutStart)}: reduced $100 per $1,000 of MAGI.`,
+    },
+    {
+      key: 'schedule',
+      label: 'Form 1040 Schedule 1-A',
+      status: result.totalCombinedDeduction > 0 ? (hasSsn ? 'pass' : 'pending') : 'pending',
+      detail:
+        result.totalCombinedDeduction > 0
+          ? hasSsn
+            ? `Claim ${formatUSD(result.totalCombinedDeduction)} on Schedule 1-A; it flows to Form 1040, line 13b.`
+            : 'Confirm your SSN to complete eligibility.'
+          : 'Complete the items above to see your Schedule 1-A amount.',
+    },
+  ];
+
   const tipsNote = tipsEnabled && !occupationConfirmed && !isMfs
     ? 'Confirm your occupation is on the Treasury list to include tips.'
     : null;
@@ -122,7 +186,7 @@ export default function TaxCalculatorApp() {
       ref={rootRef}
       id="calculator"
       aria-labelledby="calculator-heading"
-      className="scroll-mt-24 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8"
+      className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
     >
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Step 2</p>
@@ -132,9 +196,9 @@ export default function TaxCalculatorApp() {
         <p className="text-slate-600 dark:text-slate-400">Results update automatically as you type. Nothing you enter leaves your browser.</p>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* ------------------------------ Inputs ------------------------------ */}
-        <form className="flex flex-col gap-8" onSubmit={(e) => e.preventDefault()} noValidate>
+        <form className="flex flex-col gap-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
           <fieldset>
             <legend className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filing status</legend>
@@ -187,7 +251,7 @@ export default function TaxCalculatorApp() {
               {!stateTax ? (
                 <>
                   Optional. Adds state income tax to the breakdown.{' '}
-                  <a href="/states" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
+                  <a href="/state-taxes" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
                     Browse the map
                   </a>
                 </>
@@ -271,23 +335,27 @@ export default function TaxCalculatorApp() {
               I am a non-exempt employee under the FLSA (I am legally entitled to overtime pay).
             </Checkbox>
           </ToggleBlock>
+
+          <QualificationChecklist items={checklist} hasSsn={hasSsn} onSsnChange={setHasSsn} />
         </form>
 
         {/* ------------------------------ Results ----------------------------- */}
-        <aside aria-labelledby="results-heading" className="lg:sticky lg:top-24 lg:self-start">
-          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-300">
-            <span aria-hidden="true">✓</span>
-            NetWageTax Verified Logic · Updated for {TAX_YEAR} Tax Rules
-          </p>
-
-          <div className="overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-            <div className="p-6">
-              <h3 id="results-heading" className="text-sm font-medium text-slate-400">
-                Estimated Money Saved (Tax Savings)
-              </h3>
+        <aside aria-labelledby="results-heading" className="flex flex-col gap-4 lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
+          {/* 1. Hero: tax savings */}
+          <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-emerald-950 via-slate-900 to-slate-950 p-6 text-white shadow-xl ring-1 ring-emerald-500/30">
+            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/20 blur-3xl" />
+            <div className="relative">
+              <div className="flex items-start justify-between gap-3">
+                <h3 id="results-heading" className="text-sm font-medium text-emerald-100/80">
+                  Estimated Money Saved (Tax Savings)
+                </h3>
+                <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-emerald-100 ring-1 ring-white/15">
+                  {TAX_YEAR} rules
+                </span>
+              </div>
               <p
-                className={`mt-1 text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${
-                  savings > 0 ? 'text-emerald-400' : 'text-slate-300'
+                className={`mt-2 text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${
+                  savings > 0 ? 'glow-emerald text-emerald-400' : 'text-slate-300'
                 }`}
                 aria-hidden="true"
               >
@@ -297,7 +365,7 @@ export default function TaxCalculatorApp() {
               <p className="mt-1 text-sm text-slate-400">Less federal income tax owed for {TAX_YEAR}</p>
 
               <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-white/10 pt-4">
-                <p className="text-sm text-slate-400">Total Federal Deduction (Schedule 1-A)</p>
+                <p className="text-sm text-slate-300">Total Federal Deduction (Schedule 1-A)</p>
                 <p className="text-lg font-semibold tabular-nums text-white" aria-hidden="true">
                   {formatUSD(shownTotal)}
                 </p>
@@ -309,59 +377,48 @@ export default function TaxCalculatorApp() {
                   <span>{STANDARD_DEDUCTION_COVERS_NOTICE}</span>
                 </p>
               )}
+              {isMfs && <p className="mt-3 text-sm text-amber-200">{MFS_TOOLTIP}.</p>}
               <p className="sr-only" aria-live="polite">
                 Estimated money saved {formatUSD(savings)}. Total federal deduction{' '}
                 {formatUSD(result.totalCombinedDeduction)}.
               </p>
-              {isMfs && <p className="mt-3 text-sm text-amber-200">{MFS_TOOLTIP}.</p>}
-            </div>
-
-            <div className="border-t border-white/10 bg-white/[0.03] px-6 py-5">
-              <dl className="space-y-2 text-sm">
-                <Row label="Base deduction" value={formatUSD(baseTotal)} />
-                <Row
-                  label="MAGI phase-out reduction"
-                  value={reductionTotal > 0 ? `−${formatUSD(reductionTotal)}` : formatUSD(0)}
-                />
-                <div className="border-t border-white/10 pt-2">
-                  <Row label="Total deduction" value={formatUSD(result.totalCombinedDeduction)} strong />
-                </div>
-              </dl>
             </div>
           </div>
 
-          <div className="mt-4">
-            <IncomeBreakdownBar
-              magi={magiValue}
-              deduction={result.totalCombinedDeduction}
-              savings={savings}
-              stateTax={stateTax}
-            />
+          {/* 2. Where your income goes */}
+          <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} savings={savings} stateTax={stateTax} />
+
+          {/* 3. Compact line-item breakdown */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
+            <h4 className="font-medium text-slate-900 dark:text-slate-100">Deduction breakdown</h4>
+            <ul className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+              <CategoryRow title="Qualified tips (TP)" category={result.tips} enabled={tipsEnabled} note={tipsNote} />
+              <CategoryRow title="Qualified overtime (TT)" category={result.overtime} enabled={overtimeEnabled} />
+            </ul>
+            <dl className="mt-3 space-y-1.5 border-t border-slate-200 pt-3 text-sm dark:border-slate-800">
+              <Row label="Base deduction (after caps)" value={formatUSD(baseTotal)} />
+              <Row label="MAGI phase-out reduction" value={reductionTotal > 0 ? `−${formatUSD(reductionTotal)}` : formatUSD(0)} />
+              <Row label="Total deduction" value={formatUSD(result.totalCombinedDeduction)} strong />
+            </dl>
           </div>
 
-          <div className="mt-4 space-y-3">
-            <CategoryCard title="Qualified tips" category={result.tips} enabled={tipsEnabled} note={tipsNote} />
-            <CategoryCard title="Qualified overtime" category={result.overtime} enabled={overtimeEnabled} />
-          </div>
+          {/* 4. Export */}
+          <ExportSummaryActions
+            result={result}
+            tipsReported={tipsEnabled ? (tipsAmount ?? 0) : 0}
+            overtimeReported={overtimeEnabled ? (overtimeAmount ?? 0) : 0}
+            savings={savings}
+            stateTax={stateTax}
+          />
 
-          <div className="mt-4">
-            <ExportSummaryActions
-              result={result}
-              tipsReported={tipsEnabled ? (tipsAmount ?? 0) : 0}
-              overtimeReported={overtimeEnabled ? (overtimeAmount ?? 0) : 0}
-              savings={savings}
-              stateTax={stateTax}
-            />
-          </div>
-
-          <p className="mt-4 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-            <span className="font-semibold">Important: </span>
-            {result.ficaStillOwedNotice}
-          </p>
-          <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            Estimates only, not tax advice. Tax savings assume the {TAX_YEAR} standard deduction and federal income tax
-            brackets, and treat MAGI as equal to AGI. Confirm your figures with the official Schedule 1-A instructions or
-            a CPA or enrolled agent.
+          {/* 5. FICA note */}
+          <p className="flex gap-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            <span aria-hidden="true" className="mt-px text-amber-500">●</span>
+            <span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{result.ficaStillOwedNotice}</span>{' '}
+              Estimates only, not tax advice. Savings assume the {TAX_YEAR} standard deduction and federal brackets and
+              treat MAGI as AGI.
+            </span>
           </p>
         </aside>
       </div>
@@ -447,60 +504,124 @@ function Checkbox(props: { id: string; checked: boolean; onChange: (v: boolean) 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <dt className={strong ? 'font-semibold text-white' : 'text-slate-400'}>{label}</dt>
-      <dd className={`tabular-nums ${strong ? 'font-semibold text-white' : 'text-white'}`}>{value}</dd>
+      <dt className={strong ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{label}</dt>
+      <dd className={`tabular-nums ${strong ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
+        {value}
+      </dd>
     </div>
   );
 }
 
-function CategoryCard(props: {
-  title: string;
-  category: CategoryResult;
-  enabled: boolean;
-  note?: string | null;
-}) {
-  const { title, category, enabled, note } = props;
+function categoryStatus(category: CategoryResult, enabled: boolean, note?: string | null): string | null {
   const reduction = Math.min(category.phaseoutReduction, category.deductionBeforePhaseout);
-
-  let status: string | null = null;
-  if (note) status = note;
-  else if (!category.isEligible && category.ineligibilityReason) {
-    status = category.ineligibilityReason === 'NOT_CLAIMED' && !enabled
-      ? 'Not included'
-      : INELIGIBLE_COPY[category.ineligibilityReason];
-  } else if (category.isFullyPhasedOut) {
-    status = 'Fully phased out at your MAGI.';
-  } else if (reduction > 0 && category.distanceToNextPhaseoutStep !== null) {
-    status = `Your deduction drops by another $100 with ${formatUSD(category.distanceToNextPhaseoutStep)} more MAGI.`;
+  if (note) return note;
+  if (!category.isEligible && category.ineligibilityReason) {
+    return category.ineligibilityReason === 'NOT_CLAIMED' && !enabled ? 'Not included' : INELIGIBLE_COPY[category.ineligibilityReason];
   }
+  if (category.isFullyPhasedOut) return 'Fully phased out at your MAGI.';
+  if (reduction > 0 && category.distanceToNextPhaseoutStep !== null) {
+    return `Drops by another $100 with ${formatUSD(category.distanceToNextPhaseoutStep)} more MAGI.`;
+  }
+  if (category.deductionFinal > 0) return `Base ${formatUSD(category.deductionBeforePhaseout)} after the cap.`;
+  return null;
+}
 
+function CategoryRow(props: { title: string; category: CategoryResult; enabled: boolean; note?: string | null }) {
+  const { title, category, enabled, note } = props;
+  const status = categoryStatus(category, enabled, note);
+  const active = category.deductionFinal > 0;
   return (
-    <div
-      className={`rounded-xl border bg-white dark:bg-slate-900 p-4 transition-colors duration-300 ${
-        category.deductionFinal > 0 ? 'border-emerald-300 dark:border-emerald-500/40' : 'border-slate-200 dark:border-slate-800'
-      }`}
+    <li className="flex items-start justify-between gap-4 py-2.5 first:pt-0">
+      <div className="flex min-w-0 items-start gap-2.5">
+        <span
+          aria-hidden="true"
+          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+        />
+        <div className="min-w-0">
+          <p className="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+          {status && <p className="text-xs text-slate-500 dark:text-slate-400">{status}</p>}
+        </div>
+      </div>
+      <span
+        className={`shrink-0 font-semibold tabular-nums ${active ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}
+      >
+        {formatUSD(category.deductionFinal)}
+      </span>
+    </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 2026 filing qualification checklist
+// ---------------------------------------------------------------------------
+
+type CheckStatus = 'pass' | 'fail' | 'warn' | 'pending' | 'na';
+
+interface CheckItem {
+  key: string;
+  label: string;
+  status: CheckStatus;
+  detail: string;
+}
+
+const CHECK_STYLES: Record<CheckStatus, { icon: string; badge: string; sr: string }> = {
+  pass: { icon: '✓', badge: 'bg-emerald-500 text-white', sr: 'Met' },
+  fail: { icon: '✕', badge: 'bg-rose-500 text-white', sr: 'Not met' },
+  warn: { icon: '!', badge: 'bg-amber-400 text-amber-950', sr: 'Partly met' },
+  pending: { icon: '', badge: 'border-2 border-slate-300 dark:border-slate-600', sr: 'To confirm' },
+  na: { icon: '–', badge: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500', sr: 'Not applicable' },
+};
+
+function QualificationChecklist(props: { items: CheckItem[]; hasSsn: boolean; onSsnChange: (v: boolean) => void }) {
+  const { items, hasSsn, onSsnChange } = props;
+  const met = items.filter((i) => i.status === 'pass').length;
+  const applicable = items.filter((i) => i.status !== 'na').length;
+  return (
+    <section
+      aria-labelledby="checklist-heading"
+      className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100">{title}</h4>
-        <span
-          className={`font-semibold tabular-nums transition-colors duration-300 ${
-            category.deductionFinal > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
-          }`}
-        >{formatUSD(category.deductionFinal)}</span>
+        <h3 id="checklist-heading" className="font-semibold text-slate-900 dark:text-slate-100">
+          {TAX_YEAR} Filing Qualification Checklist
+        </h3>
+        <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+          {met}/{applicable} met
+        </span>
       </div>
-      {category.isEligible && (
-        <dl className="mt-2 space-y-1 text-sm">
-          <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
-            <dt>Base deduction</dt>
-            <dd className="tabular-nums">{formatUSD(category.deductionBeforePhaseout)}</dd>
-          </div>
-          <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
-            <dt>Phase-out reduction</dt>
-            <dd className="tabular-nums">{reduction > 0 ? `−${formatUSD(reduction)}` : formatUSD(0)}</dd>
-          </div>
-        </dl>
-      )}
-      {status && <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{status}</p>}
-    </div>
+      <ul className="mt-4 space-y-3">
+        {items.map((item) => {
+          const style = CHECK_STYLES[item.status];
+          return (
+            <li key={item.key} className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors duration-200 ${style.badge}`}
+              >
+                {style.icon}
+              </span>
+              <div className="min-w-0 text-sm">
+                <p className="font-medium text-slate-800 dark:text-slate-200">
+                  {item.label}
+                  <span className="sr-only">: {style.sr}.</span>
+                </p>
+                <p className="text-slate-500 dark:text-slate-400">{item.detail}</p>
+                {item.key === 'ssn' && (
+                  <label className="mt-1.5 inline-flex cursor-pointer items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={hasSsn}
+                      onChange={(e) => onSsnChange(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 accent-emerald-600"
+                    />
+                    I have a valid SSN (we never ask for the number)
+                  </label>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

@@ -75,7 +75,7 @@ export default function IncomeBreakdownBar({ magi, deduction, savings, stateTax 
         .join(', ')}.`;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-colors duration-300">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
       <div className="flex items-baseline justify-between gap-4">
         <h4 className="font-medium text-slate-900 dark:text-slate-100">Where your income goes</h4>
         {!isEmpty && <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">of {formatUSD(total)}</span>}

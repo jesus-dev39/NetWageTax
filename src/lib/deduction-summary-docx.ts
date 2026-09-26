@@ -144,6 +144,7 @@ export function buildSummaryDocument(summary: DeductionSummary): Document {
           }),
 
           metaRow('Date generated', summary.generatedAt),
+          metaRow('Reference', summary.referenceId),
           metaRow('Tax year', String(summary.taxYear)),
           metaRow('Filing status', summary.filingStatus),
 

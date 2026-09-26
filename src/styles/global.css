@@ -26,6 +26,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Primary call to action: emerald → teal gradient. */
+@utility btn-primary {
+  @apply bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500;
+}
+
+/* Soft emerald glow for headline money figures. */
+@utility glow-emerald {
+  filter: drop-shadow(0 0 15px rgb(16 185 129 / 0.3));
+}
+
 html.dark {
   color-scheme: dark;
 }
@@ -94,7 +104,7 @@ html.dark {
 
   .print-voucher {
     break-inside: avoid;
-    font-size: 13px;
+    page-break-inside: avoid;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

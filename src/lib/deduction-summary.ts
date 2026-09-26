@@ -8,7 +8,13 @@ import { formatUSD } from '../components/CurrencyInput';
 import { estimateEmployeeFica } from './fica';
 import { isCoveredByStandardDeduction } from './marginal-rate';
 import type { StateTaxEstimate } from './state-tax-data';
-import { PARAMS_BY_YEAR, type FilingStatus, type ObbbaResult } from './obbba-params';
+import {
+  PARAMS_BY_YEAR,
+  type CategoryResult,
+  type FilingStatus,
+  type IneligibilityReason,
+  type ObbbaResult,
+} from './obbba-params';
 
 export const FILING_STATUS_LABELS: Record<FilingStatus, string> = {
   single: 'Single',
@@ -51,8 +57,29 @@ export interface SummaryLine {
   total?: boolean;
 }
 
+/** One row of the worksheet: reported amount → cap → phase-out → allowed deduction. */
+export interface WorksheetRow {
+  label: string;
+  code: 'TP' | 'TT';
+  reported: number;
+  cap: number;
+  /** Deduction after the cap, before the phase-out. */
+  afterCap: number;
+  phaseoutReduction: number;
+  allowed: number;
+  /** Why nothing is allowed, when applicable. */
+  note?: string;
+}
+
 export interface DeductionSummary {
+  /** Short reference for the user's records, e.g. NWT-2026-7K3F9Q. Not an official identifier. */
+  referenceId: string;
   generatedAt: string;
+  magi: number;
+  worksheet: WorksheetRow[];
+  /** Estimated employee FICA on the reported tips and overtime. */
+  fica: number;
+  stateTax?: StateTaxEstimate | null;
   taxYear: number;
   filingStatus: string;
   totalDeduction: number;
@@ -62,6 +89,23 @@ export interface DeductionSummary {
   savingsNote?: string;
   lines: SummaryLine[];
   ficaNotice: string;
+}
+
+const INELIGIBLE_NOTE: Record<IneligibilityReason, string> = {
+  NOT_CLAIMED: 'Not claimed or not confirmed',
+  MARRIED_FILING_SEPARATELY: 'Married filing separately: not eligible',
+  SELF_EMPLOYED_SSTB: 'Specified service business: not eligible',
+  FLSA_EXEMPT_EMPLOYEE: 'FLSA non-exempt status not confirmed',
+};
+
+/** FNV-1a hash → 6 base-36 characters. Stable for the same inputs and minute. */
+function referenceFor(parts: (string | number)[]): string {
+  let h = 0x811c9dc5;
+  for (const ch of parts.join('|')) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36).toUpperCase().padStart(6, '0').slice(-6);
 }
 
 const negative = (n: number) => (n > 0 ? `−${formatUSD(n)}` : formatUSD(0));
@@ -90,7 +134,29 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
   const capDetail = (reportedAmount: number, cap: number) =>
     reportedAmount > cap ? `Limited from ${formatUSD(reportedAmount)}` : undefined;
 
+  const row = (label: string, code: 'TP' | 'TT', c: CategoryResult, reported: number, cap: number): WorksheetRow => ({
+    label,
+    code,
+    reported,
+    cap,
+    afterCap: c.deductionBeforePhaseout,
+    phaseoutReduction: Math.min(c.phaseoutReduction, c.deductionBeforePhaseout),
+    allowed: c.deductionFinal,
+    note: !c.isEligible && c.ineligibilityReason ? INELIGIBLE_NOTE[c.ineligibilityReason] : undefined,
+  });
+
+  const minute = Math.floor(generatedAt.getTime() / 60_000);
+  const referenceId = `NWT-${result.taxYear}-${referenceFor([minute, result.filingStatus, result.magi, tipsReported, overtimeReported, stateTax?.code ?? ''])}`;
+
   return {
+    referenceId,
+    magi: result.magi,
+    worksheet: [
+      row('Qualified tips', 'TP', result.tips, tipsReported, tipsCap),
+      row('Qualified overtime premium', 'TT', result.overtime, overtimeReported, overtimeCap),
+    ],
+    fica,
+    stateTax,
     generatedAt: formatGeneratedAt(generatedAt),
     taxYear: result.taxYear,
     filingStatus: FILING_STATUS_LABELS[result.filingStatus],

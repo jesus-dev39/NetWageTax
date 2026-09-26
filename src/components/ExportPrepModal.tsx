@@ -97,7 +97,7 @@ export default function ExportPrepModal({ open, taxYear, onPrint, onClose }: Pro
               ref={printRef}
               type="button"
               onClick={printNow}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+              className="inline-flex items-center justify-center rounded-lg btn-primary px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
             >
               Print / Save PDF
             </button>

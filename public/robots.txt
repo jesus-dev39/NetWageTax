@@ -1,0 +1,14 @@
+# NetWageTax: all content is public and crawlable.
+
+User-agent: *
+Allow: /
+
+# Google Search
+User-agent: Googlebot
+Allow: /
+
+# Google AdSense crawler (determines relevant ads for each page)
+User-agent: Mediapartners-Google
+Allow: /
+
+Sitemap: https://netwagetax.com/sitemap-index.xml

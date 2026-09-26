@@ -27,7 +27,7 @@ export default function StateExplorer() {
   const [highlighted, setHighlighted] = useState<StateCode | null>(null);
   const [filter, setFilter] = useState<TaxStructure | null>(null);
 
-  // Deep link: /states?state=texas
+  // Deep link: /state-taxes?state=texas
   useEffect(() => {
     const s = findState(new URLSearchParams(window.location.search).get('state'));
     if (s) setSelected(s.code);
@@ -47,7 +47,7 @@ export default function StateExplorer() {
     <div className="flex flex-col gap-10">
       <section
         aria-labelledby="map-heading"
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900"
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
       >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -177,7 +177,7 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
       </p>
       <a
         href={calculatorHref(info)}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg btn-primary px-4 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
       >
         Calculate with {info.name} taxes <span aria-hidden="true">→</span>
       </a>

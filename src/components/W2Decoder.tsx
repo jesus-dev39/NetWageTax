@@ -76,7 +76,7 @@ export default function W2Decoder() {
   return (
     <section
       aria-labelledby="w2-decoder-heading"
-      className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8"
+      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
     >
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold uppercase tracking-wide text-navy-600 dark:text-navy-300">Step 1</p>
@@ -84,8 +84,8 @@ export default function W2Decoder() {
           Decode your Form W-2, Box 12
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          Starting with 2025 W-2s, employers use three new Box 12 codes. Select the code you see on
-          your form to learn what it means.
+          The 2026 Form W-2 adds three new Box 12 codes (for 2025, many employers reported these amounts in
+          Box 14 instead). Select the code you see on your form to learn what it means.
         </p>
       </div>
 
@@ -179,7 +179,7 @@ export default function W2Decoder() {
             <button
               type="button"
               onClick={sendToCalculator}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+              className="inline-flex items-center justify-center gap-2 rounded-lg btn-primary px-5 py-2.5 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
             >
               {amount !== null ? 'Use this amount in the calculator' : `Go to the ${info.code === 'TP' ? 'tips' : 'overtime'} calculator`}
               <span aria-hidden="true">↓</span>
@@ -195,7 +195,10 @@ export default function W2Decoder() {
       <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
         Tip: These amounts belong in <strong className="font-medium text-slate-700 dark:text-slate-300">Box 12</strong>. Some payroll
         providers also list tips or overtime in Box 14, which is a free-form box. Use the Box 12 amounts when they
-        are available.
+        are available.{' '}
+        <a href="/guides/w2-box-12-guide" className="font-medium text-navy-700 underline underline-offset-2 dark:text-navy-300">
+          See every Box 12 code
+        </a>
       </p>
     </section>
   );
