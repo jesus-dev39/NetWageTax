@@ -4,6 +4,8 @@ import type { CategoryResult, FilingStatus, IneligibilityReason } from '../lib/o
 import { estimateFederalTaxSavings } from '../lib/marginal-rate';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
+import IncomeBreakdownBar from './IncomeBreakdownBar';
+import { useAnimatedNumber } from './useAnimatedNumber';
 
 const TAX_YEAR = 2026;
 const MFS_TOOLTIP = 'Married Filing Separately is ineligible under IRC §224/§225';
@@ -90,6 +92,8 @@ export default function TaxCalculatorApp() {
     Math.min(result.tips.phaseoutReduction, result.tips.deductionBeforePhaseout) +
     Math.min(result.overtime.phaseoutReduction, result.overtime.deductionBeforePhaseout);
   const savings = estimateFederalTaxSavings(magiValue, result.totalCombinedDeduction, filingStatus);
+  const shownTotal = useAnimatedNumber(result.totalCombinedDeduction);
+  const shownSavings = useAnimatedNumber(savings);
 
   const tipsNote = tipsEnabled && !occupationConfirmed && !isMfs
     ? 'Confirm your occupation is on the Treasury list to include tips.'
@@ -103,7 +107,7 @@ export default function TaxCalculatorApp() {
       className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
     >
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold uppercase tracking-wide text-navy-600">Step 2</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Step 2</p>
         <h2 id="calculator-heading" className="text-2xl font-semibold text-slate-900">
           Estimate your {TAX_YEAR} tips &amp; overtime deduction
         </h2>
@@ -128,11 +132,11 @@ export default function TaxCalculatorApp() {
                       aria-disabled={disabled || undefined}
                       aria-describedby={disabled ? 'mfs-tooltip' : undefined}
                       onClick={() => !disabled && setFilingStatus(value)}
-                      className={`h-full w-full rounded-lg border px-3 py-2.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/40 ${
+                      className={`h-full w-full rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
                         disabled
                           ? 'cursor-not-allowed border-dashed border-slate-300 bg-slate-50 text-slate-400'
                           : active
-                            ? 'border-navy-700 bg-navy-700 text-white'
+                            ? 'border-ink bg-ink text-white shadow-sm'
                             : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                       }`}
                     >
@@ -226,21 +230,37 @@ export default function TaxCalculatorApp() {
 
         {/* ------------------------------ Results ----------------------------- */}
         <aside aria-labelledby="results-heading" className="lg:sticky lg:top-24 lg:self-start">
-          <div className="overflow-hidden rounded-2xl border border-navy-900 bg-navy-900 text-white shadow-lg">
-            <div className="p-6" aria-live="polite">
-              <h3 id="results-heading" className="text-sm font-medium text-navy-200">
+          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+            <span aria-hidden="true">✓</span>
+            NetWageTax Verified Logic · Updated for {TAX_YEAR} Tax Rules
+          </p>
+
+          <div className="overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-lg">
+            <div className="p-6">
+              <h3 id="results-heading" className="text-sm font-medium text-slate-400">
                 Estimated total federal deduction
               </h3>
-              <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
-                {formatUSD(result.totalCombinedDeduction)}
+              <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums" aria-hidden="true">
+                {formatUSD(shownTotal)}
               </p>
-              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-200 ring-1 ring-emerald-300/30">
-                Est. federal tax savings: <span className="tabular-nums">{formatUSD(savings)}</span>
+              <p
+                className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ring-1 transition-colors duration-300 ${
+                  savings > 0
+                    ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/40'
+                    : 'bg-white/5 text-slate-400 ring-white/10'
+                }`}
+                aria-hidden="true"
+              >
+                Est. federal tax savings: <span className="tabular-nums">{formatUSD(shownSavings)}</span>
+              </p>
+              <p className="sr-only" aria-live="polite">
+                Estimated total federal deduction {formatUSD(result.totalCombinedDeduction)}. Estimated federal tax
+                savings {formatUSD(savings)}.
               </p>
               {isMfs && <p className="mt-3 text-sm text-amber-200">{MFS_TOOLTIP}.</p>}
             </div>
 
-            <div className="border-t border-white/10 bg-navy-950/40 px-6 py-5">
+            <div className="border-t border-white/10 bg-white/[0.03] px-6 py-5">
               <dl className="space-y-2 text-sm">
                 <Row label="Base deduction" value={formatUSD(baseTotal)} />
                 <Row
@@ -252,6 +272,10 @@ export default function TaxCalculatorApp() {
                 </div>
               </dl>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} savings={savings} />
           </div>
 
           <div className="mt-4 space-y-3">
@@ -288,7 +312,11 @@ function ToggleBlock(props: {
 }) {
   const { id, title, subtitle, enabled, onToggle, children } = props;
   return (
-    <div className={`rounded-xl border transition ${enabled ? 'border-navy-200 bg-navy-50/40' : 'border-slate-200'}`}>
+    <div
+      className={`rounded-xl border transition-colors duration-300 ${
+        enabled ? 'border-emerald-300 bg-emerald-50/30 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+      }`}
+    >
       <div className="flex items-center justify-between gap-4 p-4">
         <div>
           <p id={`${id}-toggle-label`} className="font-semibold text-slate-900">
@@ -303,20 +331,27 @@ function ToggleBlock(props: {
           aria-labelledby={`${id}-toggle-label`}
           aria-controls={`${id}-panel`}
           onClick={() => onToggle(!enabled)}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/50 focus-visible:ring-offset-2 ${
-            enabled ? 'bg-navy-700' : 'bg-slate-300'
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 ${
+            enabled ? 'bg-emerald-600' : 'bg-slate-300'
           }`}
         >
           <span
-            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${enabled ? 'translate-x-5.5' : 'translate-x-0.5'}`}
+            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${enabled ? 'translate-x-5.5' : 'translate-x-0.5'}`}
           />
         </button>
       </div>
-      {enabled && (
-        <div id={`${id}-panel`} className="border-t border-slate-200 p-4">
-          {children}
+      {/* Kept mounted so it can animate open; `inert` removes it from focus and the a11y tree when collapsed. */}
+      <div
+        id={`${id}-panel`}
+        inert={!enabled}
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+          enabled ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-slate-200 p-4">{children}</div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -329,7 +364,7 @@ function Checkbox(props: { id: string; checked: boolean; onChange: (v: boolean) 
         type="checkbox"
         checked={props.checked}
         onChange={(e) => props.onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-navy-700"
+        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600"
       />
       <label htmlFor={props.id} className="text-sm text-slate-700">
         {props.children}
@@ -341,7 +376,7 @@ function Checkbox(props: { id: string; checked: boolean; onChange: (v: boolean) 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <dt className={strong ? 'font-semibold text-white' : 'text-navy-200'}>{label}</dt>
+      <dt className={strong ? 'font-semibold text-white' : 'text-slate-400'}>{label}</dt>
       <dd className={`tabular-nums ${strong ? 'font-semibold text-white' : 'text-white'}`}>{value}</dd>
     </div>
   );
@@ -369,10 +404,18 @@ function CategoryCard(props: {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      className={`rounded-xl border bg-white p-4 transition-colors duration-300 ${
+        category.deductionFinal > 0 ? 'border-emerald-300' : 'border-slate-200'
+      }`}
+    >
       <div className="flex items-baseline justify-between gap-4">
         <h4 className="font-medium text-slate-900">{title}</h4>
-        <span className="font-semibold tabular-nums text-slate-900">{formatUSD(category.deductionFinal)}</span>
+        <span
+          className={`font-semibold tabular-nums transition-colors duration-300 ${
+            category.deductionFinal > 0 ? 'text-emerald-700' : 'text-slate-900'
+          }`}
+        >{formatUSD(category.deductionFinal)}</span>
       </div>
       {category.isEligible && (
         <dl className="mt-2 space-y-1 text-sm">
