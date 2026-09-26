@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: the `dark` class on <html> is set before paint by BaseLayout. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -21,6 +24,10 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 /* Long-form copy for legal and informational pages (no typography plugin). */
@@ -54,6 +61,13 @@ html {
   }
   & a:hover { color: var(--color-navy-900); }
   & strong { font-weight: 600; color: var(--color-slate-900); }
+
+  .dark & {
+    color: var(--color-slate-300);
+    & h2, & h3, & strong { color: var(--color-slate-100); }
+    & a { color: var(--color-navy-300); }
+    & a:hover { color: var(--color-navy-200); }
+  }
 }
 
 /*
@@ -63,9 +77,9 @@ html {
  * Without a voucher the page prints normally.
  */
 @media print {
+  /* 12mm margins keep the voucher on one page for both US Letter and A4. */
   @page {
-    size: letter;
-    margin: 0.6in;
+    margin: 12mm;
   }
 
   body:has(> .print-voucher) {
@@ -79,6 +93,8 @@ html {
   }
 
   .print-voucher {
+    break-inside: avoid;
+    font-size: 13px;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

@@ -7,6 +7,7 @@
 import { formatUSD } from '../components/CurrencyInput';
 import { estimateEmployeeFica } from './fica';
 import { isCoveredByStandardDeduction } from './marginal-rate';
+import type { StateTaxEstimate } from './state-tax-data';
 import { PARAMS_BY_YEAR, type FilingStatus, type ObbbaResult } from './obbba-params';
 
 export const FILING_STATUS_LABELS: Record<FilingStatus, string> = {
@@ -38,6 +39,8 @@ export interface SummaryInput {
   /** Box 12 Code TT amount the user entered (0 if the overtime section is off). */
   overtimeReported: number;
   savings: number;
+  /** Selected state's estimated income tax; omitted when no state is chosen. */
+  stateTax?: StateTaxEstimate | null;
 }
 
 export interface SummaryLine {
@@ -68,7 +71,7 @@ export function formatGeneratedAt(date: Date): string {
 }
 
 export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): DeductionSummary {
-  const { result, tipsReported, overtimeReported, savings } = input;
+  const { result, tipsReported, overtimeReported, savings, stateTax } = input;
   const params = PARAMS_BY_YEAR[result.taxYear];
   const isMfj = result.filingStatus === 'mfj';
   const tipsCap = isMfj ? params.tips.capMfj : params.tips.capSingleOrHoh;
@@ -98,6 +101,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
       : undefined,
     lines: [
       { label: 'Filing status', value: FILING_STATUS_LABELS[result.filingStatus] },
+      ...(stateTax ? [{ label: 'State of residence', value: stateTax.name }] : []),
       { label: 'Estimated MAGI', value: formatUSD(result.magi) },
       { label: 'W-2 Box 12, Code TP (qualified tips)', value: formatUSD(tipsReported) },
       { label: 'W-2 Box 12, Code TT (overtime premium)', value: formatUSD(overtimeReported) },
@@ -120,6 +124,18 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
         value: formatUSD(fica),
         detail: 'Social Security & Medicare, employee share',
       },
+      ...(stateTax
+        ? [
+            {
+              label: `Estimated state income tax (${stateTax.code})`,
+              value: formatUSD(stateTax.tax),
+              detail:
+                stateTax.structure === 'none'
+                  ? 'No state income tax'
+                  : `${stateTax.rateLabel} · single-filer estimate, excludes local taxes`,
+            },
+          ]
+        : []),
     ],
     ficaNotice: result.ficaStillOwedNotice,
   };

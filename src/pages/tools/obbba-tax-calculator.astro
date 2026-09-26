@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import W2Decoder from '../../components/W2Decoder';
 import TaxCalculatorApp from '../../components/TaxCalculatorApp';
+import AdSlot from '../../components/AdSlot';
 
 const title = '2026 No Tax on Tips & Overtime Calculator (OBBBA)';
 const description =
@@ -57,56 +58,63 @@ const faqSchema = {
 <BaseLayout title={title} description={description} ogType="article">
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 
-  <div class="border-b border-slate-200 bg-white">
+  <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
     <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-      <nav aria-label="Breadcrumb" class="text-sm text-slate-500">
+      <nav aria-label="Breadcrumb" class="text-sm text-slate-500 dark:text-slate-400">
         <ol class="flex items-center gap-2">
-          <li><a href="/" class="hover:text-navy-700">Home</a></li>
+          <li><a href="/" class="hover:text-navy-700 dark:hover:text-navy-300">Home</a></li>
           <li aria-hidden="true">/</li>
-          <li><a href="/#tools" class="hover:text-navy-700">Tools</a></li>
+          <li><a href="/#tools" class="hover:text-navy-700 dark:hover:text-navy-300">Tools</a></li>
           <li aria-hidden="true">/</li>
-          <li aria-current="page" class="text-slate-700">Tips &amp; Overtime Calculator</li>
+          <li aria-current="page" class="text-slate-700 dark:text-slate-300">Tips &amp; Overtime Calculator</li>
         </ol>
       </nav>
-      <h1 class="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+      <h1 class="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
         2026 No Tax on Tips &amp; Overtime Calculator
       </h1>
-      <p class="mt-4 max-w-3xl text-lg text-slate-600">
+      <p class="mt-4 max-w-3xl text-lg text-slate-600 dark:text-slate-400">
         See how much of your tips and overtime you may be able to deduct from your federal taxable income under the
         One Big Beautiful Bill Act (OBBBA), including caps and the income phase-out.
       </p>
-      <ul class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
-        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Updated for tax year 2026</li>
-        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Follows the Schedule 1-A method</li>
-        <li class="flex items-center gap-2"><span class="text-emerald-600" aria-hidden="true">✓</span> Free, no sign-up required</li>
+      <ul class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> Updated for tax year 2026</li>
+        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> Follows the Schedule 1-A method</li>
+        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> Free, no sign-up required</li>
       </ul>
     </div>
   </div>
 
   <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
+    <!-- Ad placement 1: below the page title, above Step 1. Static (no client directive) until the AdSense unit is added. -->
+    <AdSlot format="leaderboard" placement="calculator-top" />
     <W2Decoder client:load />
     <TaxCalculatorApp client:load />
   </div>
 
-  <section aria-labelledby="faq-heading" class="border-t border-slate-200 bg-white">
+  <!-- Ad placement 2: between the calculator and the FAQ. -->
+  <div class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+    <AdSlot format="leaderboard" placement="calculator-bottom" />
+  </div>
+
+  <section aria-labelledby="faq-heading" class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
     <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <h2 id="faq-heading" class="text-2xl font-semibold tracking-tight text-slate-900">Frequently asked questions</h2>
-      <div class="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+      <h2 id="faq-heading" class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Frequently asked questions</h2>
+      <div class="mt-6 divide-y divide-slate-200 dark:divide-slate-800 border-y border-slate-200 dark:border-slate-800">
         {
           faqs.map(({ question, answer }, i) => (
             <details class="group py-5" open={i === 0}>
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-slate-900 dark:text-slate-100 [&::-webkit-details-marker]:hidden">
                 <h3 class="text-lg">{question}</h3>
                 <span class="shrink-0 text-xl text-slate-400 transition group-open:rotate-45" aria-hidden="true">+</span>
               </summary>
-              <div class="mt-3 space-y-3 leading-relaxed text-slate-600">
+              <div class="mt-3 space-y-3 leading-relaxed text-slate-600 dark:text-slate-400">
                 {answer.map((p) => <p>{p}</p>)}
               </div>
             </details>
           ))
         }
       </div>
-      <p class="mt-8 text-sm text-slate-500">
+      <p class="mt-8 text-sm text-slate-500 dark:text-slate-400">
         This calculator provides educational estimates and is not tax advice. Results are not a tax return. Verify your
         figures with the official IRS Schedule 1-A instructions or a CPA or enrolled agent.
       </p>

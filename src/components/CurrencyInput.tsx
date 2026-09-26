@@ -55,7 +55,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(function 
 
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 dark:text-slate-400">
         $
       </span>
       <input
@@ -69,7 +69,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(function 
         placeholder={placeholder}
         aria-describedby={describedBy}
         disabled={disabled}
-        className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-8 pr-3.5 text-base text-slate-900 tabular-nums shadow-sm placeholder:text-slate-400 focus:border-navy-500 focus:outline-none focus:ring-2 focus:ring-navy-500/30 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+        className="block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-8 pr-3.5 text-base text-slate-900 dark:text-slate-100 tabular-nums shadow-sm placeholder:text-slate-400 focus:border-navy-500 focus:outline-none focus:ring-2 focus:ring-navy-500/30 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500"
       />
     </div>
   );

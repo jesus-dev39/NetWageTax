@@ -76,14 +76,14 @@ export default function W2Decoder() {
   return (
     <section
       aria-labelledby="w2-decoder-heading"
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8"
     >
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold uppercase tracking-wide text-navy-600">Step 1</p>
-        <h2 id="w2-decoder-heading" className="text-2xl font-semibold text-slate-900">
+        <p className="text-sm font-semibold uppercase tracking-wide text-navy-600 dark:text-navy-300">Step 1</p>
+        <h2 id="w2-decoder-heading" className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Decode your Form W-2, Box 12
         </h2>
-        <p className="text-slate-600">
+        <p className="text-slate-600 dark:text-slate-400">
           Starting with 2025 W-2s, employers use three new Box 12 codes. Select the code you see on
           your form to learn what it means.
         </p>
@@ -101,37 +101,37 @@ export default function W2Decoder() {
               onClick={() => selectCode(c.code)}
               className={`flex items-center gap-4 rounded-xl border p-4 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/40 ${
                 active
-                  ? 'border-navy-600 bg-navy-50 ring-1 ring-navy-600'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  ? 'border-navy-600 dark:border-navy-400 bg-navy-50 dark:bg-navy-500/15 ring-1 ring-navy-600 dark:ring-navy-400'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               <span
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg font-mono text-lg font-bold ${
-                  active ? 'bg-navy-700 text-white' : 'bg-slate-100 text-slate-700'
+                  active ? 'bg-navy-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {c.code}
               </span>
               <span className="flex flex-col">
-                <span className="font-medium text-slate-900">Code {c.code}</span>
-                <span className="text-sm text-slate-600">{c.shortLabel}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">Code {c.code}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">{c.shortLabel}</span>
               </span>
             </button>
           );
         })}
       </div>
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:p-6" aria-live="polite">
+      <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-5 sm:p-6" aria-live="polite">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Official title</p>
-            <h3 className="mt-1 text-lg font-semibold text-slate-900">{info.officialTitle}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Official title</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{info.officialTitle}</h3>
           </div>
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
               info.qualifies
-                ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200'
-                : 'bg-slate-200/70 text-slate-700 ring-1 ring-slate-300'
+                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700'
             }`}
           >
             <span aria-hidden="true">{info.qualifies ? '✓' : '—'}</span>
@@ -141,31 +141,31 @@ export default function W2Decoder() {
 
         <dl className="mt-5 grid gap-5 md:grid-cols-3">
           <div>
-            <dt className="text-sm font-semibold text-slate-900">In plain English</dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-700">{info.definition}</dd>
+            <dt className="text-sm font-semibold text-slate-900 dark:text-slate-100">In plain English</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{info.definition}</dd>
           </div>
           <div>
-            <dt className="text-sm font-semibold text-slate-900">Does it qualify?</dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-700">{info.qualifiesNote}</dd>
+            <dt className="text-sm font-semibold text-slate-900 dark:text-slate-100">Does it qualify?</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{info.qualifiesNote}</dd>
           </div>
           <div>
-            <dt className="text-sm font-semibold text-slate-900">Where it goes on your return</dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-700">{info.formImpact}</dd>
+            <dt className="text-sm font-semibold text-slate-900 dark:text-slate-100">Where it goes on your return</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{info.formImpact}</dd>
           </div>
         </dl>
 
         {info.watchOut && (
-          <p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-5 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <span className="font-semibold">Watch out: </span>
             {info.watchOut}
           </p>
         )}
 
         {info.code !== 'TA' ? (
-          <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-end">
+          <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 dark:border-slate-800 pt-5 sm:flex-row sm:items-end">
             <div className="sm:w-64">
-              <label htmlFor="w2-box12-amount" className="block text-sm font-medium text-slate-700">
-                Box 12 Code {info.code} amount <span className="font-normal text-slate-500">(optional)</span>
+              <label htmlFor="w2-box12-amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Box 12 Code {info.code} amount <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
               </label>
               <div className="mt-1.5">
                 <CurrencyInput
@@ -179,21 +179,21 @@ export default function W2Decoder() {
             <button
               type="button"
               onClick={sendToCalculator}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/50 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
             >
               {amount !== null ? 'Use this amount in the calculator' : `Go to the ${info.code === 'TP' ? 'tips' : 'overtime'} calculator`}
               <span aria-hidden="true">↓</span>
             </button>
           </div>
         ) : (
-          <p className="mt-6 border-t border-slate-200 pt-5 text-sm text-slate-600">
+          <p className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-5 text-sm text-slate-600 dark:text-slate-400">
             Nothing to enter in the calculator for Code TA. Check Box 12 for Codes TP or TT instead.
           </p>
         )}
       </div>
 
-      <p className="mt-4 text-sm text-slate-500">
-        Tip: These amounts belong in <strong className="font-medium text-slate-700">Box 12</strong>. Some payroll
+      <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+        Tip: These amounts belong in <strong className="font-medium text-slate-700 dark:text-slate-300">Box 12</strong>. Some payroll
         providers also list tips or overtime in Box 14, which is a free-form box. Use the Box 12 amounts when they
         are available.
       </p>

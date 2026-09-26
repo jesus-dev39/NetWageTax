@@ -4,9 +4,12 @@ import type { CategoryResult, FilingStatus, IneligibilityReason } from '../lib/o
 import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
+import { estimateStateTax, findState, type StateCode } from '../lib/state-tax-data';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
 import ExportSummaryActions from './ExportSummaryActions';
 import IncomeBreakdownBar from './IncomeBreakdownBar';
+import NoStateTaxBadge from './NoStateTaxBadge';
+import StateSelect from './StateSelect';
 import { useAnimatedNumber } from './useAnimatedNumber';
 
 const TAX_YEAR = 2026;
@@ -28,6 +31,7 @@ const INELIGIBLE_COPY: Record<IneligibilityReason, string> = {
 
 export default function TaxCalculatorApp() {
   const [filingStatus, setFilingStatus] = useState<FilingStatus>('single');
+  const [stateCode, setStateCode] = useState<StateCode | null>(null);
   const [magi, setMagi] = useState<number | null>(null);
 
   const [tipsEnabled, setTipsEnabled] = useState(true);
@@ -58,6 +62,12 @@ export default function TaxCalculatorApp() {
     }
     window.addEventListener(W2_PREFILL_EVENT, onPrefill);
     return () => window.removeEventListener(W2_PREFILL_EVENT, onPrefill);
+  }, []);
+
+  // Preselect the state from the State Directory link (?state=texas or ?state=TX).
+  useEffect(() => {
+    const s = findState(new URLSearchParams(window.location.search).get('state'));
+    if (s) setStateCode(s.code);
   }, []);
 
   // Focus after the toggled block has rendered.
@@ -97,6 +107,11 @@ export default function TaxCalculatorApp() {
   const shownTotal = useAnimatedNumber(result.totalCombinedDeduction);
   const shownSavings = useAnimatedNumber(savings);
   const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus);
+  // State tax is estimated on full MAGI: most states do not allow the federal tips & overtime deduction.
+  const stateTax = useMemo(
+    () => (stateCode ? estimateStateTax(magiValue, stateCode) : null),
+    [stateCode, magiValue],
+  );
 
   const tipsNote = tipsEnabled && !occupationConfirmed && !isMfs
     ? 'Confirm your occupation is on the Treasury list to include tips.'
@@ -107,22 +122,23 @@ export default function TaxCalculatorApp() {
       ref={rootRef}
       id="calculator"
       aria-labelledby="calculator-heading"
-      className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      className="scroll-mt-24 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8"
     >
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Step 2</p>
-        <h2 id="calculator-heading" className="text-2xl font-semibold text-slate-900">
+        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Step 2</p>
+        <h2 id="calculator-heading" className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Estimate your {TAX_YEAR} tips &amp; overtime deduction
         </h2>
-        <p className="text-slate-600">Results update automatically as you type. Nothing you enter leaves your browser.</p>
+        <p className="text-slate-600 dark:text-slate-400">Results update automatically as you type. Nothing you enter leaves your browser.</p>
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         {/* ------------------------------ Inputs ------------------------------ */}
         <form className="flex flex-col gap-8" onSubmit={(e) => e.preventDefault()} noValidate>
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
           <fieldset>
-            <legend className="text-sm font-semibold text-slate-900">Filing status</legend>
-            <div role="radiogroup" aria-label="Filing status" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <legend className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filing status</legend>
+            <div role="radiogroup" aria-label="Filing status" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-2">
               {FILING_STATUSES.map(({ value, label }) => {
                 const disabled = value === 'mfs';
                 const active = filingStatus === value;
@@ -137,10 +153,10 @@ export default function TaxCalculatorApp() {
                       onClick={() => !disabled && setFilingStatus(value)}
                       className={`h-full w-full rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
                         disabled
-                          ? 'cursor-not-allowed border-dashed border-slate-300 bg-slate-50 text-slate-400'
+                          ? 'cursor-not-allowed border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-400'
                           : active
-                            ? 'border-ink bg-ink text-white shadow-sm'
-                            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                            ? 'border-ink bg-ink text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                            : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600'
                       }`}
                     >
                       {label}
@@ -161,10 +177,36 @@ export default function TaxCalculatorApp() {
           </fieldset>
 
           <div>
-            <label htmlFor="magi" className="block text-sm font-semibold text-slate-900">
+            <label htmlFor="state" className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+              State
+            </label>
+            <div className="mt-2">
+              <StateSelect id="state" value={stateCode} onChange={setStateCode} placeholder="Select State" describedBy="state-help" />
+            </div>
+            <div id="state-help" className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              {!stateTax ? (
+                <>
+                  Optional. Adds state income tax to the breakdown.{' '}
+                  <a href="/states" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
+                    Browse the map
+                  </a>
+                </>
+              ) : stateTax.structure === 'none' ? (
+                <NoStateTaxBadge />
+              ) : (
+                <>
+                  {stateTax.rateLabel} · est. <span className="tabular-nums">{formatUSD(stateTax.tax)}</span>
+                </>
+              )}
+            </div>
+          </div>
+          </div>
+
+          <div>
+            <label htmlFor="magi" className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
               Estimated MAGI / AGI
             </label>
-            <p id="magi-help" className="mt-0.5 text-sm text-slate-500">
+            <p id="magi-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
               Your adjusted gross income from Form 1040, line 11. If you have foreign or U.S. territory income, your
               MAGI may be higher than your AGI.
             </p>
@@ -180,10 +222,10 @@ export default function TaxCalculatorApp() {
             enabled={tipsEnabled}
             onToggle={setTipsEnabled}
           >
-            <label htmlFor="tips-amount" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="tips-amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
               Qualified tips (W-2 Box 12, Code TP)
             </label>
-            <p id="tips-help" className="mt-0.5 text-sm text-slate-500">
+            <p id="tips-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
               No W-2 yet? Enter your total qualified tips for the year.
             </p>
             <div className="mt-2 sm:max-w-xs">
@@ -209,10 +251,10 @@ export default function TaxCalculatorApp() {
             enabled={overtimeEnabled}
             onToggle={setOvertimeEnabled}
           >
-            <label htmlFor="overtime-amount" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="overtime-amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
               Overtime premium (W-2 Box 12, Code TT)
             </label>
-            <p id="overtime-help" className="mt-0.5 text-sm text-slate-500">
+            <p id="overtime-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
               Enter only the premium portion (the extra “half” in time-and-a-half), not your total overtime pay.
             </p>
             <div className="mt-2 sm:max-w-xs">
@@ -233,12 +275,12 @@ export default function TaxCalculatorApp() {
 
         {/* ------------------------------ Results ----------------------------- */}
         <aside aria-labelledby="results-heading" className="lg:sticky lg:top-24 lg:self-start">
-          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-300">
             <span aria-hidden="true">✓</span>
             NetWageTax Verified Logic · Updated for {TAX_YEAR} Tax Rules
           </p>
 
-          <div className="overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-lg">
+          <div className="overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
             <div className="p-6">
               <h3 id="results-heading" className="text-sm font-medium text-slate-400">
                 Estimated Money Saved (Tax Savings)
@@ -289,7 +331,12 @@ export default function TaxCalculatorApp() {
           </div>
 
           <div className="mt-4">
-            <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} savings={savings} />
+            <IncomeBreakdownBar
+              magi={magiValue}
+              deduction={result.totalCombinedDeduction}
+              savings={savings}
+              stateTax={stateTax}
+            />
           </div>
 
           <div className="mt-4 space-y-3">
@@ -303,14 +350,15 @@ export default function TaxCalculatorApp() {
               tipsReported={tipsEnabled ? (tipsAmount ?? 0) : 0}
               overtimeReported={overtimeEnabled ? (overtimeAmount ?? 0) : 0}
               savings={savings}
+              stateTax={stateTax}
             />
           </div>
 
-          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-4 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <span className="font-semibold">Important: </span>
             {result.ficaStillOwedNotice}
           </p>
-          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
             Estimates only, not tax advice. Tax savings assume the {TAX_YEAR} standard deduction and federal income tax
             brackets, and treat MAGI as equal to AGI. Confirm your figures with the official Schedule 1-A instructions or
             a CPA or enrolled agent.
@@ -337,15 +385,15 @@ function ToggleBlock(props: {
   return (
     <div
       className={`rounded-xl border transition-colors duration-300 ${
-        enabled ? 'border-emerald-300 bg-emerald-50/30 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+        enabled ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5 shadow-sm' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
       }`}
     >
       <div className="flex items-center justify-between gap-4 p-4">
         <div>
-          <p id={`${id}-toggle-label`} className="font-semibold text-slate-900">
+          <p id={`${id}-toggle-label`} className="font-semibold text-slate-900 dark:text-slate-100">
             {title}
           </p>
-          <p className="text-sm text-slate-500">{subtitle}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
         </div>
         <button
           type="button"
@@ -354,12 +402,12 @@ function ToggleBlock(props: {
           aria-labelledby={`${id}-toggle-label`}
           aria-controls={`${id}-panel`}
           onClick={() => onToggle(!enabled)}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 ${
-            enabled ? 'bg-emerald-600' : 'bg-slate-300'
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+            enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
           }`}
         >
           <span
-            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${enabled ? 'translate-x-5.5' : 'translate-x-0.5'}`}
+            className={`inline-block h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-transform duration-200 ${enabled ? 'translate-x-5.5' : 'translate-x-0.5'}`}
           />
         </button>
       </div>
@@ -372,7 +420,7 @@ function ToggleBlock(props: {
         }`}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-slate-200 p-4">{children}</div>
+          <div className="border-t border-slate-200 dark:border-slate-800 p-4">{children}</div>
         </div>
       </div>
     </div>
@@ -387,9 +435,9 @@ function Checkbox(props: { id: string; checked: boolean; onChange: (v: boolean) 
         type="checkbox"
         checked={props.checked}
         onChange={(e) => props.onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600"
+        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 dark:border-slate-700 accent-emerald-600"
       />
-      <label htmlFor={props.id} className="text-sm text-slate-700">
+      <label htmlFor={props.id} className="text-sm text-slate-700 dark:text-slate-300">
         {props.children}
       </label>
     </div>
@@ -428,31 +476,31 @@ function CategoryCard(props: {
 
   return (
     <div
-      className={`rounded-xl border bg-white p-4 transition-colors duration-300 ${
-        category.deductionFinal > 0 ? 'border-emerald-300' : 'border-slate-200'
+      className={`rounded-xl border bg-white dark:bg-slate-900 p-4 transition-colors duration-300 ${
+        category.deductionFinal > 0 ? 'border-emerald-300 dark:border-emerald-500/40' : 'border-slate-200 dark:border-slate-800'
       }`}
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h4 className="font-medium text-slate-900">{title}</h4>
+        <h4 className="font-medium text-slate-900 dark:text-slate-100">{title}</h4>
         <span
           className={`font-semibold tabular-nums transition-colors duration-300 ${
-            category.deductionFinal > 0 ? 'text-emerald-700' : 'text-slate-900'
+            category.deductionFinal > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
           }`}
         >{formatUSD(category.deductionFinal)}</span>
       </div>
       {category.isEligible && (
         <dl className="mt-2 space-y-1 text-sm">
-          <div className="flex justify-between gap-4 text-slate-600">
+          <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
             <dt>Base deduction</dt>
             <dd className="tabular-nums">{formatUSD(category.deductionBeforePhaseout)}</dd>
           </div>
-          <div className="flex justify-between gap-4 text-slate-600">
+          <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
             <dt>Phase-out reduction</dt>
             <dd className="tabular-nums">{reduction > 0 ? `−${formatUSD(reduction)}` : formatUSD(0)}</dd>
           </div>
         </dl>
       )}
-      {status && <p className="mt-2 text-sm text-slate-500">{status}</p>}
+      {status && <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{status}</p>}
     </div>
   );
 }

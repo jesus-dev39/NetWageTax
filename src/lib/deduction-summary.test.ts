@@ -3,6 +3,7 @@ import { Packer } from 'docx';
 import { calculateObbbaDeduction } from './obbba-calculator';
 import { buildDeductionSummary } from './deduction-summary';
 import { buildSummaryDocument } from './deduction-summary-docx';
+import { estimateStateTax } from './state-tax-data';
 
 const at = new Date('2026-09-26T15:30:00');
 
@@ -42,6 +43,24 @@ describe('buildDeductionSummary', () => {
   it('explains $0 savings when the standard deduction covers all income', () => {
     expect(summaryFor(15_000, 3_000, 0).savingsNote).toMatch(/Standard deduction already covers 100%/);
     expect(summaryFor(60_000, 3_000, 0).savingsNote).toBeUndefined();
+  });
+
+  it('adds state lines only when a state is selected', () => {
+    const base = summaryFor(60_000, 10_000, 0);
+    expect(base.lines.some((l) => l.label.startsWith('Estimated state income tax'))).toBe(false);
+
+    const withState = buildDeductionSummary(
+      {
+        result: calculateObbbaDeduction({ filingStatus: 'single', magi: 60_000, taxYear: 2026, hasQualifyingTips: false, hasQualifyingOvertime: false }),
+        tipsReported: 0,
+        overtimeReported: 0,
+        savings: 0,
+        stateTax: estimateStateTax(60_000, 'PA'),
+      },
+      at,
+    );
+    expect(value(withState, 'State of residence')).toBe('Pennsylvania');
+    expect(value(withState, 'Estimated state income tax (PA)')).toBe('$1,842');
   });
 
   it('produces a valid .docx package', async () => {

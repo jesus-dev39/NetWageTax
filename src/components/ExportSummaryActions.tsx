@@ -9,20 +9,22 @@ import {
   type SummaryInput,
 } from '../lib/deduction-summary';
 import { formatUSD } from './CurrencyInput';
+import ExportPrepModal from './ExportPrepModal';
 
 type Props = SummaryInput;
 
 export default function ExportSummaryActions(props: Props) {
-  const { result, tipsReported, overtimeReported, savings } = props;
+  const { result, tipsReported, overtimeReported, savings, stateTax } = props;
   const canExport = result.totalCombinedDeduction > 0;
 
   const [generatedAt, setGeneratedAt] = useState(() => new Date());
   const [mounted, setMounted] = useState(false);
   const [docxState, setDocxState] = useState<'idle' | 'busy' | 'error'>('idle');
+  const [prepOpen, setPrepOpen] = useState(false);
 
   const summary = useMemo(
-    () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings }, generatedAt),
-    [result, tipsReported, overtimeReported, savings, generatedAt],
+    () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, generatedAt),
+    [result, tipsReported, overtimeReported, savings, stateTax, generatedAt],
   );
 
   // The voucher is portaled to <body> after hydration so print CSS can hide every other body child.
@@ -43,7 +45,7 @@ export default function ExportSummaryActions(props: Props) {
   async function handleDocx() {
     setDocxState('busy');
     try {
-      const fresh = buildDeductionSummary({ result, tipsReported, overtimeReported, savings }, new Date());
+      const fresh = buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, new Date());
       const { downloadSummaryDocx } = await import('../lib/deduction-summary-docx');
       await downloadSummaryDocx(fresh);
       setDocxState('idle');
@@ -57,16 +59,16 @@ export default function ExportSummaryActions(props: Props) {
     'inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 disabled:cursor-not-allowed';
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden">
-      <p id="export-heading" className="text-sm font-semibold text-slate-900">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 print:hidden">
+      <p id="export-heading" className="text-sm font-semibold text-slate-900 dark:text-slate-100">
         Save your {result.taxYear} deduction summary
       </p>
       <div role="group" aria-labelledby="export-heading" className="mt-3 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
-          onClick={handlePrint}
+          onClick={() => setPrepOpen(true)}
           disabled={!canExport}
-          className={`${buttonBase} bg-ink text-white hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400`}
+          className={`${buttonBase} bg-ink text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500`}
         >
           <PrinterIcon />
           Download PDF / Print Summary
@@ -76,19 +78,26 @@ export default function ExportSummaryActions(props: Props) {
           onClick={handleDocx}
           disabled={!canExport || docxState === 'busy'}
           aria-busy={docxState === 'busy'}
-          className={`${buttonBase} border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400`}
+          className={`${buttonBase} border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:text-slate-400 dark:disabled:text-slate-500`}
         >
           <DocumentIcon />
           {docxState === 'busy' ? 'Preparing…' : 'Export Word (.docx)'}
         </button>
       </div>
-      <p className="mt-2 text-xs text-slate-500" aria-live="polite">
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
         {docxState === 'error'
           ? 'The Word file could not be created. Please try again, or use Print / PDF instead.'
           : canExport
             ? 'Generated on your device. Choose “Save as PDF” in the print dialog for a PDF copy.'
             : 'Enter a qualifying tips or overtime amount to enable exports.'}
       </p>
+
+      <ExportPrepModal
+        open={prepOpen}
+        taxYear={result.taxYear}
+        onPrint={handlePrint}
+        onClose={() => setPrepOpen(false)}
+      />
 
       {mounted && canExport && createPortal(<PrintVoucher summary={summary} />, document.body)}
     </div>
@@ -99,10 +108,10 @@ export default function ExportSummaryActions(props: Props) {
 // Print-only voucher
 // ---------------------------------------------------------------------------
 
-function PrintVoucher({ summary }: { summary: DeductionSummary }) {
+export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
   return (
-    <div className="print-voucher hidden bg-white text-slate-900 print:block" aria-hidden="true">
-      <header className="flex items-start justify-between gap-6 border-b-2 border-navy-800 pb-4">
+    <div className="print-voucher hidden break-inside-avoid bg-white text-slate-900 print:block" aria-hidden="true">
+      <header className="flex items-start justify-between gap-6 border-b-2 border-navy-800 pb-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-800 text-lg font-bold text-white">
             N
@@ -120,16 +129,16 @@ function PrintVoucher({ summary }: { summary: DeductionSummary }) {
         </div>
       </header>
 
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight">NetWageTax Official Estimate Voucher</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <h1 className="mt-4 text-xl font-semibold tracking-tight">NetWageTax Official Estimate Voucher</h1>
+      <p className="mt-0.5 text-sm text-slate-600">
         {summary.taxYear} Federal Tips &amp; Overtime Deduction Summary (Schedule 1-A method)
       </p>
 
-      <section className="mt-6 break-inside-avoid rounded-lg border-2 border-emerald-600 bg-emerald-50 px-5 py-4">
+      <section className="mt-4 break-inside-avoid rounded-lg border-2 border-emerald-600 bg-emerald-50 px-5 py-3">
         <div className="flex items-end justify-between gap-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">{SAVINGS_LINE_LABEL}</p>
-            <p className="mt-1 text-4xl font-bold tabular-nums text-emerald-700">
+            <p className="mt-0.5 text-3xl font-bold tabular-nums text-emerald-700">
               {summary.savings > 0 ? '+' : ''}
               {formatUSD(summary.savings)}
             </p>
@@ -139,14 +148,14 @@ function PrintVoucher({ summary }: { summary: DeductionSummary }) {
             <p className="text-lg font-semibold tabular-nums text-slate-900">{formatUSD(summary.totalDeduction)}</p>
           </div>
         </div>
-        {summary.savingsNote && <p className="mt-3 text-sm text-emerald-900">✓ {summary.savingsNote}</p>}
+        {summary.savingsNote && <p className="mt-2 text-sm text-emerald-900">✓ {summary.savingsNote}</p>}
       </section>
 
-      <table className="mt-6 w-full border-collapse text-sm">
+      <table className="mt-4 w-full border-collapse text-[13px] leading-snug">
         <thead>
           <tr className="bg-navy-800 text-left text-white">
-            <th scope="col" className="px-3 py-2 font-semibold">Line item</th>
-            <th scope="col" className="px-3 py-2 text-right font-semibold">Amount</th>
+            <th scope="col" className="px-3 py-1.5 font-semibold">Line item</th>
+            <th scope="col" className="px-3 py-1.5 text-right font-semibold">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -155,11 +164,11 @@ function PrintVoucher({ summary }: { summary: DeductionSummary }) {
               key={line.label}
               className={`break-inside-avoid border-b border-slate-300 ${line.total ? 'bg-emerald-50 text-emerald-800' : ''}`}
             >
-              <th scope="row" className={`px-3 py-2 text-left ${line.total ? 'font-semibold' : 'font-normal'}`}>
+              <th scope="row" className={`px-3 py-1.5 text-left ${line.total ? 'font-semibold' : 'font-normal'}`}>
                 {line.label}
-                {line.detail && <span className="block text-xs font-normal text-slate-500">{line.detail}</span>}
+                {line.detail && <span className="block text-[11px] font-normal text-slate-500">{line.detail}</span>}
               </th>
-              <td className={`px-3 py-2 text-right tabular-nums ${line.total ? 'text-base font-semibold' : ''}`}>
+              <td className={`px-3 py-1.5 text-right tabular-nums ${line.total ? 'text-sm font-semibold' : ''}`}>
                 {line.value}
               </td>
             </tr>
@@ -167,14 +176,14 @@ function PrintVoucher({ summary }: { summary: DeductionSummary }) {
         </tbody>
       </table>
 
-      <p className="mt-6 break-inside-avoid rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <p className="mt-4 break-inside-avoid rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900">
         <span className="font-semibold">Important: </span>
         {summary.ficaNotice} The FICA figure above is an estimate of the employee share only.
       </p>
 
-      <footer className="mt-8 break-inside-avoid border-t border-slate-300 pt-4 text-xs leading-relaxed text-slate-600">
+      <footer className="mt-4 break-inside-avoid border-t border-slate-300 pt-3 text-[10.5px] leading-relaxed text-slate-600">
         <p className="text-sm font-semibold text-slate-900">{SUMMARY_DISCLAIMER}</p>
-        <p className="mt-2">{SUMMARY_LEGAL_NOTICE}</p>
+        <p className="mt-1">{SUMMARY_LEGAL_NOTICE}</p>
       </footer>
     </div>
   );

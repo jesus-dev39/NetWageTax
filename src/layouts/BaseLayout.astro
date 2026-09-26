@@ -15,14 +15,17 @@ const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 // Canonical/OG URLs require `site` in astro.config.mjs.
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 
+// `hideBelow` keeps the bar on one line on small screens.
 const navLinks = [
-  { href: '/#tools', label: 'Tools' },
-  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator' },
-  { href: '/about', label: 'About' },
+  { href: '/#tools', label: 'Tools', hideBelow: '' },
+  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator', hideBelow: 'hidden lg:block' },
+  { href: '/states', label: 'State Taxes', hideBelow: '' },
+  { href: '/about', label: 'About', hideBelow: 'hidden sm:block' },
 ];
 
 const footerLinks = [
   { href: '/about', label: 'About' },
+  { href: '/states', label: 'State Income Tax Map' },
   { href: '/privacy', label: 'Privacy Policy' },
   { href: '/terms', label: 'Terms of Use' },
   { href: '/disclaimer', label: 'Disclaimer' },
@@ -54,9 +57,21 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
 
+    <!-- Theme: runs before first paint to avoid a flash of the wrong theme. -->
+    <script is:inline>
+      (() => {
+        let stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch {}
+        const dark = stored ? stored === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+
     <slot name="head" />
   </head>
-  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 antialiased">
+  <body class="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased">
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow"
@@ -64,27 +79,27 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
       Skip to main content
     </a>
 
-    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
       <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
         <a href="/" class="flex items-center gap-2.5" aria-label="NetWageTax home">
           <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white" aria-hidden="true">
             N
           </span>
-          <span class="text-lg font-semibold tracking-tight text-slate-900">
-            NetWage<span class="text-navy-600">Tax</span>
+          <span class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            NetWage<span class="text-navy-600 dark:text-navy-300">Tax</span>
           </span>
         </a>
-        <nav aria-label="Main">
+        <nav aria-label="Main" class="ml-auto">
           <ul class="flex items-center gap-1 text-sm font-medium sm:gap-2">
             {
-              navLinks.map(({ href, label }, i) => (
-                <li class={i === 2 ? 'hidden sm:block' : i === 1 ? 'hidden md:block' : ''}>
+              navLinks.map(({ href, label, hideBelow }) => (
+                <li class={hideBelow}>
                   <a
                     href={href}
                     aria-current={currentPath === href ? 'page' : undefined}
                     class:list={[
-                      'rounded-md px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900',
-                      currentPath === href ? 'text-navy-700' : 'text-slate-600',
+                      'whitespace-nowrap rounded-md px-3 py-2 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
+                      currentPath === href ? 'text-navy-700 dark:text-navy-300' : 'text-slate-600 dark:text-slate-400',
                     ]}
                   >
                     {label}
@@ -94,6 +109,23 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
             }
           </ul>
         </nav>
+        <button
+          type="button"
+          id="theme-toggle"
+          aria-label="Dark theme"
+          aria-pressed="false"
+          class="-ml-4 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500/40 sm:-ml-3 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+        >
+          <!-- Moon (shown in light mode) -->
+          <svg class="h-5 w-5 dark:hidden" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" stroke-linejoin="round" />
+          </svg>
+          <!-- Sun (shown in dark mode) -->
+          <svg class="hidden h-5 w-5 dark:block" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <circle cx="10" cy="10" r="3.5" />
+            <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M4 16l1.4-1.4M14.6 5.4 16 4" stroke-linecap="round" />
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -101,12 +133,12 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
       <slot />
     </main>
 
-    <footer class="border-t border-slate-200 bg-white">
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
       <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div class="max-w-md">
-            <p class="font-semibold text-slate-900">NetWageTax</p>
-            <p class="mt-2 text-sm text-slate-600">
+            <p class="font-semibold text-slate-900 dark:text-slate-100">NetWageTax</p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Free, independent calculators that help American workers understand their paychecks and taxes.
             </p>
           </div>
@@ -115,7 +147,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
               {
                 footerLinks.map(({ href, label }) => (
                   <li>
-                    <a href={href} class="text-slate-600 transition hover:text-navy-700">
+                    <a href={href} class="text-slate-600 dark:text-slate-400 transition hover:text-navy-700 dark:hover:text-navy-300">
                       {label}
                     </a>
                   </li>
@@ -124,7 +156,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
             </ul>
           </nav>
         </div>
-        <div class="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-500">
+        <div class="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6 text-sm text-slate-500 dark:text-slate-400">
           <p>
             NetWageTax is an independent calculation tool and is not affiliated with the IRS or any government agency.
             Results are estimates for educational purposes and do not constitute tax, legal, or financial advice.
@@ -133,5 +165,39 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
         </div>
       </div>
     </footer>
+
+    <script>
+      const root = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const media = matchMedia('(prefers-color-scheme: dark)');
+
+      function apply(dark: boolean) {
+        root.classList.toggle('dark', dark);
+        toggle?.setAttribute('aria-pressed', String(dark));
+      }
+
+      function storedTheme() {
+        try {
+          return localStorage.getItem('theme');
+        } catch {
+          return null;
+        }
+      }
+
+      apply(root.classList.contains('dark'));
+
+      toggle?.addEventListener('click', () => {
+        const dark = !root.classList.contains('dark');
+        apply(dark);
+        try {
+          localStorage.setItem('theme', dark ? 'dark' : 'light');
+        } catch {}
+      });
+
+      // Follow the OS setting until the user picks a theme explicitly.
+      media.addEventListener('change', (e) => {
+        if (!storedTheme()) apply(e.matches);
+      });
+    </script>
   </body>
 </html>
