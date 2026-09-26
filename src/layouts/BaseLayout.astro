@@ -2,6 +2,7 @@
 import '@fontsource-variable/plus-jakarta-sans';
 import '../styles/global.css';
 import Logo from '../components/Logo';
+import { ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION } from '../lib/site';
 
 interface Props {
   title: string;
@@ -83,6 +84,18 @@ const isActive = (section: string) => currentPath === section || currentPath.sta
         document.documentElement.classList.toggle('dark', dark);
       })();
     </script>
+
+    <!-- Google Search Console verification -->
+    <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />
+
+    <!-- Google AdSense: account verification + loader (also enables Auto ads if turned on in the AdSense dashboard) -->
+    <meta name="google-adsense-account" content={ADSENSE_CLIENT} />
+    <script
+      is:inline
+      async
+      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+      crossorigin="anonymous"
+    ></script>
 
     <slot name="head" />
   </head>

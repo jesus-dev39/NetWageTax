@@ -7,3 +7,9 @@ export const CONTACT_EMAIL = 'contact@netwagetax.com';
 
 /** Date the current Privacy Policy, Terms, and Disclaimer took effect. */
 export const LEGAL_EFFECTIVE_DATE = 'September 26, 2026';
+
+/** Google Search Console ownership verification (HTML tag method). */
+export const GOOGLE_SITE_VERIFICATION = 'wsUBDuevEMNFehs9RrqctiaYyFcYrO5Z6jmswIbCg_0';
+
+/** Google AdSense publisher ID, used by the account meta tag, the loader script, and AdSlot units. */
+export const ADSENSE_CLIENT = 'ca-pub-2086612186107816';

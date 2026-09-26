@@ -85,15 +85,15 @@ const faqSchema = {
   </div>
 
   <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
-    <!-- Ad placement 1: below the page title, above Step 1. Static (no client directive) until the AdSense unit is added. -->
-    <AdSlot format="leaderboard" placement="calculator-top" />
+    <!-- Ad placement 1: below the page title, above Step 1. Add slotId="…" from the AdSense dashboard to go live. -->
+    <AdSlot client:visible format="leaderboard" placement="calculator-top" />
     <W2Decoder client:load />
     <TaxCalculatorApp client:load />
   </div>
 
   <!-- Ad placement 2: between the calculator and the FAQ. -->
   <div class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-    <AdSlot format="leaderboard" placement="calculator-bottom" />
+    <AdSlot client:visible format="leaderboard" placement="calculator-bottom" />
   </div>
 
   <section aria-labelledby="faq-heading" class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
