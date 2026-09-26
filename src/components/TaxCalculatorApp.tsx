@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { calculateObbbaDeduction } from '../lib/obbba-calculator';
 import type { CategoryResult, FilingStatus, IneligibilityReason } from '../lib/obbba-params';
-import { estimateFederalTaxSavings } from '../lib/marginal-rate';
+import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
+import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
+import ExportSummaryActions from './ExportSummaryActions';
 import IncomeBreakdownBar from './IncomeBreakdownBar';
 import { useAnimatedNumber } from './useAnimatedNumber';
 
@@ -94,6 +96,7 @@ export default function TaxCalculatorApp() {
   const savings = estimateFederalTaxSavings(magiValue, result.totalCombinedDeduction, filingStatus);
   const shownTotal = useAnimatedNumber(result.totalCombinedDeduction);
   const shownSavings = useAnimatedNumber(savings);
+  const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus);
 
   const tipsNote = tipsEnabled && !occupationConfirmed && !isMfs
     ? 'Confirm your occupation is on the Treasury list to include tips.'
@@ -238,24 +241,35 @@ export default function TaxCalculatorApp() {
           <div className="overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-lg">
             <div className="p-6">
               <h3 id="results-heading" className="text-sm font-medium text-slate-400">
-                Estimated total federal deduction
+                Estimated Money Saved (Tax Savings)
               </h3>
-              <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums" aria-hidden="true">
-                {formatUSD(shownTotal)}
-              </p>
               <p
-                className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ring-1 transition-colors duration-300 ${
-                  savings > 0
-                    ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/40'
-                    : 'bg-white/5 text-slate-400 ring-white/10'
+                className={`mt-1 text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${
+                  savings > 0 ? 'text-emerald-400' : 'text-slate-300'
                 }`}
                 aria-hidden="true"
               >
-                Est. federal tax savings: <span className="tabular-nums">{formatUSD(shownSavings)}</span>
+                {savings > 0 ? '+' : ''}
+                {formatUSD(shownSavings)}
               </p>
+              <p className="mt-1 text-sm text-slate-400">Less federal income tax owed for {TAX_YEAR}</p>
+
+              <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-white/10 pt-4">
+                <p className="text-sm text-slate-400">Total Federal Deduction (Schedule 1-A)</p>
+                <p className="text-lg font-semibold tabular-nums text-white" aria-hidden="true">
+                  {formatUSD(shownTotal)}
+                </p>
+              </div>
+
+              {coveredByStandardDeduction && (
+                <p className="mt-4 flex gap-2 rounded-lg bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200 ring-1 ring-emerald-400/40">
+                  <span aria-hidden="true">✓</span>
+                  <span>{STANDARD_DEDUCTION_COVERS_NOTICE}</span>
+                </p>
+              )}
               <p className="sr-only" aria-live="polite">
-                Estimated total federal deduction {formatUSD(result.totalCombinedDeduction)}. Estimated federal tax
-                savings {formatUSD(savings)}.
+                Estimated money saved {formatUSD(savings)}. Total federal deduction{' '}
+                {formatUSD(result.totalCombinedDeduction)}.
               </p>
               {isMfs && <p className="mt-3 text-sm text-amber-200">{MFS_TOOLTIP}.</p>}
             </div>
@@ -281,6 +295,15 @@ export default function TaxCalculatorApp() {
           <div className="mt-4 space-y-3">
             <CategoryCard title="Qualified tips" category={result.tips} enabled={tipsEnabled} note={tipsNote} />
             <CategoryCard title="Qualified overtime" category={result.overtime} enabled={overtimeEnabled} />
+          </div>
+
+          <div className="mt-4">
+            <ExportSummaryActions
+              result={result}
+              tipsReported={tipsEnabled ? (tipsAmount ?? 0) : 0}
+              overtimeReported={overtimeEnabled ? (overtimeAmount ?? 0) : 0}
+              savings={savings}
+            />
           </div>
 
           <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

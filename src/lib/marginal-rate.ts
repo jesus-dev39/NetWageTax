@@ -71,3 +71,11 @@ export function estimateFederalTaxSavings(
     computeFederalIncomeTax(taxableAfter, filingStatus)
   );
 }
+
+/**
+ * True cuando la deducción estándar ya cubre toda la renta: no hay impuesto
+ * federal que reducir, así que el ahorro OBBBA es $0 aunque haya deducción.
+ */
+export function isCoveredByStandardDeduction(magi: number, filingStatus: FilingStatus): boolean {
+  return magi > 0 && magi <= STANDARD_DEDUCTION_2026[filingStatus];
+}

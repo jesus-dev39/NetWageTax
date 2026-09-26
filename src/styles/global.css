@@ -55,3 +55,31 @@ html {
   & a:hover { color: var(--color-navy-900); }
   & strong { font-weight: 600; color: var(--color-slate-900); }
 }
+
+/*
+ * Print: when the calculator has a result, ExportSummaryActions portals a
+ * `.print-voucher` into <body>. Printing then shows only that voucher and hides
+ * the header, footer, FAQs, form inputs, and buttons (every other body child).
+ * Without a voucher the page prints normally.
+ */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+
+  body:has(> .print-voucher) {
+    display: block;
+    min-height: 0;
+    background: white;
+
+    & > :not(.print-voucher) {
+      display: none !important;
+    }
+  }
+
+  .print-voucher {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
