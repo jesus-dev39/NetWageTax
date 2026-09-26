@@ -51,6 +51,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Primary call to action: emerald → teal gradient. */
 @utility btn-primary {
   @apply bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500;
@@ -112,14 +118,27 @@ html.dark {
  * Without a voucher the page prints normally.
  */
 @media print {
-  /* 12mm margins keep the voucher on one page for both US Letter and A4. */
+  /*
+   * 10mm margins. The voucher's min-height (245mm) leaves ~14mm of slack on US Letter
+   * (259mm printable) and ~32mm on A4, so a browser's own margins or rounding can't
+   * push a sliver onto an empty page 2.
+   */
   @page {
-    margin: 12mm;
+    margin: 10mm;
+  }
+
+  /* Dark mode sets color-scheme: dark, which paints the page canvas dark; printouts are always light. */
+  html:has(body > .print-voucher) {
+    color-scheme: light;
+    background: white;
   }
 
   body:has(> .print-voucher) {
     display: block;
     min-height: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
     background: white;
 
     & > :not(.print-voucher) {
@@ -130,6 +149,8 @@ html.dark {
   .print-voucher {
     break-inside: avoid;
     page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

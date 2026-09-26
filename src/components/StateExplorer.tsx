@@ -16,11 +16,14 @@ import NoStateTaxBadge from './NoStateTaxBadge';
 import StateSelect from './StateSelect';
 import USStateMap, { MAP_LEGEND } from './USStateMap';
 
-const CALCULATOR_PATH = '/tools/obbba-tax-calculator';
+const PAYCHECK_PATH = '/tools/paycheck-calculator';
+const OBBBA_PATH = '/tools/obbba-tax-calculator';
 const EXAMPLE_WAGES = 50_000;
 const STRUCTURES: TaxStructure[] = ['none', 'flat', 'graduated'];
 
-export const calculatorHref = (s: StateTaxInfo) => `${CALCULATOR_PATH}?state=${s.slug}#calculator`;
+// Both calculators read ?state=<postal code> on mount and preselect it.
+const paycheckHref = (s: StateTaxInfo) => `${PAYCHECK_PATH}?state=${s.code}#calculator`;
+const obbbaHref = (s: StateTaxInfo) => `${OBBBA_PATH}?state=${s.code}#calculator`;
 
 export default function StateExplorer() {
   const [selected, setSelected] = useState<StateCode | null>(null);
@@ -118,7 +121,7 @@ export default function StateExplorer() {
                 {group.map((s) => (
                   <li key={s.code}>
                     <a
-                      href={calculatorHref(s)}
+                      href={obbbaHref(s)}
                       onMouseEnter={() => setHighlighted(s.code)}
                       onMouseLeave={() => setHighlighted(null)}
                       onFocus={() => setHighlighted(s.code)}
@@ -175,13 +178,49 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
         Est. state tax on {formatUSD(EXAMPLE_WAGES)} of wages:{' '}
         <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatUSD(example)}</span>
       </p>
-      <a
-        href={calculatorHref(info)}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg btn-primary px-4 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
-      >
-        Calculate with {info.name} taxes <span aria-hidden="true">→</span>
-      </a>
+      <div className="mt-4 flex flex-col gap-2" role="group" aria-label={`Calculators with ${info.name} taxes`}>
+        <ToolCard
+          href={paycheckHref(info)}
+          title="Paycheck Calculator"
+          subtitle={`Calculate take-home pay with ${info.name} tax`}
+          icon="M3 7.5A1.5 1.5 0 0 1 4.5 6h13A1.5 1.5 0 0 1 19 7.5v1H15a2.5 2.5 0 0 0 0 5h4v1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 14.5z M15 8.5h5v5h-5a2.5 2.5 0 0 1 0-5Z M15.5 11h.01 M6 6l7.5-2.5L15 6"
+        />
+        <ToolCard
+          href={obbbaHref(info)}
+          title="Tips & Overtime Calculator"
+          subtitle={`Calculate Schedule 1-A deduction with ${info.name} tax`}
+          icon="M6 3h12v18l-2-1.25L14 21l-2-1.25L10 21l-2-1.25L6 21z M9 8h6 M9 11.5h6 M9 15h3.5"
+        />
+      </div>
     </div>
+  );
+}
+
+/** Equal-weight launcher for a calculator, preset to the selected state. */
+function ToolCard(props: { href: string; title: string; subtitle: string; icon: string }) {
+  return (
+    <a
+      href={props.href}
+      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 text-left transition-all hover:border-emerald-500/60 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:border-slate-700/80 dark:bg-slate-800/80 dark:hover:border-emerald-500/60 dark:hover:bg-slate-800"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={props.icon} />
+          </svg>
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">{props.title}</span>
+          <span className="block text-xs text-slate-500 dark:text-slate-400">{props.subtitle}</span>
+        </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="shrink-0 text-lg text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-500 dark:text-slate-500 dark:group-hover:text-emerald-400"
+      >
+        →
+      </span>
+    </a>
   );
 }
 

@@ -6,6 +6,8 @@ const PREP_DURATION_MS = 2500;
 interface Props {
   open: boolean;
   taxYear: number;
+  /** Heading; defaults to the OBBBA voucher wording. */
+  title?: string;
   /** Opens the browser print dialog. Called after this modal has closed itself. */
   onPrint: () => void;
   onClose: () => void;
@@ -16,7 +18,7 @@ interface Props {
  * The user can skip at any time; printing is always a direct click (never
  * automatic), so the browser print dialog is tied to a user gesture.
  */
-export default function ExportPrepModal({ open, taxYear, onPrint, onClose }: Props) {
+export default function ExportPrepModal({ open, taxYear, title, onPrint, onClose }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const printRef = useRef<HTMLButtonElement>(null);
   const [started, setStarted] = useState(false);
@@ -64,7 +66,7 @@ export default function ExportPrepModal({ open, taxYear, onPrint, onClose }: Pro
       <div className="p-6">
         <div className="flex items-start justify-between gap-4">
           <h2 id="export-prep-title" className="text-lg font-semibold tracking-tight">
-            Preparing Your {taxYear} Tax Estimate Voucher
+            {title ?? `Preparing Your ${taxYear} Tax Estimate Voucher`}
           </h2>
           <button
             type="button"

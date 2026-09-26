@@ -99,7 +99,7 @@ const INELIGIBLE_NOTE: Record<IneligibilityReason, string> = {
 };
 
 /** FNV-1a hash → 6 base-36 characters. Stable for the same inputs and minute. */
-function referenceFor(parts: (string | number)[]): string {
+export function referenceFor(parts: (string | number)[]): string {
   let h = 0x811c9dc5;
   for (const ch of parts.join('|')) {
     h ^= ch.charCodeAt(0);

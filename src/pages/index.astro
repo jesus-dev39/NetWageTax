@@ -31,7 +31,7 @@ const exSegments = [
   { label: 'State', value: exState, swatch: 'bg-violet-400' },
 ].map((s) => ({ ...s, pct: (s.value / EXAMPLE.magi) * 100 }));
 
-const trustRow = ['Built on IRC §224/§225 rules', 'All 50 States + DC', 'Instant PDF & Word export'];
+const trustRow = ['Built on IRC §224/§225 rules', 'Paycheck & tips calculators', 'All 50 States + DC', 'Instant PDF & Word export'];
 
 const metrics = [
   { value: '50', label: 'US states + DC covered' },
@@ -40,23 +40,35 @@ const metrics = [
   { value: '$0', label: 'Free, no registration required' },
 ];
 
-const tools = [
+const calculators = [
+  {
+    href: '/tools/paycheck-calculator',
+    tag: 'Flagship',
+    title: 'Hourly & Salary Paycheck Calculator',
+    body: 'Turn an hourly rate or salary into take-home pay per paycheck.',
+    features: ['Federal income tax, Social Security & Medicare', 'State income tax for all 50 states + DC', 'Overtime at 1.5×, any pay frequency'],
+    cta: 'Calculate take-home pay',
+    badge: 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30',
+    icon: 'M3.5 7.5h17v10h-17z M3.5 10.5h17 M7 14.5h3 M16.5 5v2.5 M7.5 5v2.5',
+  },
   {
     href: '/tools/obbba-tax-calculator',
-    eyebrow: 'Featured calculator',
+    tag: 'New for 2026',
     title: '2026 OBBBA Tips & Overtime Calculator',
-    body: 'Deduct up to $25,000 of qualified tips and $12,500 of overtime ($25,000 joint). See the phase-out, your real tax savings, FICA, and state tax, then export a one-page worksheet.',
-    cta: 'Open the calculator',
+    body: 'Estimate your Schedule 1-A deduction and the cash it saves you in federal tax.',
+    features: ['Up to $25,000 tips and $12,500 overtime ($25,000 joint)', 'MAGI phase-out applied step by step', 'One-page PDF & Word worksheet'],
+    cta: 'Estimate my deduction',
     badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30',
-    accent: 'text-emerald-700 dark:text-emerald-400',
     icon: 'M6 3.5h12a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5A1.5 1.5 0 0 1 6 3.5Z M8 7.5h8 M8 11.5h.01 M12 11.5h.01 M16 11.5h.01 M8 15.5h.01 M12 15.5h.01 M16 15.5h.01',
   },
+];
+
+const resources = [
   {
     href: '/state-taxes',
     eyebrow: 'All 50 states + DC',
     title: '50-State Income Tax Directory & Map',
-    body: 'An interactive map of which states tax wages, which use a flat rate, and which use progressive brackets, with local tax notes for every state.',
-    cta: 'Explore the map',
+    body: 'Which states tax wages, which use a flat rate, and which use progressive brackets, with local tax notes.',
     badge: 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/30',
     accent: 'text-sky-700 dark:text-sky-400',
     icon: 'M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2-6-2Z M9 4.5v13 M15 6.5v13',
@@ -65,8 +77,7 @@ const tools = [
     href: '/guides/w2-box-12-guide',
     eyebrow: 'Reference guide',
     title: 'Form W-2 Box 12 Code Reference Guide',
-    body: 'What every Box 12 code means, from the new TA, TP, and TT codes to common ones like D, DD, and W, and which ones change your return.',
-    cta: 'Read the guide',
+    body: 'Every Box 12 code explained, from the new TA, TP, and TT to D, DD, and W, and which ones change your return.',
     badge: 'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/30',
     accent: 'text-violet-700 dark:text-violet-400',
     icon: 'M7 3.5h7l4.5 4.5v11A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5Z M14 3.5V8h4.5 M8.5 12.5h7 M8.5 16h4.5',
@@ -155,16 +166,16 @@ const jsonLd = {
 
         <div class="mt-8 flex flex-wrap gap-3">
           <a
-            href="/tools/obbba-tax-calculator"
+            href="#calculators"
             class="btn-primary inline-flex items-center gap-2 rounded-xl px-6 py-3.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
           >
-            Calculate Tips &amp; Overtime <span aria-hidden="true">→</span>
+            Explore Calculators <span aria-hidden="true">↓</span>
           </a>
           <a
             href="/state-taxes"
             class="inline-flex items-center rounded-xl border border-slate-300 bg-white/70 px-6 py-3.5 font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
           >
-            Browse State Taxes
+            Browse 50-State Taxes <span aria-hidden="true" class="ml-2">→</span>
           </a>
         </div>
       </div>
@@ -277,38 +288,98 @@ const jsonLd = {
     </dl>
   </section>
 
-  <!-- Tools -->
-  <section id="tools" aria-labelledby="tools-heading" class="scroll-mt-20">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h2 id="tools-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-        Calculators &amp; references
-      </h2>
-      <p class="mt-2 text-slate-600 dark:text-slate-400">
-        Built for the federal deductions that apply from the 2025 through 2028 tax years.
-      </p>
+  <!-- Calculators: engines only -->
+  <section id="calculators" aria-labelledby="calculators-heading" class="scroll-mt-20">
+    <div class="mx-auto max-w-6xl px-4 pt-16 pb-12 sm:px-6">
+      <h2 id="calculators-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Calculators</h2>
+      <p class="mt-2 text-slate-600 dark:text-slate-400">Free, private, and updated for the 2026 tax year.</p>
 
-      <div class="mt-8 grid gap-6 md:grid-cols-3">
+      <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         {
-          tools.map((t, i) => (
+          calculators.map((c, i) => (
             <a
-              href={t.href}
+              href={c.href}
               class:list={[
-                'group flex flex-col rounded-2xl border bg-white p-6 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-lg motion-safe:hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:bg-slate-900/90 dark:shadow-xl dark:hover:border-slate-700',
+                'group relative flex flex-col overflow-hidden rounded-2xl border bg-white p-7 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-lg motion-safe:hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:bg-slate-900/90 dark:shadow-xl dark:hover:border-slate-700',
                 i === 0 ? 'border-emerald-300 dark:border-emerald-500/40' : 'border-slate-200 dark:border-slate-800',
               ]}
             >
-              <span class={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${t.badge}`}>
+              {i === 0 && (
+                <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/15" />
+              )}
+              <div class="relative flex items-start justify-between gap-4">
+                <span class={`flex h-12 w-12 items-center justify-center rounded-xl ring-1 ${c.badge}`}>
+                  <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d={c.icon} />
+                  </svg>
+                </span>
+                <span
+                  class:list={[
+                    'rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1',
+                    i === 0
+                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30'
+                      : 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
+                  ]}
+                >
+                  {c.tag}
+                </span>
+              </div>
+              <h3 class="relative mt-5 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{c.title}</h3>
+              <p class="relative mt-2 text-slate-600 dark:text-slate-400">{c.body}</p>
+              <ul class="relative mt-5 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                {c.features.map((f) => (
+                  <li class="flex items-start gap-2">
+                    <span class="mt-0.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div class="relative mt-auto pt-7">
+                <span
+                  class:list={[
+                    'inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold',
+                    i === 0
+                      ? 'btn-primary'
+                      : 'border border-slate-300 text-slate-800 transition group-hover:border-slate-400 dark:border-slate-700 dark:text-slate-200 dark:group-hover:border-slate-500',
+                  ]}
+                >
+                  {c.cta}
+                  <span aria-hidden="true" class="transition group-hover:translate-x-0.5">→</span>
+                </span>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Guides & state resources -->
+  <section id="resources" aria-labelledby="resources-heading" class="scroll-mt-20">
+    <div class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <h2 id="resources-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        Tax Guides &amp; State Resources
+      </h2>
+      <p class="mt-2 text-slate-600 dark:text-slate-400">Reference material to understand your W-2 and your state’s rules.</p>
+
+      <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {
+          resources.map((r) => (
+            <a
+              href={r.href}
+              class="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md motion-safe:hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-slate-700"
+            >
+              <span class={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${r.badge}`}>
                 <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d={t.icon} />
+                  <path d={r.icon} />
                 </svg>
               </span>
-              <span class={`mt-5 text-xs font-semibold uppercase tracking-wide ${t.accent}`}>{t.eyebrow}</span>
-              <h3 class="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">{t.title}</h3>
-              <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t.body}</p>
-              <span class={`mt-auto inline-flex items-center gap-1 pt-5 text-sm font-semibold ${t.accent}`}>
-                {t.cta}
-                <span aria-hidden="true" class="transition group-hover:translate-x-0.5">→</span>
+              <span class="min-w-0 flex-1">
+                <span class={`text-xs font-semibold uppercase tracking-wide ${r.accent}`}>{r.eyebrow}</span>
+                <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">{r.title}</span>
+                <span class="mt-1 block text-sm leading-relaxed text-slate-600 dark:text-slate-400">{r.body}</span>
               </span>
+              <span aria-hidden="true" class={`mt-1 shrink-0 text-lg transition group-hover:translate-x-0.5 ${r.accent}`}>→</span>
             </a>
           ))
         }

@@ -28,22 +28,22 @@ import {
   type SummaryLine,
 } from './deduction-summary';
 
-const FONT = 'Calibri';
-const INK = '0B0F19';
-const MUTED = '64748B';
-const NAVY = '1F335A';
-const RULE = 'CBD5E1';
-const TOTAL_FILL = 'ECFDF5';
-const TOTAL_TEXT = '047857';
+export const FONT = 'Calibri';
+export const INK = '0B0F19';
+export const MUTED = '64748B';
+export const NAVY = '1F335A';
+export const RULE = 'CBD5E1';
+export const TOTAL_FILL = 'ECFDF5';
+export const TOTAL_TEXT = '047857';
 
 // US Letter, 1" margins → 9360 twips of usable width.
 const LABEL_WIDTH = 6360;
 const VALUE_WIDTH = 3000;
 
-const cellBorder = { style: BorderStyle.SINGLE, size: 4, color: RULE };
-const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+export const cellBorder = { style: BorderStyle.SINGLE, size: 4, color: RULE };
+export const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
 
-function text(value: string, opts: { bold?: boolean; size?: number; color?: string; italics?: boolean } = {}) {
+export function text(value: string, opts: { bold?: boolean; size?: number; color?: string; italics?: boolean } = {}) {
   return new TextRun({ text: value, font: FONT, size: opts.size ?? 21, color: opts.color ?? INK, ...opts });
 }
 
@@ -96,7 +96,7 @@ function lineRow(line: SummaryLine): TableRow {
   });
 }
 
-function metaRow(label: string, value: string): Paragraph {
+export function metaRow(label: string, value: string): Paragraph {
   return new Paragraph({
     spacing: { after: 40 },
     children: [text(`${label}: `, { bold: true, color: MUTED, size: 20 }), text(value, { size: 20 })],

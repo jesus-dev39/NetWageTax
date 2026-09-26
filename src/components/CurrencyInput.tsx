@@ -10,6 +10,13 @@ export function formatUSD(value: number): string {
   return usd.format(Math.round(value));
 }
 
+const usdCents = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** "$1,842.50": for per-paycheck amounts. */
+export function formatUSDCents(value: number): string {
+  return usdCents.format(Math.round(value * 100) / 100);
+}
+
 /** "12345.6" → "12,345.6" (keeps what the user typed, adds thousands separators). */
 function withThousands(raw: string): string {
   if (raw === '') return '';

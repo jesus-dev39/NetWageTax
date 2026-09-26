@@ -8,6 +8,8 @@
  * el Additional Medicare Tax del 0,9% (umbral de $200,000 / $250,000 MFJ).
  */
 
+import type { FilingStatus } from './obbba-params';
+
 /** Tipo del empleado para Social Security (OASDI). */
 export const SOCIAL_SECURITY_RATE = 0.062;
 
@@ -31,4 +33,23 @@ export function estimateEmployeeFica(wages: number): FicaEstimate {
   const socialSecurity = Math.min(w, SOCIAL_SECURITY_WAGE_BASE_2026) * SOCIAL_SECURITY_RATE;
   const medicare = w * MEDICARE_RATE;
   return { socialSecurity, medicare, total: socialSecurity + medicare };
+}
+
+// ---------------------------------------------------------------------------
+// Additional Medicare Tax (0,9%): se calcula sobre la obligación anual según
+// el estado civil. Ojo: el empleador retiene a partir de $200,000 de salario
+// sin importar el estado civil; la diferencia se ajusta en la declaración.
+// ---------------------------------------------------------------------------
+
+export const ADDITIONAL_MEDICARE_RATE = 0.009;
+
+export const ADDITIONAL_MEDICARE_THRESHOLD: Record<FilingStatus, number> = {
+  single: 200_000,
+  hoh: 200_000,
+  mfj: 250_000,
+  mfs: 125_000,
+};
+
+export function estimateAdditionalMedicare(wages: number, filingStatus: FilingStatus): number {
+  return Math.max(0, wages - ADDITIONAL_MEDICARE_THRESHOLD[filingStatus]) * ADDITIONAL_MEDICARE_RATE;
 }
