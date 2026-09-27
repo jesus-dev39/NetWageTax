@@ -47,9 +47,26 @@ export interface StateTaxInfo {
   note: string;
   /** Local income taxes that the estimate does not include. */
   localTaxNote?: string;
+  /** Official state revenue department website ('' = not yet verified). */
+  sourceUrl: string;
+  /**
+   * Whether the state lets you subtract the federal tips/overtime deduction (Schedule 1-A).
+   * undefined = no verified data; pages must not claim either way.
+   */
+  followsFederalTipsOvertime?: boolean;
+  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. */
+  brackets?: TaxBracket[];
+  /** Bordering states (DC counts as bordering MD and VA). */
+  neighbors: StateCode[];
 }
 
-type Row = Omit<StateTaxInfo, 'slug'>;
+/** One bracket of a single filer's schedule: `rate` applies to taxable income above `over`. */
+export interface TaxBracket {
+  over: number;
+  rate: number;
+}
+
+type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors'>;
 
 const NO_TAX = (code: StateCode, name: string, note: string): Row => ({
   code, name, structure: 'none', estimateRate: 0, exemptAmount: 0, note,
@@ -118,13 +135,161 @@ const ROWS: Row[] = [
   NO_TAX('WY', 'Wyoming', 'Wyoming has no personal or corporate income tax.'),
 ];
 
+/** Date the state pages were last reviewed (ISO). Provisional until the data is checked by hand. */
+export const STATE_TAX_LAST_UPDATED = '2026-09-27';
+
+/**
+ * Official revenue department sites. Leave '' when unsure; pages then omit the link.
+ * TODO: verify every URL by hand before each annual update.
+ */
+const SOURCE_URLS: Record<StateCode, string> = {
+  AL: 'https://www.revenue.alabama.gov/',
+  AK: 'https://tax.alaska.gov/',
+  AZ: 'https://azdor.gov/',
+  AR: 'https://www.dfa.arkansas.gov/',
+  CA: 'https://www.ftb.ca.gov/',
+  CO: 'https://tax.colorado.gov/',
+  CT: 'https://portal.ct.gov/drs',
+  DE: 'https://revenue.delaware.gov/',
+  DC: 'https://otr.cfo.dc.gov/',
+  FL: 'https://floridarevenue.com/',
+  GA: 'https://dor.georgia.gov/',
+  HI: 'https://tax.hawaii.gov/',
+  ID: 'https://tax.idaho.gov/',
+  IL: 'https://tax.illinois.gov/',
+  IN: 'https://www.in.gov/dor/',
+  IA: 'https://revenue.iowa.gov/',
+  KS: 'https://www.ksrevenue.gov/',
+  KY: 'https://revenue.ky.gov/',
+  LA: 'https://revenue.louisiana.gov/',
+  ME: 'https://www.maine.gov/revenue/',
+  MD: 'https://www.marylandcomptroller.gov/',
+  MA: 'https://www.mass.gov/orgs/massachusetts-department-of-revenue',
+  MI: 'https://www.michigan.gov/taxes',
+  MN: 'https://www.revenue.state.mn.us/',
+  MS: 'https://www.dor.ms.gov/',
+  MO: 'https://dor.mo.gov/',
+  MT: 'https://revenue.mt.gov/',
+  NE: 'https://revenue.nebraska.gov/',
+  NV: 'https://tax.nv.gov/',
+  NH: 'https://www.revenue.nh.gov/',
+  NJ: 'https://www.nj.gov/treasury/taxation/',
+  NM: 'https://www.tax.newmexico.gov/',
+  NY: 'https://www.tax.ny.gov/',
+  NC: 'https://www.ncdor.gov/',
+  ND: 'https://www.tax.nd.gov/',
+  OH: '',
+  OK: 'https://oklahoma.gov/tax.html',
+  OR: 'https://www.oregon.gov/dor/',
+  PA: 'https://www.pa.gov/agencies/revenue',
+  RI: 'https://tax.ri.gov/',
+  SC: 'https://dor.sc.gov/',
+  SD: 'https://dor.sd.gov/',
+  TN: 'https://www.tn.gov/revenue.html',
+  TX: 'https://comptroller.texas.gov/',
+  UT: 'https://tax.utah.gov/',
+  VT: 'https://tax.vermont.gov/',
+  VA: 'https://www.tax.virginia.gov/',
+  WA: 'https://dor.wa.gov/',
+  WV: 'https://tax.wv.gov/',
+  WI: 'https://www.revenue.wi.gov/',
+  WY: 'https://revenue.wyo.gov/',
+};
+
+/** Only states whose data explicitly says so. Missing = unknown. */
+const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
+  CA: false,
+};
+
+/** Verified single-filer bracket schedules. Add states one by one; pages pick them up automatically. */
+const BRACKETS: Partial<Record<StateCode, TaxBracket[]>> = {};
+
+/** Land borders (plus DC–MD/VA). Four Corners point contacts (AZ–CO, NM–UT) are not counted. */
+const NEIGHBORS: Record<StateCode, StateCode[]> = {
+  AL: ['FL', 'GA', 'MS', 'TN'],
+  AK: [],
+  AZ: ['CA', 'NV', 'UT', 'NM'],
+  AR: ['LA', 'MO', 'MS', 'OK', 'TN', 'TX'],
+  CA: ['OR', 'NV', 'AZ'],
+  CO: ['KS', 'NE', 'NM', 'OK', 'UT', 'WY'],
+  CT: ['MA', 'NY', 'RI'],
+  DE: ['MD', 'NJ', 'PA'],
+  DC: ['MD', 'VA'],
+  FL: ['AL', 'GA'],
+  GA: ['AL', 'FL', 'NC', 'SC', 'TN'],
+  HI: [],
+  ID: ['MT', 'NV', 'OR', 'UT', 'WA', 'WY'],
+  IL: ['IA', 'IN', 'KY', 'MO', 'WI'],
+  IN: ['IL', 'KY', 'MI', 'OH'],
+  IA: ['IL', 'MN', 'MO', 'NE', 'SD', 'WI'],
+  KS: ['CO', 'MO', 'NE', 'OK'],
+  KY: ['IL', 'IN', 'MO', 'OH', 'TN', 'VA', 'WV'],
+  LA: ['AR', 'MS', 'TX'],
+  ME: ['NH'],
+  MD: ['DC', 'DE', 'PA', 'VA', 'WV'],
+  MA: ['CT', 'NH', 'NY', 'RI', 'VT'],
+  MI: ['IN', 'OH', 'WI'],
+  MN: ['IA', 'ND', 'SD', 'WI'],
+  MS: ['AL', 'AR', 'LA', 'TN'],
+  MO: ['AR', 'IA', 'IL', 'KS', 'KY', 'NE', 'OK', 'TN'],
+  MT: ['ID', 'ND', 'SD', 'WY'],
+  NE: ['CO', 'IA', 'KS', 'MO', 'SD', 'WY'],
+  NV: ['AZ', 'CA', 'ID', 'OR', 'UT'],
+  NH: ['MA', 'ME', 'VT'],
+  NJ: ['DE', 'NY', 'PA'],
+  NM: ['AZ', 'CO', 'OK', 'TX'],
+  NY: ['CT', 'MA', 'NJ', 'PA', 'VT'],
+  NC: ['GA', 'SC', 'TN', 'VA'],
+  ND: ['MN', 'MT', 'SD'],
+  OH: ['IN', 'KY', 'MI', 'PA', 'WV'],
+  OK: ['AR', 'CO', 'KS', 'MO', 'NM', 'TX'],
+  OR: ['CA', 'ID', 'NV', 'WA'],
+  PA: ['DE', 'MD', 'NJ', 'NY', 'OH', 'WV'],
+  RI: ['CT', 'MA'],
+  SC: ['GA', 'NC'],
+  SD: ['IA', 'MN', 'MT', 'ND', 'NE', 'WY'],
+  TN: ['AL', 'AR', 'GA', 'KY', 'MO', 'MS', 'NC', 'VA'],
+  TX: ['AR', 'LA', 'NM', 'OK'],
+  UT: ['AZ', 'CO', 'ID', 'NV', 'WY'],
+  VT: ['MA', 'NH', 'NY'],
+  VA: ['DC', 'KY', 'MD', 'NC', 'TN', 'WV'],
+  WA: ['ID', 'OR'],
+  WV: ['KY', 'MD', 'OH', 'PA', 'VA'],
+  WI: ['IA', 'IL', 'MI', 'MN'],
+  WY: ['CO', 'ID', 'MT', 'NE', 'SD', 'UT'],
+};
+
 const slugify = (name: string) => name.toLowerCase().replace(/[^a-z]+/g, '-');
 
-export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({ ...r, slug: slugify(r.name) })).sort((a, b) =>
-  a.name.localeCompare(b.name),
-);
+export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
+  ...r,
+  slug: slugify(r.name),
+  sourceUrl: SOURCE_URLS[r.code],
+  followsFederalTipsOvertime: FOLLOWS_FEDERAL_TIPS_OVERTIME[r.code],
+  brackets: BRACKETS[r.code],
+  neighbors: NEIGHBORS[r.code],
+})).sort((a, b) => a.name.localeCompare(b.name));
+
+/** Canonical page for a state, e.g. /state-taxes/new-york/. */
+export const statePagePath = (s: Pick<StateTaxInfo, 'slug'>) => `/state-taxes/${s.slug}/`;
 
 export const STATES_BY_CODE = Object.fromEntries(STATES.map((s) => [s.code, s])) as Record<StateCode, StateTaxInfo>;
+
+/**
+ * Up to `count` states to cross-link: neighbors first (same tax structure before others),
+ * then same-structure states with the closest estimated tax at the reference wage.
+ */
+export function relatedStates(code: StateCode, count = 4): StateTaxInfo[] {
+  const s = STATES_BY_CODE[code];
+  const neighbors = s.neighbors
+    .map((c) => STATES_BY_CODE[c])
+    .sort((a, b) => Number(b.structure === s.structure) - Number(a.structure === s.structure));
+  const taxAt = (x: StateTaxInfo) => calculateStateIncomeTax(GRADUATED_REFERENCE_WAGE, x.code);
+  const peers = STATES.filter((x) => x.structure === s.structure && x.code !== code && !s.neighbors.includes(x.code)).sort(
+    (a, b) => Math.abs(taxAt(a) - taxAt(s)) - Math.abs(taxAt(b) - taxAt(s)) || a.name.localeCompare(b.name),
+  );
+  return [...neighbors, ...peers].slice(0, count);
+}
 
 /** Accepts a state code ("tx") or slug ("texas"). */
 export function findState(value: string | null | undefined): StateTaxInfo | undefined {

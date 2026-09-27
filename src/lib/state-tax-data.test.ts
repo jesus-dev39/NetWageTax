@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateStateIncomeTax, findState, formatStateRate, STATES, STATES_BY_CODE } from './state-tax-data';
+import { calculateStateIncomeTax, findState, formatStateRate, relatedStates, statePagePath, STATES, STATES_BY_CODE } from './state-tax-data';
 import { US_STATE_PATHS } from './us-state-paths';
 
 describe('state tax dataset', () => {
@@ -54,5 +54,34 @@ describe('lookup and labels', () => {
     expect(formatStateRate(STATES_BY_CODE.FL)).toBe('0% State Tax');
     expect(formatStateRate(STATES_BY_CODE.NC)).toBe('3.99% Flat Tax');
     expect(formatStateRate(STATES_BY_CODE.CA)).toBe('1%–13.3% Progressive');
+  });
+});
+
+describe('state page data', () => {
+  it('uses lowercase hyphenated slugs and trailing-slash page paths', () => {
+    for (const s of STATES) expect(s.slug).toMatch(/^[a-z]+(-[a-z]+)*$/);
+    expect(statePagePath(STATES_BY_CODE.NY)).toBe('/state-taxes/new-york/');
+    expect(statePagePath(STATES_BY_CODE.DC)).toBe('/state-taxes/district-of-columbia/');
+  });
+
+  it('has symmetric neighbor lists', () => {
+    for (const s of STATES) {
+      expect(s.neighbors).not.toContain(s.code);
+      for (const n of s.neighbors) expect(STATES_BY_CODE[n].neighbors).toContain(s.code);
+    }
+  });
+
+  it('only uses https source URLs, or leaves them empty', () => {
+    for (const s of STATES) expect(s.sourceUrl).toMatch(/^(https:\/\/.+)?$/);
+  });
+
+  it('links every state to 3–4 other states', () => {
+    for (const s of STATES) {
+      const related = relatedStates(s.code);
+      expect(related.length).toBeGreaterThanOrEqual(3);
+      expect(related.length).toBeLessThanOrEqual(4);
+      expect(related.map((r) => r.code)).not.toContain(s.code);
+      expect(new Set(related.map((r) => r.code)).size).toBe(related.length);
+    }
   });
 });
