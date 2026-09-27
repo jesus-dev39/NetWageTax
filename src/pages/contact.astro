@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL, CONTACT_RESPONSE_TIME } from '../lib/site';
+
+const reasons = [
+  {
+    title: 'Errors in our data',
+    body: 'A state rate, bracket, threshold, or calculation that looks wrong or out of date. Tell us the page and, if you can, link the official source.',
+  },
+  {
+    title: 'Calculator suggestions',
+    body: 'A paycheck or workplace tax question you wish we had a calculator for, or a feature that would make an existing one more useful.',
+  },
+  {
+    title: 'Privacy requests',
+    body: 'Questions about our Privacy Policy, cookies, or advertising, or a request about your personal data.',
+  },
+];
+---
+
+<BaseLayout
+  title="Contact Us"
+  description={`Contact NetWageTax at ${CONTACT_EMAIL} to report a data error, suggest a calculator, or make a privacy request. We usually reply ${CONTACT_RESPONSE_TIME}.`}
+>
+  <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Contact NetWageTax</h1>
+      <p class="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">
+        The best way to reach us is by email at{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`} class="font-medium text-navy-700 underline underline-offset-2 dark:text-navy-300">{CONTACT_EMAIL}</a>.
+        We usually reply {CONTACT_RESPONSE_TIME}.
+      </p>
+    </div>
+  </div>
+
+  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <h2 id="what-to-write-about">What you can write to us about</h2>
+    <ul>
+      {
+        reasons.map((r) => (
+          <li>
+            <strong>{r.title}:</strong> {r.body}
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2 id="before-you-write">Before you write</h2>
+    <p>
+      We can’t give individual tax advice or review your personal tax situation. For that, please talk to a qualified
+      tax professional. Our calculators run in your browser, so we never see the numbers you enter; if you report a
+      calculation issue, include the inputs you used so we can reproduce it.
+    </p>
+    <p>
+      For how we handle your data, see our <a href="/privacy/">Privacy Policy</a>. For the limits of our estimates, see
+      our <a href="/disclaimer/">Financial &amp; Tax Disclaimer</a>.
+    </p>
+  </article>
+</BaseLayout>
