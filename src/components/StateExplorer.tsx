@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   calculateStateIncomeTax,
   formatStateRate,
@@ -6,7 +6,7 @@ import {
   STATES,
   STATES_BY_CODE,
   STRUCTURE_LABELS,
-  findState,
+  statePagePath,
   type StateCode,
   type StateTaxInfo,
   type TaxStructure,
@@ -16,8 +16,8 @@ import NoStateTaxBadge from './NoStateTaxBadge';
 import StateSelect from './StateSelect';
 import USStateMap, { MAP_LEGEND } from './USStateMap';
 
-const PAYCHECK_PATH = '/tools/paycheck-calculator';
-const OBBBA_PATH = '/tools/obbba-tax-calculator';
+const PAYCHECK_PATH = '/tools/paycheck-calculator/';
+const OBBBA_PATH = '/tools/obbba-tax-calculator/';
 const EXAMPLE_WAGES = 50_000;
 const STRUCTURES: TaxStructure[] = ['none', 'flat', 'graduated'];
 
@@ -30,19 +30,8 @@ export default function StateExplorer() {
   const [highlighted, setHighlighted] = useState<StateCode | null>(null);
   const [filter, setFilter] = useState<TaxStructure | null>(null);
 
-  // Deep link: /state-taxes?state=texas
-  useEffect(() => {
-    const s = findState(new URLSearchParams(window.location.search).get('state'));
-    if (s) setSelected(s.code);
-  }, []);
-
-  function select(code: StateCode | null) {
-    setSelected(code);
-    const url = new URL(window.location.href);
-    if (code) url.searchParams.set('state', STATES_BY_CODE[code].slug);
-    else url.searchParams.delete('state');
-    window.history.replaceState(null, '', url);
-  }
+  // Old ?state= deep links are redirected to /state-taxes/<slug>/ by the page itself.
+  const select = (code: StateCode | null) => setSelected(code);
 
   const info = selected ? STATES_BY_CODE[selected] : null;
 
@@ -105,7 +94,7 @@ export default function StateExplorer() {
           State directory
         </h2>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Pick a state to open the tips &amp; overtime calculator with its income tax already included.
+          Pick a state to see its 2026 rates, a worked example, and how it compares with its neighbors.
         </p>
 
         {STRUCTURES.map((structure) => {
@@ -121,7 +110,7 @@ export default function StateExplorer() {
                 {group.map((s) => (
                   <li key={s.code}>
                     <a
-                      href={obbbaHref(s)}
+                      href={statePagePath(s)}
                       onMouseEnter={() => setHighlighted(s.code)}
                       onMouseLeave={() => setHighlighted(null)}
                       onFocus={() => setHighlighted(s.code)}
@@ -178,6 +167,12 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
         Est. state tax on {formatUSD(EXAMPLE_WAGES)} of wages:{' '}
         <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatUSD(example)}</span>
       </p>
+      <a
+        href={statePagePath(info)}
+        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:text-emerald-400"
+      >
+        Full {info.name} tax guide <span aria-hidden="true">→</span>
+      </a>
       <div className="mt-4 flex flex-col gap-2" role="group" aria-label={`Calculators with ${info.name} taxes`}>
         <ToolCard
           href={paycheckHref(info)}

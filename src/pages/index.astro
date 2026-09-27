@@ -4,7 +4,7 @@ import { formatUSD } from '../components/CurrencyInput';
 import { estimateEmployeeFica } from '../lib/fica';
 import { computeFederalIncomeTax, STANDARD_DEDUCTION_2026 } from '../lib/marginal-rate';
 import { calculateObbbaDeduction } from '../lib/obbba-calculator';
-import { estimateStateTax, STATES, STRUCTURE_LABELS, type TaxStructure } from '../lib/state-tax-data';
+import { estimateStateTax, statePagePath, STATES, STRUCTURE_LABELS, type TaxStructure } from '../lib/state-tax-data';
 
 // Hero preview: a real example computed at build time with the same engine the calculator uses.
 const EXAMPLE = { magi: 52_000, tips: 8_000, state: 'GA' as const };
@@ -443,7 +443,7 @@ const jsonLd = {
                   {group.map((s) => (
                     <li>
                       <a
-                        href={`/state-taxes?state=${s.slug}`}
+                        href={statePagePath(s)}
                         class="inline-block rounded-md border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-500/40 dark:hover:text-emerald-400"
                       >
                         {s.name}
