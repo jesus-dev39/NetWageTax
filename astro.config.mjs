@@ -15,9 +15,13 @@ const isDev = process.argv.includes('dev');
 export default defineConfig({
   site: 'https://netwagetax.com',
 
+  // Canonical URLs end in a slash (/state-taxes/california/). vercel.json redirects
+  // slashless requests to them, so keep every internal link slash-terminated.
+  trailingSlash: 'always',
+
   // The directory moved from /states; keep old links and bookmarks working.
   redirects: {
-    '/states': '/state-taxes',
+    '/states': '/state-taxes/',
   },
 
   vite: {

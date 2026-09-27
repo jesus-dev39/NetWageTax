@@ -410,7 +410,7 @@ function WithholdingExplanation(props: {
           <span className="font-semibold">Good to know: </span>
           the half-time premium in your overtime (about {formatUSD(overtimePay / 3)} a year here) may be deductible under
           the new “no tax on overtime” rules, up to $12,500. This paycheck estimate doesn’t include it.{' '}
-          <a href="/tools/obbba-tax-calculator" className="font-medium underline underline-offset-2">
+          <a href="/tools/obbba-tax-calculator/" className="font-medium underline underline-offset-2">
             Estimate your overtime deduction →
           </a>
         </p>

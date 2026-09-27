@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "trailingSlash": true,
+  "redirects": [
+    { "source": "/states", "destination": "/state-taxes/", "permanent": true },
+    { "source": "/states/", "destination": "/state-taxes/", "permanent": true }
+  ]
+}

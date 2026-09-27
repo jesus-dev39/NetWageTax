@@ -251,7 +251,7 @@ export default function TaxCalculatorApp() {
               {!stateTax ? (
                 <>
                   Optional. Adds state income tax to the breakdown.{' '}
-                  <a href="/state-taxes" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
+                  <a href="/state-taxes/" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
                     Browse the map
                   </a>
                 </>

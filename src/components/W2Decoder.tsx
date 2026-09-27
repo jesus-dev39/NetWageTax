@@ -196,7 +196,7 @@ export default function W2Decoder() {
         Tip: These amounts belong in <strong className="font-medium text-slate-700 dark:text-slate-300">Box 12</strong>. Some payroll
         providers also list tips or overtime in Box 14, which is a free-form box. Use the Box 12 amounts when they
         are available.{' '}
-        <a href="/guides/w2-box-12-guide" className="font-medium text-navy-700 underline underline-offset-2 dark:text-navy-300">
+        <a href="/guides/w2-box-12-guide/" className="font-medium text-navy-700 underline underline-offset-2 dark:text-navy-300">
           See every Box 12 code
         </a>
       </p>

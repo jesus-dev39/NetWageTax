@@ -22,31 +22,31 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
 // `hideBelow` drops About between md and lg (it stays in the footer) so the bar fits on one line.
 const navLinks = [
   { href: '/#calculators', label: 'Calculators', section: '/tools', hideBelow: '' },
-  { href: '/tools/paycheck-calculator', label: 'Paycheck Calculator', section: '/tools/paycheck-calculator', hideBelow: '' },
-  { href: '/state-taxes', label: 'State Taxes', section: '/state-taxes', hideBelow: '' },
-  { href: '/guides/w2-box-12-guide', label: 'W-2 Guide', section: '/guides', hideBelow: '' },
-  { href: '/about', label: 'About', section: '/about', hideBelow: 'hidden lg:list-item' },
+  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator', section: '/tools/paycheck-calculator', hideBelow: '' },
+  { href: '/state-taxes/', label: 'State Taxes', section: '/state-taxes', hideBelow: '' },
+  { href: '/guides/w2-box-12-guide/', label: 'W-2 Guide', section: '/guides', hideBelow: '' },
+  { href: '/about/', label: 'About', section: '/about', hideBelow: 'hidden lg:list-item' },
 ];
 
 // Mobile drawer (below md).
 const mobileLinks = [
   { href: '/#calculators', label: 'All Calculators', hint: 'Paycheck, tips & overtime', section: '/tools' },
-  { href: '/tools/paycheck-calculator', label: 'Paycheck Calculator', hint: 'Hourly & salary take-home pay', section: '/tools/paycheck-calculator' },
-  { href: '/state-taxes', label: '50-State Tax Directory & Map', hint: 'Income tax rates for every state', section: '/state-taxes' },
-  { href: '/guides/w2-box-12-guide', label: 'W-2 Box 12 Reference Guide', hint: 'Codes TA, TP, TT, D, DD, W and more', section: '/guides' },
-  { href: '/about', label: 'About NetWageTax', hint: 'Who we are and how we work', section: '/about' },
-  { href: '/disclaimer', label: 'Tax Disclaimer', hint: 'Estimates, not tax advice', section: '/disclaimer' },
+  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator', hint: 'Hourly & salary take-home pay', section: '/tools/paycheck-calculator' },
+  { href: '/state-taxes/', label: '50-State Tax Directory & Map', hint: 'Income tax rates for every state', section: '/state-taxes' },
+  { href: '/guides/w2-box-12-guide/', label: 'W-2 Box 12 Reference Guide', hint: 'Codes TA, TP, TT, D, DD, W and more', section: '/guides' },
+  { href: '/about/', label: 'About NetWageTax', hint: 'Who we are and how we work', section: '/about' },
+  { href: '/disclaimer/', label: 'Tax Disclaimer', hint: 'Estimates, not tax advice', section: '/disclaimer' },
 ];
 
 const footerLinks = [
-  { href: '/about', label: 'About' },
-  { href: '/tools/obbba-tax-calculator', label: 'Tips & Overtime Calculator' },
-  { href: '/tools/paycheck-calculator', label: 'Paycheck Calculator' },
-  { href: '/state-taxes', label: 'State Income Tax Map' },
-  { href: '/guides/w2-box-12-guide', label: 'W-2 Box 12 Guide' },
-  { href: '/privacy', label: 'Privacy Policy' },
-  { href: '/terms', label: 'Terms of Use' },
-  { href: '/disclaimer', label: 'Disclaimer' },
+  { href: '/about/', label: 'About' },
+  { href: '/tools/obbba-tax-calculator/', label: 'Tips & Overtime Calculator' },
+  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator' },
+  { href: '/state-taxes/', label: 'State Income Tax Map' },
+  { href: '/guides/w2-box-12-guide/', label: 'W-2 Box 12 Guide' },
+  { href: '/privacy/', label: 'Privacy Policy' },
+  { href: '/terms/', label: 'Terms of Use' },
+  { href: '/disclaimer/', label: 'Disclaimer' },
 ];
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
