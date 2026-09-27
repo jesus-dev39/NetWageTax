@@ -92,3 +92,36 @@ describe('state page data', () => {
     }
   });
 });
+
+describe('bracket schedules', () => {
+  const withBrackets = STATES.filter((s) => s.brackets);
+
+  it('includes the verified CA and NY schedules', () => {
+    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY']);
+  });
+
+  it('has a year and an official https source for every schedule', () => {
+    for (const s of withBrackets) {
+      expect(s.bracketsYear).toBeGreaterThanOrEqual(2025);
+      expect(s.bracketsSource).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('starts at $0, rises monotonically and stays inside bracketRange', () => {
+    for (const s of withBrackets) {
+      const b = s.brackets!;
+      expect(b[0].over).toBe(0);
+      expect(b[0].rate).toBeCloseTo(s.bracketRange![0]);
+      for (let i = 1; i < b.length; i++) {
+        expect(b[i].over).toBeGreaterThan(b[i - 1].over);
+        expect(b[i].rate).toBeGreaterThan(b[i - 1].rate);
+      }
+      expect(b[b.length - 1].rate).toBeLessThanOrEqual(s.bracketRange![1]);
+    }
+  });
+
+  it('does not change the $65,000 estimate', () => {
+    expect(calculateStateIncomeTax(65_000, 'CA')).toBeCloseTo((65_000 - 5_700) * 0.033);
+    expect(calculateStateIncomeTax(65_000, 'NY')).toBeCloseTo((65_000 - 8_000) * 0.051);
+  });
+});

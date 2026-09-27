@@ -70,6 +70,12 @@ const facts = [
   { label: 'Local income taxes', value: s.localTaxNote ? 'Yes, see note' : 'None in our data' },
 ];
 
+// Tax year the pages describe; older bracket schedules get an inflation-indexing note.
+const PAGE_TAX_YEAR = 2026;
+const bracketsSourceLabel = s.bracketsSource
+  ? `${new URL(s.bracketsSource).hostname.replace(/^www\./, '')}${s.bracketsSource.toLowerCase().endsWith('.pdf') ? ' (PDF)' : ''}`
+  : '';
+
 const diffLabel = (d: number) => (Math.round(d) === 0 ? 'Same' : `${d > 0 ? '+' : '−'}${formatUSD(Math.abs(d))}`);
 const revenueLink = s.sourceUrl
   ? `<a href="${s.sourceUrl}" rel="noopener" target="_blank">the official ${s.name} tax agency website</a>`
@@ -134,6 +140,16 @@ const revenueLink = s.sourceUrl
           (s.brackets ? (
             <>
               <h3 id="brackets">{s.name} tax brackets for single filers</h3>
+              <p class="text-sm">
+                {s.bracketsYear} brackets for single filers. Source:{' '}
+                <a href={s.bracketsSource} rel="noopener" target="_blank">{bracketsSourceLabel}</a>
+              </p>
+              {s.bracketsYear! < PAGE_TAX_YEAR && (
+                <p class="text-sm">
+                  {s.name} adjusts its bracket thresholds for inflation each year. The {PAGE_TAX_YEAR} thresholds haven’t
+                  been published yet, so we show the latest official schedule. Rates are unchanged.
+                </p>
+              )}
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                   <thead>
@@ -157,6 +173,7 @@ const revenueLink = s.sourceUrl
                   </tbody>
                 </table>
               </div>
+              {s.bracketsNote && <p class="text-sm">{s.bracketsNote}</p>}
             </>
           ) : (
             <p>

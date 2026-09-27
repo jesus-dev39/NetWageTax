@@ -55,8 +55,14 @@ export interface StateTaxInfo {
    * undefined = no verified data; pages must not claim either way.
    */
   followsFederalTipsOvertime?: boolean;
-  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. */
+  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. Display only: the estimate doesn't use it. */
   brackets?: TaxBracket[];
+  /** Tax year of `brackets` (set whenever `brackets` is). */
+  bracketsYear?: number;
+  /** Official document the `brackets` were taken from. */
+  bracketsSource?: string;
+  /** Extra context shown under the bracket table (surcharges, recapture, ...). */
+  bracketsNote?: string;
   /** Bordering states (DC counts as bordering MD and VA). */
   neighbors: StateCode[];
 }
@@ -202,8 +208,51 @@ const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
   CA: false,
 };
 
-/** Verified single-filer bracket schedules. Add states one by one; pages pick them up automatically. */
-const BRACKETS: Partial<Record<StateCode, TaxBracket[]>> = {};
+interface BracketSchedule {
+  year: number;
+  source: string;
+  brackets: TaxBracket[];
+  note?: string;
+}
+
+/**
+ * Verified single-filer bracket schedules, each from an official document. Add states one by one;
+ * pages pick them up automatically. Display only: calculateStateIncomeTax still uses estimateRate.
+ */
+const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
+  CA: {
+    year: 2025,
+    source: 'https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf',
+    brackets: [
+      { over: 0, rate: 0.01 },
+      { over: 11_079, rate: 0.02 },
+      { over: 26_264, rate: 0.04 },
+      { over: 41_452, rate: 0.06 },
+      { over: 57_542, rate: 0.08 },
+      { over: 72_724, rate: 0.093 },
+      { over: 371_479, rate: 0.103 },
+      { over: 445_771, rate: 0.113 },
+      { over: 742_953, rate: 0.123 },
+    ],
+    note: 'California adds a 1% Behavioral Health Services Tax on taxable income over $1,000,000, for a top marginal rate of 13.3%.',
+  },
+  NY: {
+    year: 2026,
+    source: 'https://www.tax.ny.gov/pdf/publications/withholding/nys50_t_nys.pdf',
+    brackets: [
+      { over: 0, rate: 0.039 },
+      { over: 8_500, rate: 0.044 },
+      { over: 11_700, rate: 0.0515 },
+      { over: 13_900, rate: 0.054 },
+      { over: 80_650, rate: 0.059 },
+      { over: 215_400, rate: 0.0685 },
+      { over: 1_077_550, rate: 0.0965 },
+      { over: 5_000_000, rate: 0.103 },
+      { over: 25_000_000, rate: 0.109 },
+    ],
+    note: "New York cut its five lowest rates by 0.1 percentage point for 2026. Higher earners may also be subject to New York's tax benefit recapture, which isn't shown here. New York City and Yonkers residents pay local income tax on top of these rates.",
+  },
+};
 
 /** Land borders (plus DC–MD/VA). Four Corners point contacts (AZ–CO, NM–UT) are not counted. */
 const NEIGHBORS: Record<StateCode, StateCode[]> = {
@@ -267,7 +316,10 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   slug: slugify(r.name),
   sourceUrl: SOURCE_URLS[r.code],
   followsFederalTipsOvertime: FOLLOWS_FEDERAL_TIPS_OVERTIME[r.code],
-  brackets: BRACKETS[r.code],
+  brackets: BRACKETS[r.code]?.brackets,
+  bracketsYear: BRACKETS[r.code]?.year,
+  bracketsSource: BRACKETS[r.code]?.source,
+  bracketsNote: BRACKETS[r.code]?.note,
   neighbors: NEIGHBORS[r.code],
 })).sort((a, b) => a.name.localeCompare(b.name));
 
