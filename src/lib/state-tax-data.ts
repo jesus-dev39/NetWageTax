@@ -93,7 +93,7 @@ const ROWS: Row[] = [
   NO_TAX('AK', 'Alaska', 'Alaska has no state income tax or statewide sales tax, and pays residents an annual Permanent Fund Dividend.'),
   FLAT('AZ', 'Arizona', 0.025, 16_100, 'Flat 2.5% since 2023, one of the lowest flat rates in the country. Uses the federal standard deduction.'),
   GRAD('AR', 'Arkansas', 0.032, 2_410, [0.02, 0.039], 'Top rate cut to 3.9% in 2024. Low-income filers pay reduced rates.'),
-  GRAD('CA', 'California', 0.033, 5_700, [0.01, 0.133], 'Nine brackets from 1% to 12.3%, plus a 1% Mental Health Services Tax above $1 million. California does not follow the federal tips and overtime deduction.'),
+  GRAD('CA', 'California', 0.033, 5_700, [0.01, 0.133], 'Nine brackets from 1% to 12.3%, plus a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) above $1 million. California does not follow the federal tips and overtime deduction.'),
   FLAT('CO', 'Colorado', 0.044, 16_100, 'Flat 4.4%, calculated from federal taxable income. TABOR refunds can temporarily lower the rate.', 'Denver and a few other cities charge a small monthly occupational privilege tax.'),
   GRAD('CT', 'Connecticut', 0.0435, 0, [0.02, 0.0699], 'Seven brackets (2%–6.99%). The personal exemption phases out by about $44,000 for single filers.'),
   GRAD('DE', 'Delaware', 0.048, 3_250, [0.022, 0.066], 'Brackets from 2.2% to 6.6% above $60,000. Delaware has no state sales tax.', 'Wilmington levies a 1.25% city wage tax.'),
@@ -234,7 +234,7 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
       { over: 445_771, rate: 0.113 },
       { over: 742_953, rate: 0.123 },
     ],
-    note: 'California adds a 1% Behavioral Health Services Tax on taxable income over $1,000,000, for a top marginal rate of 13.3%.',
+    note: 'California adds a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) on taxable income over $1,000,000, for a top marginal rate of 13.3%.',
   },
   NY: {
     year: 2026,
