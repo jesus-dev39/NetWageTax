@@ -135,8 +135,8 @@ export default function StateExplorer() {
         <p className="mt-8 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
           Data: {STATE_TAX_DATA_AS_OF}. Estimates cover state income tax on wages for a single filer and exclude local
           income taxes and state credits. Progressive-state estimates use the typical effective rate for about $65,000
-          of wages. Most states do not allow the federal tips and overtime deduction. Check your state revenue
-          department for exact figures.
+          of wages. State treatment varies: many states don&apos;t automatically follow the federal tips and overtime
+          deduction. Check your state&apos;s rules and its revenue department for exact figures.
         </p>
       </section>
     </div>

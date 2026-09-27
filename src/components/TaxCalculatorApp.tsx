@@ -108,7 +108,7 @@ export default function TaxCalculatorApp() {
   const shownTotal = useAnimatedNumber(result.totalCombinedDeduction);
   const shownSavings = useAnimatedNumber(savings);
   const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus);
-  // State tax is estimated on full MAGI: most states do not allow the federal tips & overtime deduction.
+  // State tax is estimated on full MAGI: whether a state follows the federal tips & overtime deduction varies and isn't in our data.
   const stateTax = useMemo(
     () => (stateCode ? estimateStateTax(magiValue, stateCode) : null),
     [stateCode, magiValue],

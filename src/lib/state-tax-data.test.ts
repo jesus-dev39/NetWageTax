@@ -71,6 +71,13 @@ describe('state page data', () => {
     }
   });
 
+  it('does not count Four Corners point contacts as borders', () => {
+    expect(STATES_BY_CODE.AZ.neighbors).not.toContain('CO');
+    expect(STATES_BY_CODE.CO.neighbors).not.toContain('AZ');
+    expect(STATES_BY_CODE.NM.neighbors).not.toContain('UT');
+    expect(STATES_BY_CODE.UT.neighbors).not.toContain('NM');
+  });
+
   it('only uses https source URLs, or leaves them empty', () => {
     for (const s of STATES) expect(s.sourceUrl).toMatch(/^(https:\/\/.+)?$/);
   });

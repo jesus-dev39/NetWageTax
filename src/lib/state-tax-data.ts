@@ -13,8 +13,9 @@
  *                 salarios típicos, menos preciso en rentas muy altas o bajas.
  *
  * No incluye impuestos locales (condados, ciudades, school districts) ni
- * créditos estatales. La mayoría de estados NO aplican la deducción federal
- * OBBBA de propinas/horas extra, así que se calcula sobre el MAGI completo.
+ * créditos estatales. El tratamiento estatal de la deducción federal OBBBA de
+ * propinas/horas extra varía y no está en los datos (salvo followsFederalTipsOvertime),
+ * así que la estimación se calcula sobre el MAGI completo.
  *
  * Fuentes: departamentos de hacienda estatales y legislación 2025 aprobada
  * con efecto para el año fiscal 2026. Revisar cada enero (DATA_AS_OF).
