@@ -30,8 +30,8 @@ Calculadoras fiscales y de nómina para trabajadores de EE. UU., centradas en la
 Requiere Node.js 22.12 o superior.
 
 ```sh
-git clone https://github.com/jesus-dev39/obbba-tax-calculator.git
-cd obbba-tax-calculator
+git clone https://github.com/jesus-dev39/NetWageTax.git
+cd NetWageTax
 npm install
 npm run dev        # servidor de desarrollo en http://localhost:4321
 ```
