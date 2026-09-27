@@ -68,7 +68,7 @@ SPEC.md           # Especificación inicial: reglas fiscales, inputs/outputs y c
 
 **Qué aprendí.** A lanzar un producto completo: comprar y configurar un dominio, SEO técnico, generar páginas estáticas con Astro y trabajar con TypeScript en una lógica de negocio compleja en la que cualquier error se nota en el resultado.
 
-**Uso de IA.** Desarrollé el proyecto con apoyo de asistentes de IA para escribir código. Yo definí la especificación (`SPEC.md`) con las reglas fiscales y los casos de prueba, verifiqué las cifras con las fuentes oficiales, tomé las decisiones de producto y de arquitectura y revisé el código antes de integrarlo.
+**Uso de IA.** Lo desarrollé con apoyo de asistentes de IA. Yo definí la idea y las funcionalidades, revisé y probé el código, resolví los errores y me encargué del despliegue.
 
 ## Autor
 
