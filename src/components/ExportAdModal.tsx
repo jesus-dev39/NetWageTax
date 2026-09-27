@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import AdSlot from './AdSlot';
 
 export type ExportFormat = 'pdf' | 'docx' | 'xlsx';
 
@@ -24,7 +23,7 @@ type Status = 'working' | 'done' | 'ready' | 'error';
  * Policy-safe by design (Better Ads Standards / AdSense):
  * - No forced wait or countdown: Word/Excel files are generated immediately and download
  *   as soon as they're ready; PDF's print button is usable the moment the modal opens.
- * - The ad area never holds a manual AdSense unit (see AdSlot.tsx); it's a sponsor slot.
+ * - No ads of any kind: ads never go in dialogs or next to download buttons.
  * - The ✕ button, Esc, and the "click to close" CTA all dismiss it at any time.
  *
  * Files start from the user's click (the browser's transient activation still applies),
@@ -148,9 +147,6 @@ export default function ExportAdModal({ request, onClose }: Props) {
             style={{ width: `${progress}%` }}
           />
         </div>
-
-        {/* Sponsor slot: never a manual AdSense unit inside a dialog (see AdSlot.tsx). */}
-        <AdSlot format="rectangle" placement="export-modal" label="Sponsored" className="mt-6" />
 
         <div className="mt-6 flex flex-col gap-2">
           {status === 'ready' && (

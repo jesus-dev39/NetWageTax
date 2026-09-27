@@ -11,11 +11,8 @@
  * The loader script (adsbygoogle.js?client=…) is included once in BaseLayout's <head>.
  * Each format reserves its final height so the page does not shift when ads load (CLS).
  *
- * Policy note for the `export-modal` placement (ExportAdModal): AdSense program policies do
- * not allow manually placed ad units inside pop-ups or dialogs, and the Better Ads Standards
- * prohibit prestitial ads with a countdown. Never give that placement a slotId: fill it with a
- * direct sponsor / house creative, or rely on Auto ads "vignette" interstitials, the
- * Google-managed, policy-compliant format.
+ * Placement rules: never inside modals/dialogs (AdSense policy), never between a calculator's
+ * inputs and its result, and never next to buttons, especially the export/download actions.
  */
 import { useEffect, useRef } from 'react';
 import { ADSENSE_CLIENT } from '../lib/site';
