@@ -85,15 +85,16 @@ const faqSchema = {
   </div>
 
   <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
-    <!-- Ad placement 1: below the page title, above Step 1. Add slotId="…" from the AdSense dashboard to go live. -->
-    <AdSlot client:visible format="leaderboard" placement="calculator-top" />
+    <!--
+      Ad placement 1: below the page title, above Step 1. Add slotId="…" from the AdSense dashboard to go live.
+      md+ only: on phones the reserved 100px pushed the first input below a 700px screen. While hidden,
+      client:visible never hydrates it, so no ad request is made.
+    -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="calculator-top" />
+    </div>
     <W2Decoder client:load />
     <TaxCalculatorApp client:load />
-  </div>
-
-  <!-- Ad placement 2: between the calculator and the FAQ. -->
-  <div class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-    <AdSlot client:visible format="leaderboard" placement="calculator-bottom" />
   </div>
 
   <section aria-labelledby="faq-heading" class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -114,6 +115,8 @@ const faqSchema = {
           ))
         }
       </div>
+      <!-- Ad placement: after the FAQ list, before the disclaimer; well away from the export/download buttons. -->
+      <AdSlot client:visible format="leaderboard" placement="calculator-bottom" className="mt-10" />
       <p class="mt-8 text-sm text-slate-500 dark:text-slate-400">
         This calculator provides educational estimates and is not tax advice. Results are not a tax return. Verify your
         figures with the official IRS Schedule 1-A instructions or a CPA or enrolled agent.

@@ -99,14 +99,15 @@ const jsonLd = {
   </div>
 
   <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
-    <!-- Ad placement: below the page title. Add slotId="…" from the AdSense dashboard to go live. -->
-    <AdSlot client:visible format="leaderboard" placement="paycheck-top" />
+    <!--
+      Ad placement: below the page title. Add slotId="…" from the AdSense dashboard to go live.
+      md+ only: on phones the reserved 100px pushed the first input below a 700px screen. While hidden,
+      client:visible never hydrates it, so no ad request is made.
+    -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="paycheck-top" />
+    </div>
     <PaycheckCalculatorApp client:load />
-  </div>
-
-  <!-- Ad placement: before the FAQ. -->
-  <div class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-    <AdSlot client:visible format="leaderboard" placement="paycheck-bottom" />
   </div>
 
   <section aria-labelledby="faq-heading" class="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -127,6 +128,8 @@ const jsonLd = {
           ))
         }
       </div>
+      <!-- Ad placement: after the FAQ list, before the disclaimer; well away from the export/download buttons. -->
+      <AdSlot client:visible format="leaderboard" placement="paycheck-bottom" className="mt-10" />
       <p class="mt-8 text-sm text-slate-500 dark:text-slate-400">
         This calculator provides educational estimates, not tax or payroll advice. For your exact withholding, see IRS
         Publication 15-T and your employer’s payroll department. Have tips or overtime?{' '}
