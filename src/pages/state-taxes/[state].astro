@@ -126,6 +126,16 @@ const revenueLink = s.sourceUrl
       <h2 id="how-it-works">How {s.name} taxes wages</h2>
       <p>{s.note}</p>
       {rankingSentences(s).map((t) => <p>{t}</p>)}
+      {
+        s.rateSource && (
+          <p class="text-[15px] text-ink-2">
+            Rate source:{' '}
+            <a href={s.rateSource.url} rel="noopener" target="_blank">
+              {s.rateSource.label}
+            </a>
+          </p>
+        )
+      }
 
       {
         s.structure === 'graduated' &&
@@ -241,13 +251,24 @@ const revenueLink = s.sourceUrl
         )
       }
       {
-        tipsStatus === 'does-not-follow' && (
-          <p>
-            <strong>{s.name} does not follow the federal tips and overtime deduction.</strong> Qualified tips and
-            overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name}, and our estimate
-            taxes your full wages.
-          </p>
-        )
+        tipsStatus === 'does-not-follow' &&
+          (s.tipsOvertimeNote ? (
+            <>
+              <p>
+                <strong>{s.tipsOvertimeNote}</strong>
+              </p>
+              <p>
+                Our estimate doesn’t apply {s.name}’s exclusion: it applies the state tax to your full wages, so it can
+                overstate your {s.name} tax if you have qualifying tips or overtime.
+              </p>
+            </>
+          ) : (
+            <p>
+              <strong>{s.name} does not follow the federal tips and overtime deduction.</strong> Qualified tips and
+              overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name}, and our estimate
+              taxes your full wages.
+            </p>
+          ))
       }
       {
         tipsStatus === 'follows' && (

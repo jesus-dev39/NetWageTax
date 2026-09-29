@@ -280,7 +280,7 @@ export default function TaxCalculatorApp() {
             </p>
           </div>
 
-          <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} savings={savings} stateTax={stateTax} />
+          <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} filingStatus={filingStatus} stateTax={stateTax} />
 
           <section aria-labelledby="deduction-breakdown-heading">
             <h3 id="deduction-breakdown-heading" className="font-semibold text-ink">

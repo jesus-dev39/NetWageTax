@@ -125,3 +125,20 @@ describe('bracket schedules', () => {
     expect(calculateStateIncomeTax(65_000, 'NY')).toBeCloseTo((65_000 - 8_000) * 0.051);
   });
 });
+
+describe('Georgia (HB 463, 2026)', () => {
+  const ga = STATES_BY_CODE.GA;
+
+  it('uses the 4.99% rate and the 2026 $12,000 single standard deduction', () => {
+    expect(ga.estimateRate).toBe(0.0499);
+    expect(ga.exemptAmount).toBe(12_000);
+    expect(calculateStateIncomeTax(65_000, 'GA')).toBeCloseTo((65_000 - 12_000) * 0.0499);
+    expect(formatStateRate(ga)).toBe('4.99% flat tax');
+  });
+
+  it('does not follow the federal tips and overtime deduction and cites its source', () => {
+    expect(ga.followsFederalTipsOvertime).toBe(false);
+    expect(ga.tipsOvertimeNote).toContain('$1,750 of overtime and $1,750 of cash tips');
+    expect(ga.rateSource?.url).toMatch(/^https:\/\/gov\.georgia\.gov\//);
+  });
+});

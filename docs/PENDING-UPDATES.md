@@ -22,6 +22,11 @@ publish the next year's numbers, and all states every January.
 - [ ] **California: update to the 2026 brackets when the FTB publishes them.** Replace the 2025
       schedule in `BRACKETS.CA` and set `year: 2026`. The inflation note above the table then
       disappears on its own (it only shows when `bracketsYear` is before 2026).
+- [ ] **Georgia: check the 2027 rate and standard deduction (January 2027).** HB 463 (2026) cuts the
+      rate by 0.125 point a year toward 3.99% only if state revenue conditions are met: confirm whether
+      2027 is 4.865% or stays at 4.99%. The single standard deduction rises to $15,000 in 2027 (update
+      `exemptAmount` from $12,000), with later $375 steps also tied to revenue. The state's own
+      tips/overtime exclusion ($1,750 each) runs through 2028. Source: `RATE_SOURCES.GA`.
 - [ ] **All states: review the 2027 data (January 15, 2027).** Rates, `exemptAmount`, `estimateRate`,
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
       Then update `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` and the tax year shown on the pages.

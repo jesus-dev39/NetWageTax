@@ -55,6 +55,10 @@ export interface StateTaxInfo {
    * undefined = no verified data; pages must not claim either way.
    */
   followsFederalTipsOvertime?: boolean;
+  /** What the state itself does with tips and overtime, when verified (e.g. its own exclusion). Our estimate doesn't apply it. */
+  tipsOvertimeNote?: string;
+  /** Official document the current rate comes from (a law or a state publication), when verified. */
+  rateSource?: { url: string; label: string };
   /** Full single-filer bracket schedule, when verified. Pages show a table only if present. Display only: the estimate doesn't use it. */
   brackets?: TaxBracket[];
   /** Tax year of `brackets` (set whenever `brackets` is). */
@@ -99,7 +103,8 @@ const ROWS: Row[] = [
   GRAD('DE', 'Delaware', 0.048, 3_250, [0.022, 0.066], 'Brackets from 2.2% to 6.6% above $60,000. Delaware has no state sales tax.', 'Wilmington levies a 1.25% city wage tax.'),
   GRAD('DC', 'District of Columbia', 0.057, 16_100, [0.04, 0.1075], 'Seven brackets from 4% to 10.75%. Uses the federal standard deduction.'),
   NO_TAX('FL', 'Florida', 'Florida has no personal income tax. Article VII, Section 5 of the Florida Constitution prohibits one.'),
-  FLAT('GA', 'Georgia', 0.0509, 12_000, 'Flat tax since 2024. The rate steps down 0.10 point a year toward 4.99% (5.09% scheduled for 2026).'),
+  // HB 463 (2026): 4.99% from January 1, 2026. The $15,000 single standard deduction starts in 2027, so 2026 keeps $12,000.
+  FLAT('GA', 'Georgia', 0.0499, 12_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). Further cuts of 0.125 point a year toward 3.99% depend on state revenue.'),
   GRAD('HI', 'Hawaii', 0.064, 9_100, [0.014, 0.11], 'Twelve brackets up to 11%. Recent laws are doubling the standard deduction and widening brackets through 2031.'),
   FLAT('ID', 'Idaho', 0.053, 20_900, 'Flat 5.3% on income above a 0% band, after the federal standard deduction.'),
   FLAT('IL', 'Illinois', 0.0495, 2_850, 'Flat 4.95%, set by the Illinois Constitution, which requires a single rate.'),
@@ -209,6 +214,17 @@ const SOURCE_URLS: Record<StateCode, string> = {
 /** Only states whose data explicitly says so. Missing = unknown. */
 const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
   CA: false,
+  GA: false,
+};
+
+/** Verified notes on a state's own treatment of tips and overtime. */
+const TIPS_OVERTIME_NOTES: Partial<Record<StateCode, string>> = {
+  GA: 'Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028.',
+};
+
+/** Official documents for current rates, added state by state as each is verified. */
+const RATE_SOURCES: Partial<Record<StateCode, { url: string; label: string }>> = {
+  GA: { url: 'https://gov.georgia.gov/document/2026-signed-legislation/hb-463/download', label: 'HB 463 (2026), as passed (PDF)' },
 };
 
 interface BracketSchedule {
@@ -319,6 +335,8 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   slug: slugify(r.name),
   sourceUrl: SOURCE_URLS[r.code],
   followsFederalTipsOvertime: FOLLOWS_FEDERAL_TIPS_OVERTIME[r.code],
+  tipsOvertimeNote: TIPS_OVERTIME_NOTES[r.code],
+  rateSource: RATE_SOURCES[r.code],
   brackets: BRACKETS[r.code]?.brackets,
   bracketsYear: BRACKETS[r.code]?.year,
   bracketsSource: BRACKETS[r.code]?.source,

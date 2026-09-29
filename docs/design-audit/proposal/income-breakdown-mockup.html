@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-  Proposal (not implemented): new "Where your money goes" block for the tips and overtime calculator.
-  Figures are the engine's output for a single filer, $52,000 MAGI, $8,000 qualified tips, Georgia
-  (with the state data as of September 29, 2026: 5.09%).
+  Approved and implemented (IncomeBreakdownBar): "Where your income goes" for the tips and overtime calculator.
+  Figures are the engine's output for a single filer, $52,000 MAGI, $8,000 qualified tips, Georgia at 4.99%
+  (HB 463, 2026).
 -->
 <html lang="en">
 <head>
@@ -41,13 +41,13 @@
   <section class="wrap">
     <h3>Where your income goes <span class="num">of $52,000</span></h3>
     <div class="bar" aria-hidden="true">
-      <i style="width:82.5%;background:var(--net)"></i><i style="width:6.0%;background:var(--fed)"></i><i style="width:7.7%;background:var(--fica)"></i><i style="width:3.9%;background:var(--state)"></i>
+      <i style="width:82.5%;background:var(--net)"></i><i style="width:6.0%;background:var(--fed)"></i><i style="width:7.6%;background:var(--fica)"></i><i style="width:3.8%;background:var(--state)"></i>
     </div>
     <dl class="num">
       <div class="row"><span class="sw" style="background:var(--fed)"></span><dt>Federal income tax<small>After your $8,000 tips and overtime deduction</small></dt><dd>$3,100<small>6.0%</small></dd></div>
-      <div class="row"><span class="sw" style="background:var(--fica)"></span><dt>Social Security &amp; Medicare<small>Still owed on tips and overtime</small></dt><dd>$3,978<small>7.7%</small></dd></div>
-      <div class="row"><span class="sw" style="background:var(--state)"></span><dt>Georgia income tax (est.)<small>Georgia, 5.09% Flat Tax. Our estimate taxes tips and overtime at the state level.</small></dt><dd>$2,036<small>3.9%</small></dd></div>
-      <div class="row total"><span class="sw" style="background:var(--net)"></span><dt>Take-home</dt><dd>$42,886<small>82.5%</small></dd></div>
+      <div class="row"><span class="sw" style="background:var(--fica)"></span><dt>Social Security &amp; Medicare<small>Still owed on tips and overtime</small></dt><dd>$3,978<small>7.6%</small></dd></div>
+      <div class="row"><span class="sw" style="background:var(--state)"></span><dt>Georgia income tax (est.)<small>Georgia, 4.99% flat tax. Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028. Our estimate doesn’t apply that exclusion: it taxes your full income.</small></dt><dd>$1,996<small>3.8%</small></dd></div>
+      <div class="row total"><span class="sw" style="background:var(--net)"></span><dt>Take-home</dt><dd>$42,926<small>82.5%</small></dd></div>
     </dl>
     <p class="saved num"><span>The deduction lowers your federal income tax from $4,060 to $3,100.</span><strong>$960 saved</strong></p>
     <p class="note">Assumes all MAGI is wages. Social Security applies only to the first $184,500 of 2026 wages; the 0.9% Additional Medicare Tax is not included. State tax is a single-filer estimate and excludes local income taxes.</p>
