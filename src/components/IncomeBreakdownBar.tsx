@@ -1,5 +1,6 @@
 import { estimateEmployeeFica, SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
-import type { StateTaxEstimate } from '../lib/state-tax-data';
+import { tipsOvertimeStatus } from '../lib/state-page-content';
+import { STATES_BY_CODE, type StateTaxEstimate } from '../lib/state-tax-data';
 import BreakdownBar from './BreakdownBar';
 import { formatUSD } from './CurrencyInput';
 
@@ -19,6 +20,24 @@ interface Segment {
   hint: string;
   value: number;
   color: string;
+}
+
+/**
+ * What the state row says about tips and overtime. Only claim what a state does when
+ * followsFederalTipsOvertime is known; otherwise describe what our estimate does.
+ */
+function stateTaxHint(stateTax: StateTaxEstimate): string {
+  const lead = `${stateTax.name}, ${stateTax.rateLabel}.`;
+  switch (tipsOvertimeStatus(STATES_BY_CODE[stateTax.code])) {
+    case 'no-wage-tax':
+      return `${stateTax.name}: no state income tax.`;
+    case 'does-not-follow':
+      return `${lead} ${stateTax.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
+    case 'follows':
+      return `${lead} ${stateTax.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
+    default:
+      return `${lead} Our estimate taxes tips and overtime at the state level.`;
+  }
 }
 
 export default function IncomeBreakdownBar({ magi, deduction, savings, stateTax = null }: Props) {
@@ -56,10 +75,7 @@ export default function IncomeBreakdownBar({ magi, deduction, savings, stateTax 
           {
             key: 'state',
             label: 'State income tax (est.)',
-            hint:
-              stateTax.structure === 'none'
-                ? `${stateTax.name}: no state income tax`
-                : `${stateTax.name}, ${stateTax.rateLabel}; applies to tips and overtime too`,
+            hint: stateTaxHint(stateTax),
             value: state,
             color: 'bg-data-state',
           },
