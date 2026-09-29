@@ -80,7 +80,7 @@ export default function AdSlot({ format, slotId, client = ADSENSE_CLIENT, placem
       className={`mx-auto flex w-full flex-col items-center print:hidden ${className}`}
     >
       {label && (
-        <span className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+        <span className="mb-1.5 text-xs text-ink-2">
           {label}
         </span>
       )}
@@ -94,11 +94,9 @@ export default function AdSlot({ format, slotId, client = ADSENSE_CLIENT, placem
         />
       ) : (
         <div
-          className={`flex items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50/60 text-center dark:border-slate-700 dark:bg-slate-900/40 ${FORMAT_CLASSES[format]}`}
+          className={`flex items-center justify-center border border-dashed border-line bg-surface text-center ${FORMAT_CLASSES[format]}`}
         >
-          <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
-            Advertisement / Sponsor Space
-          </span>
+          <span className="text-xs text-ink-2">Advertisement (placeholder, development only)</span>
         </div>
       )}
     </aside>

@@ -1,20 +1,50 @@
 ---
 /**
- * Title block for content pages (about, methodology, legal): H1 and lead paragraph at the
- * docs/DESIGN.md type scale, over a 1px rule. Extra content (a summary list, a date) goes in the slot.
+ * Title block for content and tool pages: optional breadcrumbs, H1, and lead paragraph at the
+ * docs/DESIGN.md type scale, left-aligned in the page container over a 1px rule.
+ * Extra content (a summary list, a date) goes in the slot.
  */
+interface Crumb {
+  label: string;
+  /** Omit for the current page (the last crumb). */
+  href?: string;
+}
+
 interface Props {
   title: string;
   lead?: string;
+  breadcrumbs?: Crumb[];
 }
 
-const { title, lead } = Astro.props;
+const { title, lead, breadcrumbs } = Astro.props;
 ---
 
 <div class="border-b border-line">
-  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-    <h1 class="text-[2rem]/[1.15] font-bold tracking-[-0.02em] text-ink md:text-[2.75rem]/[1.1]">{title}</h1>
-    {lead && <p class="mt-4 text-lg/[1.5] text-ink-2 md:text-xl/[1.5]">{lead}</p>}
-    <slot />
+  <div class="container-page py-8 sm:py-12">
+    <div class="max-w-3xl">
+      {
+        breadcrumbs && (
+          <nav aria-label="Breadcrumb" class="mb-4 text-[15px] text-ink-2">
+            <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {breadcrumbs.map((c, i) => (
+                <li class="flex items-center gap-2">
+                  {i > 0 && <span aria-hidden="true">/</span>}
+                  {c.href ? (
+                    <a href={c.href} class="text-link underline underline-offset-[3px] hover:decoration-2">
+                      {c.label}
+                    </a>
+                  ) : (
+                    <span aria-current="page">{c.label}</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+      <h1 class="text-[2rem]/[1.15] font-bold tracking-[-0.02em] text-ink md:text-[2.75rem]/[1.1]">{title}</h1>
+      {lead && <p class="mt-4 text-lg/[1.5] text-ink-2 md:text-xl/[1.5]">{lead}</p>}
+      <slot />
+    </div>
   </div>
 </div>

@@ -46,9 +46,9 @@ export default function PaycheckExportActions({ input, result }: Props) {
   // Every format opens the same modal; files are built from fresh data at click time.
   function exportRequest(format: ExportFormat): ExportRequest {
     const titles: Record<ExportFormat, string> = {
-      pdf: `Preparing your ${summary.taxYear} Paycheck PDF Estimate`,
-      docx: `Preparing your ${summary.taxYear} Paycheck Word Estimate`,
-      xlsx: `Preparing your ${summary.taxYear} Paycheck Excel Worksheet`,
+      pdf: `Your ${summary.taxYear} paycheck estimate (PDF)`,
+      docx: `Your ${summary.taxYear} paycheck estimate (Word)`,
+      xlsx: `Your ${summary.taxYear} paycheck estimate (Excel)`,
     };
     const run: Record<ExportFormat, () => Promise<void> | void> = {
       pdf: handlePrint,
@@ -59,9 +59,9 @@ export default function PaycheckExportActions({ input, result }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
+    <div className="print:hidden">
       <ExportToolbar
-        heading={"Save your paycheck estimate"}
+        heading="Save this estimate"
         canExport={canExport}
         disabledHint="Enter your pay to enable exports."
         onSelect={(format) => setRequest(exportRequest(format))}

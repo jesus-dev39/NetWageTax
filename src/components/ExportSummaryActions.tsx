@@ -48,9 +48,9 @@ export default function ExportSummaryActions(props: Props) {
   // Every format opens the same modal; files are built from fresh data at click time.
   function exportRequest(format: ExportFormat): ExportRequest {
     const titles: Record<ExportFormat, string> = {
-      pdf: `Preparing your ${result.taxYear} Tips & Overtime PDF Worksheet`,
-      docx: `Preparing your ${result.taxYear} Tips & Overtime Word Worksheet`,
-      xlsx: `Preparing your ${result.taxYear} Tips & Overtime Excel Worksheet`,
+      pdf: `Your ${result.taxYear} tips and overtime worksheet (PDF)`,
+      docx: `Your ${result.taxYear} tips and overtime worksheet (Word)`,
+      xlsx: `Your ${result.taxYear} tips and overtime worksheet (Excel)`,
     };
     const run: Record<ExportFormat, () => Promise<void> | void> = {
       pdf: handlePrint,
@@ -61,9 +61,9 @@ export default function ExportSummaryActions(props: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
+    <div className="print:hidden">
       <ExportToolbar
-        heading={`Save your ${result.taxYear} deduction summary`}
+        heading={`Save your ${result.taxYear} deduction worksheet`}
         canExport={canExport}
         disabledHint="Enter a qualifying tips or overtime amount to enable exports."
         onSelect={(format) => setRequest(exportRequest(format))}

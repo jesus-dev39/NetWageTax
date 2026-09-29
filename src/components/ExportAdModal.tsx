@@ -96,8 +96,7 @@ export default function ExportAdModal({ request, onClose }: Props) {
     error: `The ${fileLabel} file could not be created. Please try again.`,
   };
 
-  const primary =
-    'inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900';
+  const primary = 'inline-flex h-11 w-full items-center justify-center gap-2 rounded-control px-5 font-semibold';
 
   return (
     <dialog
@@ -105,11 +104,11 @@ export default function ExportAdModal({ request, onClose }: Props) {
       onClose={onClose}
       aria-labelledby="export-modal-title"
       aria-describedby="export-modal-status"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-panel border border-line bg-page p-0 text-ink shadow-[0_8px_24px_rgb(26_31_36/0.12)] backdrop:bg-[rgb(17_20_23/0.6)]"
     >
       <div className="p-6">
         <div className="flex items-start justify-between gap-4">
-          <h2 id="export-modal-title" className="text-lg font-semibold tracking-tight">
+          <h2 id="export-modal-title" className="text-xl/[1.3] font-bold">
             {request?.title}
             {status === 'working' ? '…' : ''}
           </h2>
@@ -117,7 +116,7 @@ export default function ExportAdModal({ request, onClose }: Props) {
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Close"
-            className="-mr-2 -mt-1 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="-mr-2 -mt-1 rounded-control p-1.5 text-ink transition-colors hover:bg-surface"
           >
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
               <path d="m5 5 10 10M15 5 5 15" strokeLinecap="round" />
@@ -128,7 +127,7 @@ export default function ExportAdModal({ request, onClose }: Props) {
         <p
           id="export-modal-status"
           aria-live="polite"
-          className={`mt-4 text-sm ${status === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`mt-4 ${status === 'error' ? 'text-error' : 'text-ink-2'}`}
         >
           {message[status]}
         </p>
@@ -138,10 +137,10 @@ export default function ExportAdModal({ request, onClose }: Props) {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress}
-          className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+          className="mt-3 h-2 overflow-hidden bg-line"
         >
           <div
-            className={`h-full rounded-full bg-linear-to-r from-emerald-500 to-teal-500 transition-[width] ease-out motion-reduce:transition-none ${
+            className={`h-full bg-green transition-[width] ease-out motion-reduce:transition-none ${
               progress === 100 ? 'duration-200' : 'duration-700'
             }`}
             style={{ width: `${progress}%` }}
@@ -160,14 +159,14 @@ export default function ExportAdModal({ request, onClose }: Props) {
                 ref={actionRef}
                 type="button"
                 onClick={() => dialogRef.current?.close()}
-                className={`${primary} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}
+                className={`${primary} btn-primary`}
               >
-                <span aria-hidden="true">✓</span> Download started · Click to close
+                Close
               </button>
               <button
                 type="button"
                 onClick={() => request && void start(request)}
-                className="text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+                className="py-2 text-link underline underline-offset-[3px] hover:decoration-2"
               >
                 Didn’t start? Download again
               </button>
@@ -179,7 +178,7 @@ export default function ExportAdModal({ request, onClose }: Props) {
             </button>
           )}
           {status === 'working' && (
-            <button type="button" disabled className={`${primary} cursor-wait bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500`}>
+            <button type="button" disabled className={`${primary} cursor-wait border-2 border-line text-muted`}>
               Preparing…
             </button>
           )}

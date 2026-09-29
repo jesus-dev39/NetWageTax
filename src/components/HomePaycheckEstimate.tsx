@@ -2,32 +2,17 @@ import { useMemo, useState } from 'react';
 import { calculatePaycheck, type PayFrequency, type PaycheckFilingStatus, type PaycheckInput, type PayMode } from '../lib/paycheck';
 import { toPaycheckSearchParams } from '../lib/paycheck-url';
 import { STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
+import BreakdownBar from './BreakdownBar';
 import CurrencyInput, { formatUSD, formatUSDCents } from './CurrencyInput';
+import { HoursInput, RadioGroup } from './form';
 import NativeSelect from './NativeSelect';
+import { FILING_OPTIONS, FREQUENCY_OPTIONS, PAY_MODE_OPTIONS } from './paycheck-options';
 
 /**
  * Home page paycheck estimate (docs/DESIGN.md §8): a short form and its result, side by side from sm up.
  * Same engine as the full calculator; "See the full breakdown" opens it with these inputs in the URL.
  * Defaults show a result on first paint, including the build-time HTML shown without JavaScript.
  */
-
-const FREQUENCIES: { value: PayFrequency; label: string }[] = [
-  { value: 'weekly', label: 'Every week' },
-  { value: 'biweekly', label: 'Every 2 weeks' },
-  { value: 'semimonthly', label: 'Twice a month' },
-  { value: 'monthly', label: 'Every month' },
-];
-
-const FILING_STATUSES: { value: PaycheckFilingStatus; label: string }[] = [
-  { value: 'single', label: 'Single' },
-  { value: 'mfj', label: 'Married filing jointly' },
-  { value: 'hoh', label: 'Head of household' },
-];
-
-const MODES: { value: PayMode; label: string }[] = [
-  { value: 'salary', label: 'Salary' },
-  { value: 'hourly', label: 'Hourly' },
-];
 
 const minus = (n: number) => (n > 0 ? `−${formatUSDCents(n)}` : formatUSDCents(0));
 
@@ -71,24 +56,7 @@ export default function HomePaycheckEstimate() {
           Paycheck estimate
         </h2>
 
-        <fieldset>
-          <legend className="mb-2 font-semibold text-ink">How are you paid?</legend>
-          <div className="flex gap-6">
-            {MODES.map((m) => (
-              <label key={m.value} className="flex cursor-pointer items-center gap-2 text-ink">
-                <input
-                  type="radio"
-                  name="home-pay-mode"
-                  value={m.value}
-                  checked={mode === m.value}
-                  onChange={() => setMode(m.value)}
-                  className="h-[22px] w-[22px] shrink-0 cursor-pointer appearance-none rounded-full border-2 border-ink bg-page checked:bg-ink checked:shadow-[inset_0_0_0_4px_var(--color-page)]"
-                />
-                {m.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <RadioGroup legend="How are you paid?" name="home-pay-mode" options={PAY_MODE_OPTIONS} value={mode} onChange={setMode} inline />
 
         {mode === 'salary' ? (
           <div>
@@ -109,18 +77,7 @@ export default function HomePaycheckEstimate() {
               <label htmlFor="home-hours" className="mb-1.5 block font-semibold text-ink">
                 Hours a week
               </label>
-              <input
-                id="home-hours"
-                type="text"
-                inputMode="decimal"
-                autoComplete="off"
-                value={hoursPerWeek}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-                  setHoursPerWeek(Number(cleaned) > 168 ? '168' : cleaned);
-                }}
-                className="num h-11 w-full rounded-control border-2 border-field bg-page px-3 text-lg text-ink"
-              />
+              <HoursInput id="home-hours" value={hoursPerWeek} onChange={setHoursPerWeek} unit="hrs" />
             </div>
           </div>
         )}
@@ -130,7 +87,7 @@ export default function HomePaycheckEstimate() {
             Paid
           </label>
           <NativeSelect id="home-frequency" value={frequency} onChange={(e) => setFrequency(e.target.value as PayFrequency)}>
-            {FREQUENCIES.map((f) => (
+            {FREQUENCY_OPTIONS.map((f) => (
               <option key={f.value} value={f.value}>
                 {f.label}
               </option>
@@ -143,7 +100,7 @@ export default function HomePaycheckEstimate() {
             Filing as
           </label>
           <NativeSelect id="home-filing" value={filingStatus} onChange={(e) => setFilingStatus(e.target.value as PaycheckFilingStatus)}>
-            {FILING_STATUSES.map((f) => (
+            {FILING_OPTIONS.map((f) => (
               <option key={f.value} value={f.value}>
                 {f.label}
               </option>
@@ -174,14 +131,10 @@ export default function HomePaycheckEstimate() {
               {formatUSDCents(r.netPerPeriod)}
             </p>
             <p className="num mt-1 text-ink-2">
-              {formatUSD(r.netAnnual)} a year, {r.periods} paychecks
+              {formatUSD(r.netAnnual)} a year, {r.periods} paychecks{state ? '' : ', before state tax'}
             </p>
 
-            <div className="mt-5 flex h-2.5 gap-0.5" aria-hidden="true">
-              {segments.map((s) => (
-                <span key={s.key} className={`${s.color} h-full`} style={{ width: `${(s.value / r.grossAnnual) * 100}%` }} />
-              ))}
-            </div>
+            <BreakdownBar segments={segments} className="mt-5" />
 
             <dl className="num mt-3">
               <Row color="bg-data-federal" label="Federal income tax" value={minus(per(r.federalTax))} />
@@ -200,7 +153,7 @@ export default function HomePaycheckEstimate() {
 
         <p className="sr-only" aria-live="polite">
           {hasPay
-            ? `Take-home pay ${formatUSDCents(r.netPerPeriod)} per paycheck, ${formatUSD(r.netAnnual)} a year.`
+            ? `Take-home pay ${formatUSDCents(r.netPerPeriod)} per paycheck, ${formatUSD(r.netAnnual)} a year${state ? '' : ', before state tax'}.`
             : 'Enter your pay to see your take-home pay.'}
         </p>
 
