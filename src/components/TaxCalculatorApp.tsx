@@ -355,7 +355,7 @@ export default function TaxCalculatorApp() {
               </div>
               <p
                 className={`mt-2 text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${
-                  savings > 0 ? 'glow-emerald text-emerald-400' : 'text-slate-300'
+                  savings > 0 ? 'text-emerald-400' : 'text-slate-300'
                 }`}
                 aria-hidden="true"
               >

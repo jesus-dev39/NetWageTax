@@ -4,7 +4,7 @@
  *   node scripts/export-logo.mjs
  *
  * Renders with a local headless Chrome so the wordmark uses the site's real font
- * (Plus Jakarta Sans, shipped only as woff2) and Tailwind's exact oklch colors.
+ * (Public Sans, shipped only as woff2) and Tailwind's exact oklch colors.
  * The mark comes from public/favicon.svg, the same shapes as components/Logo.tsx.
  * Set CHROME_PATH if Chrome isn't in the default Windows location.
  */
@@ -18,14 +18,14 @@ const root = new URL('..', import.meta.url);
 const chromePath = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const mark = readFileSync(new URL('public/favicon.svg', root), 'utf8');
 const font = readFileSync(
-  new URL('node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2', root),
+  new URL('node_modules/@fontsource-variable/public-sans/files/public-sans-latin-wght-normal.woff2', root),
 ).toString('base64');
 
 // Same colors and weights as the header logo (text-slate-900 / text-emerald-600, tracking-tight).
 const page = (width, height, body) => `<!doctype html><html><head><style>
-  @font-face { font-family: 'Jakarta'; src: url(data:font/woff2;base64,${font}) format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: 'SiteFont'; src: url(data:font/woff2;base64,${font}) format('woff2'); font-weight: 100 900; }
   html, body { margin: 0; width: ${width}px; height: ${height}px; background: #fff; overflow: hidden; }
-  body { display: flex; align-items: center; justify-content: center; font-family: 'Jakarta'; }
+  body { display: flex; align-items: center; justify-content: center; font-family: 'SiteFont'; }
   .word { letter-spacing: -0.025em; line-height: 1; }
   .net { font-weight: 800; color: oklch(20.8% 0.042 265.755); }
   .tax { font-weight: 700; color: oklch(59.6% 0.145 163.225); }
@@ -96,12 +96,12 @@ try {
     }
     // Load both weights explicitly (the square mark has no text, so nothing would trigger it).
     const { result } = await send('Runtime.evaluate', {
-      expression: `Promise.all([document.fonts.load('800 47px Jakarta'), document.fonts.load('700 47px Jakarta')])
+      expression: `Promise.all([document.fonts.load('800 47px SiteFont'), document.fonts.load('700 47px SiteFont')])
         .then((sets) => sets.every((s) => s.length > 0 && s.every((f) => f.status === 'loaded')))`,
       awaitPromise: true,
       returnByValue: true,
     });
-    if (!result.value) throw new Error('Plus Jakarta Sans failed to load');
+    if (!result.value) throw new Error('Public Sans failed to load');
     const { data } = await send('Page.captureScreenshot', {
       format: 'png',
       clip: { x: 0, y: 0, width: o.width, height: o.height, scale: 1 },

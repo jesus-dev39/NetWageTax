@@ -150,7 +150,7 @@ export default function PaycheckCalculatorApp() {
                 Take-Home Pay per paycheck
               </h3>
               <p className="mt-2 flex flex-wrap items-baseline gap-x-2" aria-hidden="true">
-                <span className={`text-5xl font-bold tracking-tight tabular-nums ${hasPay ? 'glow-emerald text-emerald-400' : 'text-slate-300'}`}>
+                <span className={`text-5xl font-bold tracking-tight tabular-nums ${hasPay ? 'text-emerald-400' : 'text-slate-300'}`}>
                   {formatUSDCents(shownNet)}
                 </span>
                 <span className="text-sm font-medium text-slate-400">/ {freq.short}</span>
