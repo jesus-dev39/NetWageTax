@@ -142,7 +142,10 @@ const ROWS: Row[] = [
   NO_TAX('WY', 'Wyoming', 'Wyoming has no personal or corporate income tax.'),
 ];
 
-/** Date the state pages were last reviewed (ISO). Provisional until the data is checked by hand. */
+/**
+ * Date the rules behind the estimates (federal, FICA, and state) were last reviewed by hand (ISO).
+ * Shown in the site-wide status strip, on /methodology/, and on the state pages. Update it after every review.
+ */
 export const STATE_TAX_LAST_UPDATED = '2026-09-27';
 
 /**

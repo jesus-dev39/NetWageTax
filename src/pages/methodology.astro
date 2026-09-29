@@ -21,10 +21,14 @@ const rates = TAX_BRACKETS_2026.single.map((b) => b.rate);
 const bracketRange = `${pct(Math.min(...rates))} to ${pct(Math.max(...rates))}`;
 const obbba = PARAMS_BY_YEAR[SITE_TAX_YEAR];
 
-const summary = [
+const summary: { label: string; value: string; note?: string }[] = [
   { label: 'Tax year', value: String(SITE_TAX_YEAR) },
   { label: 'Rules last checked', value: formatLongDate(STATE_TAX_LAST_UPDATED) },
-  { label: 'State data', value: STATE_TAX_DATA_AS_OF },
+  {
+    label: 'State data',
+    value: STATE_TAX_DATA_AS_OF,
+    note: 'Some bracket tables show the latest year the state has published.',
+  },
 ];
 ---
 
@@ -39,10 +43,13 @@ const summary = [
   >
     <dl class="mt-8 border-t border-line text-[15px] sm:text-base">
       {
-        summary.map(({ label, value }) => (
+        summary.map(({ label, value, note }) => (
           <div class="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:justify-between sm:gap-6">
-            <dt class="text-ink-2">{label}</dt>
-            <dd class="font-semibold text-ink sm:text-right">{value}</dd>
+            <dt class="shrink-0 text-ink-2">{label}</dt>
+            <dd class="text-ink sm:text-right">
+              <span class="font-semibold">{value}</span>
+              {note && <span class="mt-0.5 block text-sm text-ink-2">{note}</span>}
+            </dd>
           </div>
         ))
       }
