@@ -1,11 +1,12 @@
 /**
- * Exports the NetWageTax logo as PNGs into brand/ (not published with the site).
+ * Exports the NetWageTax logo: PNGs into brand/ (not published with the site), plus the
+ * site's public/apple-touch-icon.png and public/favicon.ico.
  *
  *   node scripts/export-logo.mjs
  *
  * Renders with a local headless Chrome so the wordmark uses the site's real font
- * (Public Sans, shipped only as woff2) and Tailwind's exact oklch colors.
- * The mark comes from public/favicon.svg, the same shapes as components/Logo.tsx.
+ * (Public Sans, shipped only as woff2). The mark comes from public/favicon.svg, the same
+ * shapes and flat greens as components/Logo.tsx.
  * Set CHROME_PATH if Chrome isn't in the default Windows location.
  */
 import { spawn } from 'node:child_process';
@@ -21,29 +22,54 @@ const font = readFileSync(
   new URL('node_modules/@fontsource-variable/public-sans/files/public-sans-latin-wght-normal.woff2', root),
 ).toString('base64');
 
-// Same colors and weights as the header logo (text-slate-900 / text-emerald-600, tracking-tight).
-const page = (width, height, body) => `<!doctype html><html><head><style>
+// Same color and weight as the header logo (text-ink, font-bold, tracking-tight).
+const page = (width, height, body, background = '#fff') => `<!doctype html><html><head><style>
   @font-face { font-family: 'SiteFont'; src: url(data:font/woff2;base64,${font}) format('woff2'); font-weight: 100 900; }
-  html, body { margin: 0; width: ${width}px; height: ${height}px; background: #fff; overflow: hidden; }
+  html, body { margin: 0; width: ${width}px; height: ${height}px; background: ${background}; overflow: hidden; }
   body { display: flex; align-items: center; justify-content: center; font-family: 'SiteFont'; }
   .word { letter-spacing: -0.025em; line-height: 1; }
-  .net { font-weight: 800; color: oklch(20.8% 0.042 265.755); }
-  .tax { font-weight: 700; color: oklch(59.6% 0.145 163.225); }
+  .name { font-weight: 700; color: #1a1f24; }
   svg { display: block; }
 </style></head><body>${body}</body></html>`;
 
 const markAt = (size) => mark.replace('<svg ', `<svg width="${size}" height="${size}" `);
 
+// `dir` is relative to the repo root. Transparent outputs are the favicon sizes.
 const outputs = [
-  { file: 'logo-square.png', width: 512, height: 512, body: markAt(360) },
+  { dir: 'brand/', file: 'logo-square.png', width: 512, height: 512, body: markAt(360) },
   {
+    dir: 'brand/',
     file: 'logo-wide.png',
     width: 600,
     height: 150,
     // Header proportions: 32px mark, 10px gap, 18px text, scaled to an 84px mark.
-    body: `<div style="display:flex;align-items:center;gap:26px">${markAt(84)}<span class="word" style="font-size:47px"><span class="net">NetWage</span><span class="tax">Tax</span></span></div>`,
+    body: `<div style="display:flex;align-items:center;gap:26px">${markAt(84)}<span class="word name" style="font-size:47px">NetWageTax</span></div>`,
   },
+  { dir: 'public/', file: 'apple-touch-icon.png', width: 180, height: 180, body: markAt(120) },
+  { dir: null, file: 'favicon-32.png', width: 32, height: 32, body: markAt(32), transparent: true },
+  { dir: null, file: 'favicon-48.png', width: 48, height: 48, body: markAt(48), transparent: true },
 ];
+
+/** Packs PNG images into one .ico (PNG-compressed entries, supported by every current browser). */
+function icoFromPngs(images) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(images.length, 4);
+  let offset = 6 + 16 * images.length;
+  const entries = images.map(({ size, png }) => {
+    const e = Buffer.alloc(16);
+    e.writeUInt8(size >= 256 ? 0 : size, 0);
+    e.writeUInt8(size >= 256 ? 0 : size, 1);
+    e.writeUInt16LE(1, 4); // color planes
+    e.writeUInt16LE(32, 6); // bits per pixel
+    e.writeUInt32LE(png.length, 8);
+    e.writeUInt32LE(offset, 12);
+    offset += png.length;
+    return e;
+  });
+  return Buffer.concat([header, ...entries, ...images.map((i) => i.png)]);
+}
 
 const profile = mkdtempSync(join(tmpdir(), 'nwt-logo-'));
 const port = 9400 + Math.floor(Math.random() * 400);
@@ -78,12 +104,12 @@ try {
       ws.send(JSON.stringify({ id, method, params }));
     });
 
-  const outDir = new URL('brand/', root);
-  mkdirSync(outDir, { recursive: true });
+  const favicons = [];
   for (const o of outputs) {
     await send('Emulation.setDeviceMetricsOverride', { width: o.width, height: o.height, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setDefaultBackgroundColorOverride', o.transparent ? { color: { r: 0, g: 0, b: 0, a: 0 } } : {});
     const htmlPath = join(profile, `${o.file}.html`);
-    writeFileSync(htmlPath, page(o.width, o.height, o.body));
+    writeFileSync(htmlPath, page(o.width, o.height, o.body, o.transparent ? 'transparent' : '#fff'));
     const url = pathToFileURL(htmlPath).href;
     await send('Page.navigate', { url });
     for (let i = 0; i < 80; i++) {
@@ -94,10 +120,9 @@ try {
       if (result.value) break;
       await sleep(100);
     }
-    // Load both weights explicitly (the square mark has no text, so nothing would trigger it).
+    // Load the font explicitly (the mark-only outputs have no text, so nothing would trigger it).
     const { result } = await send('Runtime.evaluate', {
-      expression: `Promise.all([document.fonts.load('800 47px SiteFont'), document.fonts.load('700 47px SiteFont')])
-        .then((sets) => sets.every((s) => s.length > 0 && s.every((f) => f.status === 'loaded')))`,
+      expression: `document.fonts.load('700 47px SiteFont').then((s) => s.length > 0 && s.every((f) => f.status === 'loaded'))`,
       awaitPromise: true,
       returnByValue: true,
     });
@@ -106,9 +131,18 @@ try {
       format: 'png',
       clip: { x: 0, y: 0, width: o.width, height: o.height, scale: 1 },
     });
-    writeFileSync(new URL(o.file, outDir), Buffer.from(data, 'base64'));
-    console.log(`brand/${o.file} (${o.width}×${o.height})`);
+    const png = Buffer.from(data, 'base64');
+    if (!o.dir) {
+      favicons.push({ size: o.width, png });
+      continue;
+    }
+    const outDir = new URL(o.dir, root);
+    mkdirSync(outDir, { recursive: true });
+    writeFileSync(new URL(o.file, outDir), png);
+    console.log(`${o.dir}${o.file} (${o.width}×${o.height})`);
   }
+  writeFileSync(new URL('public/favicon.ico', root), icoFromPngs(favicons));
+  console.log(`public/favicon.ico (${favicons.map((f) => `${f.size}×${f.size}`).join(', ')})`);
   ws.close();
 } finally {
   chrome.kill();

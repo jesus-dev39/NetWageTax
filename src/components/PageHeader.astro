@@ -1,0 +1,20 @@
+---
+/**
+ * Title block for content pages (about, methodology, legal): H1 and lead paragraph at the
+ * docs/DESIGN.md type scale, over a 1px rule. Extra content (a summary list, a date) goes in the slot.
+ */
+interface Props {
+  title: string;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+---
+
+<div class="border-b border-line">
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <h1 class="text-[2rem]/[1.15] font-bold tracking-[-0.02em] text-ink md:text-[2.75rem]/[1.1]">{title}</h1>
+    {lead && <p class="mt-4 text-lg/[1.5] text-ink-2 md:text-xl/[1.5]">{lead}</p>}
+    <slot />
+  </div>
+</div>

@@ -1,15 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="nwt-rise" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#10B981" />
-      <stop offset="1" stop-color="#06B6D4" />
-    </linearGradient>
-    <linearGradient id="nwt-fold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#059669" />
-      <stop offset="1" stop-color="#0891B2" />
-    </linearGradient>
-  </defs>
-  <path d="M4 28V10.5L10.5 6v17.5z" fill="url(#nwt-rise)" />
-  <path d="M4 10.5 10.5 6 28 23.5 21.5 28z" fill="url(#nwt-fold)" />
-  <path d="M21.5 28V8.5L28 3v20.5z" fill="url(#nwt-rise)" />
+  <path d="M4 28V10.5L10.5 6v17.5z" fill="#0d6b47" />
+  <path d="M4 10.5 10.5 6 28 23.5 21.5 28z" fill="#0a5639" />
+  <path d="M21.5 28V8.5L28 3v20.5z" fill="#0d6b47" />
 </svg>

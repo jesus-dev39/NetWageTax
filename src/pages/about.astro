@@ -1,38 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import { CONTACT_EMAIL } from '../lib/site';
-
-const principles = [
-  {
-    title: 'Transparent',
-    body: 'Every result shows its work: the caps, thresholds, and phase-out steps behind the number, so you can check it against the law yourself.',
-  },
-  {
-    title: 'Private by design',
-    body: 'Our calculators run entirely in your browser. The figures you enter are never sent to or stored on our servers.',
-  },
-  {
-    title: 'Free and independent',
-    body: 'We are supported by advertising, not by selling your data or upselling tax products. No sign-up is ever required.',
-  },
-];
+import { STATES } from '../lib/state-tax-data';
 ---
 
 <BaseLayout
   title="About Us"
-  description="NetWageTax builds free, transparent, client-side paycheck and workplace tax calculators for American workers. Learn about our mission and how we work."
+  description="NetWageTax builds free, transparent paycheck and workplace tax calculators for American workers. Learn about our tools, our principles, and how we work."
 >
-  <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">About NetWageTax</h1>
-      <p class="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-        We build free, transparent calculators that help American workers understand their paychecks and the tax rules
-        that shape them.
-      </p>
-    </div>
-  </div>
+  <PageHeader
+    title="About NetWageTax"
+    lead="We build free, transparent calculators that help American workers understand their paychecks and the tax rules that shape them."
+  />
 
-  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+  <article class="prose-page mx-auto max-w-3xl px-4 py-10 sm:px-6">
     <h2 id="mission">Our mission</h2>
     <p>
       Tax rules that affect everyday workers, such as how tips are taxed, how overtime is treated, or what a new code
@@ -45,50 +27,70 @@ const principles = [
       unfamiliar box, or when you want to know what a raise or extra shift really means for your take-home pay.
     </p>
 
+    <h2 id="tools">Our tools</h2>
+    <ul>
+      <li>
+        <a href="/tools/paycheck-calculator/">Paycheck calculator</a>: take-home pay per paycheck for hourly or
+        salaried work, after federal income tax, Social Security, Medicare, and state income tax.
+      </li>
+      <li>
+        <a href="/tools/obbba-tax-calculator/">Tips and overtime calculator</a>: the 2026 federal deductions for
+        qualified tips and overtime under the One Big Beautiful Bill Act, and what they save you in federal income tax.
+      </li>
+      <li>
+        <a href="/state-taxes/">State income tax pages</a>: {STATES.length} pages, one for every state and the
+        District of Columbia, with its rates and a worked example.
+      </li>
+      <li>
+        <a href="/guides/w2-box-12-guide/">W-2 Box 12 guide</a>: what each Box 12 code means, including the new
+        codes TA, TP, and TT, and which ones change your tax return.
+      </li>
+    </ul>
+
     <h2 id="principles">What we stand for</h2>
-    <ul class="!list-none !pl-0 grid gap-4 sm:grid-cols-3">
-      {
-        principles.map(({ title, body }) => (
-          <li class="!mt-0 rounded-xl bg-white dark:bg-slate-900 p-5 ring-1 ring-slate-200 dark:ring-slate-800">
-            <p class="font-semibold text-slate-900 dark:text-slate-100">{title}</p>
-            <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{body}</p>
-          </li>
-        ))
-      }
+    <ul>
+      <li>
+        <strong>Transparent.</strong> Results show the steps behind the number, such as caps, thresholds, and
+        phase-outs, so you can check them against the rules yourself.
+      </li>
+      <li>
+        <strong>Private.</strong> Our calculators run in your browser. The figures you enter are never sent to or
+        stored on our servers.
+      </li>
+      <li>
+        <strong>Free.</strong> Every tool is free to use, with no account or sign-up.
+      </li>
     </ul>
 
     <h2 id="how">How we build our calculators</h2>
     <ul>
       <li>
         <strong>Primary sources first.</strong> Our tools are built from statutory text, IRS forms and instructions,
-        and official guidance, not from secondhand summaries.
+        Social Security Administration figures, and state tax agency publications, not from secondhand summaries.
       </li>
       <li>
         <strong>Tested logic.</strong> Calculation engines are covered by automated tests for caps, filing statuses,
         and phase-out edge cases before they go live.
       </li>
       <li>
-        <strong>Kept current.</strong> Tax parameters are stored by tax year so they can be updated when the IRS
-        publishes new figures or guidance.
+        <strong>Kept current.</strong> Tax parameters are stored by tax year so they can be updated when the IRS or a
+        state publishes new figures or guidance.
       </li>
       <li>
-        <strong>Honest about limits.</strong> We tell you what a tool does not cover, such as FICA or state taxes, so an
-        estimate is never mistaken for a final answer.
+        <strong>Honest about limits.</strong> Our estimates don't include local income taxes, state tax credits, or
+        pre-tax deductions such as 401(k) contributions and health insurance premiums. State income tax is a
+        simplified estimate rather than a full bracket calculation.
       </li>
     </ul>
-
-    <h2 id="tools">Our tools</h2>
     <p>
-      Our first calculator, the <a href="/tools/obbba-tax-calculator/">2026 OBBBA Tips &amp; Overtime Calculator</a>,
-      estimates the new federal deductions for qualified tips and overtime created by the One Big Beautiful Bill Act,
-      and decodes the new W-2 Box 12 Codes TA, TP, and TT. We are expanding our library of paycheck and withholding
-      tools over time.
+      Our sources, what each estimate assumes, and how often we review the data are all on{' '}
+      <a href="/methodology/">How we calculate</a>.
     </p>
 
     <h2 id="independence">Independence and funding</h2>
     <p>
       NetWageTax is an independent project. We are not affiliated with the IRS, any government agency, any employer,
-      or any tax preparation company. The Site is funded by advertising, and advertisers have no influence over our
+      or any tax preparation company. We fund the site with advertising, and advertisers have no influence over our
       calculations or content. NetWageTax is an educational tool and not a substitute for a qualified tax
       professional. Please read our <a href="/disclaimer/">Financial &amp; Tax Disclaimer</a> for details.
     </p>
@@ -96,8 +98,8 @@ const principles = [
     <h2 id="contact">Contact us</h2>
     <p>
       Found an error, have a question, or want to suggest a calculator? Email us at{' '}
-      <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We read every message, although we cannot provide
-      individual tax advice.
+      <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> or use our <a href="/contact/">contact page</a>. We read
+      every message, although we cannot provide individual tax advice.
     </p>
   </article>
 </BaseLayout>

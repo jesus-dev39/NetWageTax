@@ -112,6 +112,11 @@ html {
   @apply bg-green text-page transition-colors duration-150 hover:bg-green-hover;
 }
 
+/* Page container: 1120px max, 16/24/32px side gutters (docs/DESIGN.md §4). */
+@utility container-page {
+  @apply mx-auto w-full max-w-[70rem] px-4 sm:px-6 lg:px-8;
+}
+
 /* Tabular, lining figures for amounts, percentages, and rates, so columns of numbers line up. */
 @utility num {
   font-variant-numeric: tabular-nums lining-nums;

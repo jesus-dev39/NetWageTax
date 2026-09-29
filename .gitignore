@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Per-phase redesign screenshots (local review only)
+docs/design-audit/phases/
