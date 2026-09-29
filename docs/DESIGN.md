@@ -215,8 +215,9 @@ changes to "Figure out your take-home pay".
     the total, a "See the full breakdown" button, and the assumptions.
 
 **Header, mobile (390):** one column. H1 at 32px, the lead, and the calculator starting on the
-first screen (about 350px down). "Paid" and "Filing as" share a row to shorten the form; the
-result sits right below it. The parameter list shrinks to one line under the calculator.
+first screen (about 350px down), with the result right below the form. The parameter list shrinks
+to one line under the calculator. "Paid" and "Filing as" are stacked, not side by side: at half
+width "Head of household" doesn't fit in the select, on mobile or in the desktop form column.
 
 **Behavior:**
 
@@ -231,7 +232,8 @@ result sits right below it. The parameter list shrinks to one line under the cal
 
 **Below the header:**
 
-1. "Other tools" as a tool list (tips & overtime, state taxes, W-2 codes).
+1. "Other tools" as a tool list (tips & overtime, W-2 codes). State taxes aren't repeated here
+   because the next section links to every state.
 2. "2026 income tax by state": all 51 states and DC as link columns grouped into no income tax,
    flat rate, and progressive brackets, with counts. These are important internal links for
    search, so they stay on the home page.

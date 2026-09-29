@@ -10,7 +10,8 @@ import {
   type PayMode,
 } from '../lib/paycheck';
 import { buildPaycheckRows, PAYCHECK_TAX_YEAR } from '../lib/paycheck-summary';
-import { findState, formatStateRate, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
+import { parsePaycheckSearchParams } from '../lib/paycheck-url';
+import { formatStateRate, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
 import CurrencyInput, { formatUSD, formatUSDCents } from './CurrencyInput';
 import NoStateTaxBadge from './NoStateTaxBadge';
 import PaycheckExportActions from './PaycheckExportActions';
@@ -34,10 +35,17 @@ export default function PaycheckCalculatorApp() {
   const [filingStatus, setFilingStatus] = useState<PaycheckFilingStatus>('single');
   const [stateCode, setStateCode] = useState<StateCode | null>(null);
 
-  // Deep link from the State Directory: ?state=texas or ?state=TX.
+  // Deep links: ?state=texas from the state pages, and every input from the home page estimate.
   useEffect(() => {
-    const s = findState(new URLSearchParams(window.location.search).get('state'));
-    if (s) setStateCode(s.code);
+    const p = parsePaycheckSearchParams(window.location.search);
+    if (p.mode) setMode(p.mode);
+    if (p.annualSalary !== undefined) setAnnualSalary(p.annualSalary);
+    if (p.hourlyRate !== undefined) setHourlyRate(p.hourlyRate);
+    if (p.hoursPerWeek !== undefined) setHoursPerWeek(String(p.hoursPerWeek));
+    if (p.overtimeHoursPerWeek !== undefined) setOvertimeHours(String(p.overtimeHoursPerWeek));
+    if (p.frequency) setFrequency(p.frequency);
+    if (p.filingStatus) setFilingStatus(p.filingStatus);
+    if (p.stateCode) setStateCode(p.stateCode);
   }, []);
 
   const input: PaycheckInput = useMemo(
