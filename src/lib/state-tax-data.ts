@@ -362,18 +362,18 @@ export function calculateStateIncomeTax(taxableIncome: number, stateCode: StateC
 
 const pct = (r: number) => `${+(r * 100).toFixed(2)}%`;
 
-/** "0% State Tax" · "3.99% Flat Tax" · "1%–13.3% Progressive". */
+/** "No state income tax" · "3.99% flat tax" · "1%–13.3% progressive" (sentence case, docs/DESIGN.md §3). */
 export function formatStateRate(s: StateTaxInfo): string {
-  if (s.structure === 'none') return '0% State Tax';
-  if (s.structure === 'flat') return `${pct(s.estimateRate)} Flat Tax`;
+  if (s.structure === 'none') return 'No state income tax';
+  if (s.structure === 'flat') return `${pct(s.estimateRate)} flat tax`;
   const [lo, hi] = s.bracketRange!;
-  return `${pct(lo)}–${pct(hi)} Progressive`;
+  return `${pct(lo)}–${pct(hi)} progressive`;
 }
 
 export const STRUCTURE_LABELS: Record<TaxStructure, string> = {
-  none: 'No Income Tax States',
-  flat: 'Flat Tax States',
-  graduated: 'Progressive Tax States',
+  none: 'No income tax',
+  flat: 'Flat rate',
+  graduated: 'Progressive brackets',
 };
 
 /** What the calculator, breakdown chart and exports need about the chosen state. */

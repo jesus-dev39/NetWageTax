@@ -51,9 +51,9 @@ describe('lookup and labels', () => {
   });
 
   it('formats rate labels', () => {
-    expect(formatStateRate(STATES_BY_CODE.FL)).toBe('0% State Tax');
-    expect(formatStateRate(STATES_BY_CODE.NC)).toBe('3.99% Flat Tax');
-    expect(formatStateRate(STATES_BY_CODE.CA)).toBe('1%–13.3% Progressive');
+    expect(formatStateRate(STATES_BY_CODE.FL)).toBe('No state income tax');
+    expect(formatStateRate(STATES_BY_CODE.NC)).toBe('3.99% flat tax');
+    expect(formatStateRate(STATES_BY_CODE.CA)).toBe('1%–13.3% progressive');
   });
 });
 

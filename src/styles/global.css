@@ -44,6 +44,11 @@
   --color-data-fica: #a56a12;
   --color-data-state: #7a4f93;
 
+  /* State map categories (hue, not contrast, tells them apart; the legend and directory carry the same data as text). */
+  --color-map-none: #b9dcc8;
+  --color-map-flat: #b8cbe3;
+  --color-map-graduated: #dcdfe3;
+
   --radius-control: 4px;
   --radius-panel: 6px;
 }
@@ -68,6 +73,10 @@
   --color-data-federal: #8fa9cc;
   --color-data-fica: #e0a64a;
   --color-data-state: #b996d0;
+
+  --color-map-none: #2c5c46;
+  --color-map-flat: #34496a;
+  --color-map-graduated: #3b4249;
 }
 
 html {

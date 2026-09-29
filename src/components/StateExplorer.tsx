@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   calculateStateIncomeTax,
   formatStateRate,
@@ -12,8 +12,9 @@ import {
   type TaxStructure,
 } from '../lib/state-tax-data';
 import { formatUSD } from './CurrencyInput';
+import { Field, RADIO_CLASS } from './form';
+import NativeSelect from './NativeSelect';
 import NoStateTaxBadge from './NoStateTaxBadge';
-import StateSelect from './StateSelect';
 import USStateMap, { MAP_LEGEND } from './USStateMap';
 
 const PAYCHECK_PATH = '/tools/paycheck-calculator/';
@@ -24,6 +25,8 @@ const STRUCTURES: TaxStructure[] = ['none', 'flat', 'graduated'];
 // Both calculators read ?state=<postal code> on mount and preselect it.
 const paycheckHref = (s: StateTaxInfo) => `${PAYCHECK_PATH}?state=${s.code}#calculator`;
 const obbbaHref = (s: StateTaxInfo) => `${OBBBA_PATH}?state=${s.code}#calculator`;
+
+const link = 'text-link underline underline-offset-[3px] hover:decoration-2';
 
 export default function StateExplorer() {
   const [selected, setSelected] = useState<StateCode | null>(null);
@@ -36,95 +39,84 @@ export default function StateExplorer() {
   const info = selected ? STATES_BY_CODE[selected] : null;
 
   return (
-    <div className="flex flex-col gap-10">
-      <section
-        aria-labelledby="map-heading"
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 id="map-heading" className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-              2026 state income tax map
-            </h2>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">Hover over a state to see its rate, or click to see details.</p>
-          </div>
-          <div role="group" aria-label="Filter the map by tax structure" className="flex flex-wrap gap-2">
-            <FilterChip active={filter === null} onClick={() => setFilter(null)}>
-              All 51
-            </FilterChip>
+    <div className="flex flex-col gap-12">
+      <section aria-labelledby="map-heading">
+        <h2 id="map-heading" className="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">
+          2026 state income tax map
+        </h2>
+        <p className="mt-2 text-ink-2">Point at a state to see its rate, or select it to see details.</p>
+
+        <fieldset className="mt-4">
+          <legend className="mb-2 font-semibold text-ink">Show on the map</legend>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <FilterRadio checked={filter === null} onChange={() => setFilter(null)} label={`All (${STATES.length})`} />
             {MAP_LEGEND.map(({ structure, label, swatch }) => (
-              <FilterChip
+              <FilterRadio
                 key={structure}
-                active={filter === structure}
-                onClick={() => setFilter(filter === structure ? null : structure)}
-              >
-                <span className={`h-2.5 w-2.5 rounded-sm ${swatch}`} aria-hidden="true" />
-                {label} ({STATES.filter((s) => s.structure === structure).length})
-              </FilterChip>
+                checked={filter === structure}
+                onChange={() => setFilter(structure)}
+                label={`${label} (${STATES.filter((s) => s.structure === structure).length})`}
+                swatch={swatch}
+              />
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <USStateMap selected={selected} onSelect={select} highlighted={highlighted} filter={filter} />
 
-          <div className="flex flex-col gap-4">
-            <div>
-              <label htmlFor="explorer-state" className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Find your state
-              </label>
-              <div className="mt-2">
-                <StateSelect id="explorer-state" value={selected} onChange={select} />
-              </div>
-            </div>
+          <div className="flex flex-col gap-5">
+            <Field id="explorer-state" label="Find your state">
+              <NativeSelect id="explorer-state" value={selected ?? ''} onChange={(e) => select((e.target.value || null) as StateCode | null)}>
+                <option value="">Choose a state</option>
+                {STATES.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
 
             {info ? (
               <StateDetail info={info} />
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                Select a state on the map or search above to see its 2026 income tax structure and an example estimate.
+              <p className="border-l-4 border-line bg-surface px-4 py-3 text-[15px] text-ink-2">
+                Select a state on the map or choose one above to see its 2026 income tax structure and an example estimate.
               </p>
             )}
           </div>
         </div>
       </section>
 
-      <section aria-labelledby="directory-heading">
-        <h2 id="directory-heading" className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+      <section aria-labelledby="directory-heading" className="border-t border-line pt-10">
+        <h2 id="directory-heading" className="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">
           State directory
         </h2>
-        <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Pick a state to see its 2026 rates, a worked example, and how it compares with its neighbors.
-        </p>
+        <p className="mt-2 text-ink-2">Pick a state to see its 2026 rates, a worked example, and how it compares with its neighbors.</p>
 
         {STRUCTURES.map((structure) => {
           const group = STATES.filter((s) => s.structure === structure);
           return (
             <div key={structure} className="mt-8">
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                <span className={`h-3 w-3 rounded-sm ${MAP_LEGEND.find((l) => l.structure === structure)!.swatch}`} aria-hidden="true" />
+              <h3 className="flex items-center gap-2 font-bold text-ink">
+                <span className={`h-3 w-3 ${MAP_LEGEND.find((l) => l.structure === structure)!.swatch}`} aria-hidden="true" />
                 {STRUCTURE_LABELS[structure]}
-                <span className="text-sm font-normal text-slate-500 dark:text-slate-400">({group.length})</span>
+                <span className="num font-normal text-ink-2">({group.length})</span>
               </h3>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <ul className="mt-2 grid border-t border-line sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                 {group.map((s) => (
-                  <li key={s.code}>
+                  <li key={s.code} className="flex flex-wrap items-baseline justify-between gap-x-3 border-b border-line py-2">
                     <a
                       href={statePagePath(s)}
                       onMouseEnter={() => setHighlighted(s.code)}
                       onMouseLeave={() => setHighlighted(null)}
                       onFocus={() => setHighlighted(s.code)}
                       onBlur={() => setHighlighted(null)}
-                      className="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition hover:border-emerald-400 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500/60"
+                      className={link}
                     >
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium text-slate-900 dark:text-slate-100">{s.name}</span>
-                        <span className="block text-xs text-slate-500 dark:text-slate-400">{formatStateRate(s)}</span>
-                      </span>
-                      <span className="shrink-0 font-mono text-xs text-slate-400 transition group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
-                        {s.code} <span aria-hidden="true">→</span>
-                      </span>
+                      {s.name}
                     </a>
+                    {structure !== 'none' && <span className="num text-[15px] text-ink-2">{formatStateRate(s)}</span>}
                   </li>
                 ))}
               </ul>
@@ -132,11 +124,14 @@ export default function StateExplorer() {
           );
         })}
 
-        <p className="mt-8 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-8 max-w-3xl text-sm text-ink-2">
           Data: {STATE_TAX_DATA_AS_OF}. Estimates cover state income tax on wages for a single filer and exclude local
-          income taxes and state credits. Progressive-state estimates use the typical effective rate for about $65,000
-          of wages. State treatment varies: many states don&apos;t automatically follow the federal tips and overtime
-          deduction. Check your state&apos;s rules and its revenue department for exact figures.
+          income taxes and state credits. Progressive-state estimates use the typical effective rate for about $65,000 of
+          wages. Each state decides whether to follow the federal tips and overtime deduction; check your state’s revenue
+          department for exact figures.{' '}
+          <a href="/methodology/" className={link}>
+            How we calculate
+          </a>
         </p>
       </section>
     </div>
@@ -146,92 +141,49 @@ export default function StateExplorer() {
 function StateDetail({ info }: { info: StateTaxInfo }) {
   const example = calculateStateIncomeTax(EXAMPLE_WAGES, info.code);
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40" aria-live="polite">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{info.name}</h3>
-        <span className="font-mono text-sm text-slate-400">{info.code}</span>
+    <div aria-live="polite">
+      <h3 className="text-xl/[1.3] font-bold text-ink">{info.name}</h3>
+      <div className="mt-1">
+        {info.structure === 'none' ? <NoStateTaxBadge /> : <p className="num font-semibold text-ink">{formatStateRate(info)}</p>}
       </div>
-      {info.structure === 'none' ? (
-        <NoStateTaxBadge className="mt-2" />
-      ) : (
-        <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-300">{formatStateRate(info)}</p>
-      )}
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{info.note}</p>
-      {info.localTaxNote && (
-        <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          <span className="font-medium text-slate-700 dark:text-slate-300">Local taxes: </span>
-          {info.localTaxNote}
-        </p>
-      )}
-      <p className="mt-3 border-t border-slate-200 pt-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-        Est. state tax on {formatUSD(EXAMPLE_WAGES)} of wages:{' '}
-        <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatUSD(example)}</span>
-      </p>
-      <a
-        href={statePagePath(info)}
-        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:text-emerald-400"
-      >
-        Full {info.name} tax guide <span aria-hidden="true">→</span>
-      </a>
-      <div className="mt-4 flex flex-col gap-2" role="group" aria-label={`Calculators with ${info.name} taxes`}>
-        <ToolCard
-          href={paycheckHref(info)}
-          title="Paycheck Calculator"
-          subtitle={`Calculate take-home pay with ${info.name} tax`}
-          icon="M3 7.5A1.5 1.5 0 0 1 4.5 6h13A1.5 1.5 0 0 1 19 7.5v1H15a2.5 2.5 0 0 0 0 5h4v1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 14.5z M15 8.5h5v5h-5a2.5 2.5 0 0 1 0-5Z M15.5 11h.01 M6 6l7.5-2.5L15 6"
-        />
-        <ToolCard
-          href={obbbaHref(info)}
-          title="Tips & Overtime Calculator"
-          subtitle={`Calculate Schedule 1-A deduction with ${info.name} tax`}
-          icon="M6 3h12v18l-2-1.25L14 21l-2-1.25L10 21l-2-1.25L6 21z M9 8h6 M9 11.5h6 M9 15h3.5"
-        />
-      </div>
+      <p className="mt-3 text-[15px] text-ink-2">{info.note}</p>
+      <dl className="num mt-3 border-t border-line text-[15px]">
+        <div className="flex justify-between gap-4 border-b border-line py-2">
+          <dt className="text-ink-2">Est. tax on {formatUSD(EXAMPLE_WAGES)} of wages</dt>
+          <dd className="font-semibold text-ink">{formatUSD(example)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 border-b border-line py-2">
+          <dt className="text-ink-2">Local income taxes</dt>
+          <dd className="text-right font-semibold text-ink">{info.localTaxNote ? 'Some cities and counties' : 'None'}</dd>
+        </div>
+      </dl>
+      <ul className="mt-4 flex flex-col gap-2" aria-label={`More about ${info.name}`}>
+        <li>
+          <a href={statePagePath(info)} className={`${link} font-semibold`}>
+            {info.name} tax guide
+          </a>
+        </li>
+        <li>
+          <a href={paycheckHref(info)} className={link}>
+            Paycheck calculator with {info.name} tax
+          </a>
+        </li>
+        <li>
+          <a href={obbbaHref(info)} className={link}>
+            Tips and overtime calculator with {info.name} tax
+          </a>
+        </li>
+      </ul>
     </div>
   );
 }
 
-/** Equal-weight launcher for a calculator, preset to the selected state. */
-function ToolCard(props: { href: string; title: string; subtitle: string; icon: string }) {
+function FilterRadio(props: { checked: boolean; onChange: () => void; label: string; swatch?: string }) {
   return (
-    <a
-      href={props.href}
-      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 text-left transition-all hover:border-emerald-500/60 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:border-slate-700/80 dark:bg-slate-800/80 dark:hover:border-emerald-500/60 dark:hover:bg-slate-800"
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d={props.icon} />
-          </svg>
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">{props.title}</span>
-          <span className="block text-xs text-slate-500 dark:text-slate-400">{props.subtitle}</span>
-        </span>
-      </span>
-      <span
-        aria-hidden="true"
-        className="shrink-0 text-lg text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-500 dark:text-slate-500 dark:group-hover:text-emerald-400"
-      >
-        →
-      </span>
-    </a>
-  );
-}
-
-function FilterChip(props: { active: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={props.active}
-      onClick={props.onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
-        props.active
-          ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-          : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-600'
-      }`}
-    >
-      {props.children}
-    </button>
+    <label className="flex cursor-pointer items-center gap-2.5 text-ink">
+      <input type="radio" name="map-filter" checked={props.checked} onChange={props.onChange} className={RADIO_CLASS} />
+      {props.swatch && <span className={`h-3 w-3 ${props.swatch}`} aria-hidden="true" />}
+      <span className="num">{props.label}</span>
+    </label>
   );
 }
