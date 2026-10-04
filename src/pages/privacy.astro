@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import { CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE, SITE_DOMAIN } from '../lib/site';
 ---
 
@@ -7,14 +8,12 @@ import { CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE, SITE_DOMAIN } from '../lib/site';
   title="Privacy Policy"
   description="How NetWageTax handles information: calculations run in your browser and are never stored, plus our disclosures on log files, cookies, and third-party advertising."
 >
-  <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Privacy Policy</h1>
-      <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Effective and last updated: {LEGAL_EFFECTIVE_DATE}</p>
-    </div>
-  </div>
+  <PageHeader title="Privacy Policy">
+    <p class="mt-4 text-[15px] text-ink-2">Effective and last updated: {LEGAL_EFFECTIVE_DATE}</p>
+  </PageHeader>
 
-  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+  <div class="container-page py-10">
+  <article class="prose-page max-w-3xl">
     <p>
       This Privacy Policy explains what information NetWageTax (“NetWageTax,” “we,” “us,” or “our”) collects when you
       visit {SITE_DOMAIN} (the “Site”), how that information is used, and the choices you have. By using the Site, you
@@ -197,4 +196,5 @@ import { CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE, SITE_DOMAIN } from '../lib/site';
       Questions about this policy can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
     </p>
   </article>
+  </div>
 </BaseLayout>

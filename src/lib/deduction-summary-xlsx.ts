@@ -15,7 +15,7 @@ const COLS = 6;
 
 export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
   const rows: Cell[][] = [
-    [wide(`NetWageTax - ${s.taxYear} Federal Tips & Overtime Deduction Worksheet`, COLS)],
+    [wide(`NetWageTax: ${s.taxYear} tips and overtime deduction worksheet`, COLS)],
     ['Reference', s.referenceId, null, 'Generated', s.generatedAt],
     [],
     [wide('Parameters', COLS)],
@@ -50,7 +50,7 @@ export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
     [wide('Tax impact', COLS)],
     ['Net federal deduction (Schedule 1-A)', usd(s.totalDeduction)],
     ['Estimated federal income tax savings', usd(s.savings)],
-    ['Estimated FICA still owed on tips & overtime', usd(s.fica)],
+    ['Estimated FICA still owed on tips and overtime', usd(s.fica)],
     [
       s.stateTax ? `Estimated state income tax (${s.stateTax.code})` : 'Estimated state income tax',
       s.stateTax ? usd(s.stateTax.tax) : 'No state selected',
@@ -62,7 +62,7 @@ export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
 
   const wb = utils.book_new();
   utils.book_append_sheet(wb, buildSheet(rows, [44, 16, 16, 16, 16, 16]), 'Deduction Worksheet');
-  wb.Props = { Title: `NetWageTax ${s.taxYear} Tips & Overtime Deduction Worksheet`, Author: 'NetWageTax' };
+  wb.Props = { Title: `NetWageTax: ${s.taxYear} tips and overtime deduction worksheet`, Author: 'NetWageTax' };
   return wb;
 }
 

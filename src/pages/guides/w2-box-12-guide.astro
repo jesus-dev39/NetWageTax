@@ -1,12 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
 import { CONTACT_EMAIL } from '../../lib/site';
 
-const title = 'Form W-2 Box 12 Codes: Complete 2025–2026 Reference Guide';
+// Search intent: "w2 box 12 codes", "box 12 code dd", "what is code d on w2". Lead with the code list.
+const title = 'W-2 Box 12 Codes: What Every Code Means (2026)';
 const description =
-  'What every Form W-2 Box 12 code means, including the new Codes TA, TP, and TT under the One Big Beautiful Bill Act, plus D, DD, W, AA and more, and which ones affect your tax return.';
+  'What every W-2 Box 12 code means, from A to II, plus the new TP, TT, and TA codes for tips, overtime, and Trump Accounts, and which ones change your tax return.';
 const PUBLISHED = '2026-09-26';
-const REVIEWED = '2026-09-26';
+const REVIEWED = '2026-10-04';
 const reviewedLabel = new Date(`${REVIEWED}T12:00:00`).toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
@@ -14,13 +16,10 @@ const reviewedLabel = new Date(`${REVIEWED}T12:00:00`).toLocaleDateString('en-US
 });
 
 const toc = [
+  { id: 'all-codes', label: 'Every Box 12 code, A to TT' },
   { id: 'what-is-box-12', label: 'What Box 12 is' },
   { id: 'new-codes', label: 'The new codes: TA, TP, and TT' },
-  { id: 'code-tp', label: 'Code TP: qualified tips' },
-  { id: 'code-tt', label: 'Code TT: qualified overtime' },
-  { id: 'code-ta', label: 'Code TA: Trump Account contributions' },
   { id: '2025-vs-2026', label: '2025 vs. 2026 Forms W-2' },
-  { id: 'all-codes', label: 'Every Box 12 code at a glance' },
   { id: 'mistakes', label: 'Common mistakes' },
   { id: 'sources', label: 'Sources' },
 ];
@@ -35,49 +34,199 @@ const EFFECT_LABEL: Record<Effect, string> = {
   owed: 'Tax you owe',
 };
 
+/** Status tags (docs/DESIGN.md §6): green only for the deduction, warning tint for tax owed. */
 const EFFECT_CLASS: Record<Effect, string> = {
-  new: 'bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30',
-  excluded: 'bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30',
-  included: 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
-  info: 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
-  owed: 'bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30',
+  new: 'bg-green-tint text-green',
+  excluded: 'bg-surface text-ink-2',
+  included: 'bg-surface text-ink-2',
+  info: 'bg-surface text-ink-2',
+  owed: 'bg-warning-tint text-ink',
 };
 
-const codes: { code: string; reports: string; effect: Effect; action: string }[] = [
-  { code: 'TA', reports: 'Employer contributions to a Trump Account (IRC §530A)', effect: 'info', action: 'Nothing to enter for tips or overtime. Generally excluded from income up to the annual limit.' },
-  { code: 'TP', reports: 'Qualified tips eligible for the “no tax on tips” deduction', effect: 'new', action: 'Starting amount for Schedule 1-A, Part II. You apply the cap and phase-out yourself.' },
-  { code: 'TT', reports: 'Qualified overtime compensation (FLSA overtime premium only)', effect: 'new', action: 'Starting amount for Schedule 1-A, Part III. You apply the cap and phase-out yourself.' },
-  { code: 'A', reports: 'Uncollected Social Security or RRTA tax on tips', effect: 'owed', action: 'Your employer couldn’t withhold it. You pay it with your return (Schedule 2).' },
-  { code: 'B', reports: 'Uncollected Medicare tax on tips', effect: 'owed', action: 'Same as Code A, for Medicare. Paid with your return (Schedule 2).' },
-  { code: 'C', reports: 'Taxable cost of group-term life insurance over $50,000', effect: 'included', action: 'Already counted in Boxes 1, 3, and 5. No extra step.' },
-  { code: 'D', reports: 'Elective deferrals to a 401(k) plan, including SIMPLE 401(k)', effect: 'excluded', action: 'Pre-tax savings, excluded from Box 1 but still subject to FICA. May affect the Saver’s Credit.' },
-  { code: 'E', reports: 'Elective deferrals to a 403(b) plan', effect: 'excluded', action: 'Same treatment as Code D.' },
-  { code: 'F', reports: 'Elective deferrals to a 408(k)(6) SARSEP', effect: 'excluded', action: 'Same treatment as Code D.' },
-  { code: 'G', reports: 'Deferrals and employer contributions to a 457(b) plan', effect: 'excluded', action: 'Pre-tax deferred compensation, excluded from Box 1.' },
-  { code: 'H', reports: 'Elective deferrals to a 501(c)(18)(D) plan', effect: 'included', action: 'Included in Box 1. You may deduct it on Schedule 1.' },
-  { code: 'J', reports: 'Nontaxable sick pay', effect: 'excluded', action: 'Informational; not included in Box 1.' },
-  { code: 'K', reports: '20% excise tax on excess golden parachute payments', effect: 'owed', action: 'Reported on Schedule 2.' },
-  { code: 'L', reports: 'Substantiated employee business expense reimbursements', effect: 'excluded', action: 'Nontaxable reimbursements under an accountable plan.' },
-  { code: 'M', reports: 'Uncollected Social Security/RRTA tax on group-term life insurance (former employees)', effect: 'owed', action: 'Paid with your return (Schedule 2).' },
-  { code: 'N', reports: 'Uncollected Medicare tax on group-term life insurance (former employees)', effect: 'owed', action: 'Paid with your return (Schedule 2).' },
-  { code: 'P', reports: 'Excludable moving expense reimbursements paid to members of the Armed Forces', effect: 'excluded', action: 'Nontaxable; applies only to active-duty military moves.' },
-  { code: 'Q', reports: 'Nontaxable combat pay', effect: 'excluded', action: 'Not taxed, but you can elect to include it for the Earned Income Tax Credit.' },
-  { code: 'R', reports: 'Employer contributions to an Archer MSA', effect: 'excluded', action: 'Report on Form 8853.' },
-  { code: 'S', reports: 'Salary reduction contributions to a SIMPLE IRA', effect: 'excluded', action: 'Pre-tax savings, excluded from Box 1.' },
-  { code: 'T', reports: 'Employer-provided adoption benefits', effect: 'included', action: 'Use Form 8839 to figure the excludable amount.' },
-  { code: 'V', reports: 'Income from exercising nonstatutory stock options', effect: 'included', action: 'Already in Boxes 1, 3, and 5. Keep it for your cost basis when you sell.' },
-  { code: 'W', reports: 'Employer and pre-tax employee contributions to a Health Savings Account (HSA)', effect: 'excluded', action: 'Report on Form 8889 to check you stayed within the annual limit.' },
-  { code: 'Y', reports: 'Deferrals under a §409A nonqualified deferred compensation plan', effect: 'info', action: 'Informational; reporting is optional for employers.' },
-  { code: 'Z', reports: 'Income under a nonqualified deferred compensation plan that fails §409A', effect: 'owed', action: 'Already in Box 1, plus an additional 20% tax and interest on Schedule 2.' },
-  { code: 'AA', reports: 'Designated Roth contributions to a 401(k) plan', effect: 'included', action: 'After-tax savings; already in Box 1.' },
-  { code: 'BB', reports: 'Designated Roth contributions to a 403(b) plan', effect: 'included', action: 'After-tax savings; already in Box 1.' },
-  { code: 'DD', reports: 'Cost of employer-sponsored health coverage', effect: 'info', action: 'Informational only. It is not taxable and you do not enter it anywhere.' },
-  { code: 'EE', reports: 'Designated Roth contributions to a governmental 457(b) plan', effect: 'included', action: 'After-tax savings; already in Box 1.' },
-  { code: 'FF', reports: 'Permitted benefits under a qualified small employer HRA (QSEHRA)', effect: 'info', action: 'May reduce a Premium Tax Credit if you buy Marketplace coverage.' },
-  { code: 'GG', reports: 'Income from qualified equity grants under §83(i)', effect: 'included', action: 'Already in Box 1.' },
-  { code: 'HH', reports: 'Aggregate deferrals under §83(i) elections', effect: 'info', action: 'Informational.' },
-  { code: 'II', reports: 'Medicaid waiver payments excluded from income (Notice 2014-7)', effect: 'excluded', action: 'Excluded from Box 1; may still count as earned income for some credits.' },
+interface Code {
+  code: string;
+  /** Short name, used in the heading ("Code D: 401(k) contributions"). */
+  name: string;
+  /** Plain-English explanation of what the amount is. */
+  meaning: string;
+  effect: Effect;
+  /** What the worker does with it on their return. */
+  action: string;
+  /** Codes with a full section above link to it instead of getting their own anchor. */
+  section?: string;
+}
+
+// IRS order (General Instructions for Forms W-2 and W-3). There are no codes I, O, U, X, CC.
+const codes: Code[] = [
+  {
+    code: 'A', name: 'Uncollected Social Security tax on tips', effect: 'owed',
+    meaning: 'Your tips were larger than the wages your employer could withhold from, so part of the Social Security (or Railroad Retirement) tax on those tips wasn’t collected.',
+    action: 'You owe it. Report it on Schedule 2 and pay it with your return.',
+  },
+  {
+    code: 'B', name: 'Uncollected Medicare tax on tips', effect: 'owed',
+    meaning: 'The same as Code A, for the Medicare tax on your tips.',
+    action: 'You owe it. Report it on Schedule 2 and pay it with your return.',
+  },
+  {
+    code: 'C', name: 'Group-term life insurance over $50,000', effect: 'included',
+    meaning: 'Life insurance your employer pays for is a taxable benefit once coverage passes $50,000. This is the taxable cost of the coverage above that amount.',
+    action: 'Nothing to do. It’s already counted in Boxes 1, 3, and 5.',
+  },
+  {
+    code: 'D', name: '401(k) contributions', effect: 'excluded',
+    meaning: 'The pre-tax amount you chose to put into your 401(k), including a SIMPLE 401(k). It’s left out of your taxable wages in Box 1 but still counts for Social Security and Medicare (Boxes 3 and 5).',
+    action: 'Nothing to enter. Your Box 1 wages already reflect it. It can matter for the Saver’s Credit (Form 8880).',
+  },
+  {
+    code: 'E', name: '403(b) contributions', effect: 'excluded',
+    meaning: 'Pre-tax contributions to a 403(b) plan, the retirement plan used by schools, hospitals, and nonprofits.',
+    action: 'Nothing to enter. Treated like Code D.',
+  },
+  {
+    code: 'F', name: 'SARSEP contributions', effect: 'excluded',
+    meaning: 'Pre-tax contributions to a salary reduction SEP (SARSEP) under section 408(k)(6), an older small-employer retirement plan.',
+    action: 'Nothing to enter. Treated like Code D.',
+  },
+  {
+    code: 'G', name: '457(b) contributions', effect: 'excluded',
+    meaning: 'Pre-tax deferrals, and any employer contributions, to a 457(b) deferred compensation plan, common for state and local government workers.',
+    action: 'Nothing to enter. It’s already left out of Box 1.',
+  },
+  {
+    code: 'H', name: '501(c)(18)(D) plan contributions', effect: 'included',
+    meaning: 'Contributions to a pension plan created before June 25, 1959, and funded only by employee contributions. Unlike a 401(k), these are included in your Box 1 wages.',
+    action: 'You can deduct the amount as an adjustment to income on Schedule 1.',
+  },
+  {
+    code: 'J', name: 'Nontaxable sick pay', effect: 'excluded',
+    meaning: 'Sick pay that isn’t taxable, usually because you paid the premiums for the disability policy with after-tax money.',
+    action: 'Nothing to do. It isn’t in Box 1.',
+  },
+  {
+    code: 'K', name: 'Excise tax on golden parachute payments', effect: 'owed',
+    meaning: 'The 20% excise tax your employer withheld on excess golden parachute payments, made when a company changes ownership.',
+    action: 'Report it on Schedule 2.',
+  },
+  {
+    code: 'L', name: 'Business expense reimbursements', effect: 'excluded',
+    meaning: 'Travel, mileage, or per diem reimbursements you accounted for to your employer, up to the federal rate. Anything paid above that rate is already in Box 1.',
+    action: 'Nothing to do. These reimbursements aren’t taxable.',
+  },
+  {
+    code: 'M', name: 'Uncollected Social Security tax on group-term life insurance', effect: 'owed',
+    meaning: 'For former employees: Social Security (or RRTA) tax on group-term life insurance coverage over $50,000 that your employer couldn’t collect.',
+    action: 'You owe it. Report it on Schedule 2 and pay it with your return.',
+  },
+  {
+    code: 'N', name: 'Uncollected Medicare tax on group-term life insurance', effect: 'owed',
+    meaning: 'For former employees: the same as Code M, for the Medicare tax.',
+    action: 'You owe it. Report it on Schedule 2 and pay it with your return.',
+  },
+  {
+    code: 'P', name: 'Military moving expense reimbursements', effect: 'excluded',
+    meaning: 'Moving expenses your employer paid or reimbursed for a member of the U.S. Armed Forces on active duty who moved because of a military order.',
+    action: 'Nothing to do. They aren’t taxable.',
+  },
+  {
+    code: 'Q', name: 'Nontaxable combat pay', effect: 'excluded',
+    meaning: 'Military pay earned in a combat zone, which isn’t taxable.',
+    action: 'Not taxed, but you can choose to count it as earned income for the Earned Income Tax Credit if that gives you a bigger credit.',
+  },
+  {
+    code: 'R', name: 'Archer MSA contributions', effect: 'excluded',
+    meaning: 'Employer contributions to an Archer medical savings account.',
+    action: 'Report them on Form 8853.',
+  },
+  {
+    code: 'S', name: 'SIMPLE IRA contributions', effect: 'excluded',
+    meaning: 'The pre-tax amount you chose to put into a SIMPLE IRA through payroll.',
+    action: 'Nothing to enter. It’s already left out of Box 1.',
+  },
+  {
+    code: 'T', name: 'Adoption benefits', effect: 'excluded',
+    meaning: 'Adoption expenses your employer paid or reimbursed under an adoption assistance program. They’re left out of Box 1, but only up to the yearly limit.',
+    action: 'Fill out Form 8839 to figure how much is tax-free. Any amount over the limit is added to your wages.',
+  },
+  {
+    code: 'V', name: 'Stock option income', effect: 'included',
+    meaning: 'The income from exercising nonstatutory stock options: the difference between the stock’s value and the price you paid.',
+    action: 'Already in Boxes 1, 3, and 5. Keep it to figure your cost basis when you sell the shares.',
+  },
+  {
+    code: 'W', name: 'Health Savings Account (HSA) contributions', effect: 'excluded',
+    meaning: 'Your employer’s contributions to your HSA, plus anything you put in pre-tax through payroll.',
+    action: 'Report it on Form 8889, which checks that total contributions stayed within the annual limit.',
+  },
+  {
+    code: 'Y', name: 'Section 409A deferrals', effect: 'info',
+    meaning: 'Pay you deferred into a nonqualified deferred compensation plan. Employers aren’t required to report it.',
+    action: 'Nothing to do.',
+  },
+  {
+    code: 'Z', name: 'Income from a plan that fails section 409A', effect: 'owed',
+    meaning: 'Deferred compensation that became taxable because the plan didn’t meet the section 409A rules.',
+    action: 'Already in Box 1. You also owe an extra 20% tax plus interest, reported on Schedule 2.',
+  },
+  {
+    code: 'AA', name: 'Roth 401(k) contributions', effect: 'included',
+    meaning: 'After-tax contributions you made to a designated Roth account in your 401(k).',
+    action: 'Nothing to enter. They’re already in Box 1.',
+  },
+  {
+    code: 'BB', name: 'Roth 403(b) contributions', effect: 'included',
+    meaning: 'After-tax contributions you made to a designated Roth account in your 403(b).',
+    action: 'Nothing to enter. They’re already in Box 1.',
+  },
+  {
+    code: 'DD', name: 'Cost of employer health coverage', effect: 'info',
+    meaning: 'The total cost of your employer-sponsored health insurance, including both your share and your employer’s. It’s reported so you know what your coverage costs.',
+    action: 'Nothing to do. It isn’t taxable and you don’t enter it anywhere.',
+  },
+  {
+    code: 'EE', name: 'Roth 457(b) contributions', effect: 'included',
+    meaning: 'After-tax contributions you made to a designated Roth account in a governmental 457(b) plan.',
+    action: 'Nothing to enter. They’re already in Box 1.',
+  },
+  {
+    code: 'FF', name: 'Small employer HRA (QSEHRA) benefits', effect: 'info',
+    meaning: 'The yearly amount you could get from a qualified small employer health reimbursement arrangement.',
+    action: 'If you buy Marketplace coverage, it can lower your Premium Tax Credit (Form 8962).',
+  },
+  {
+    code: 'GG', name: 'Section 83(i) equity grant income', effect: 'included',
+    meaning: 'Income from stock received under a qualified equity grant whose tax you had deferred under section 83(i).',
+    action: 'Already in Box 1.',
+  },
+  {
+    code: 'HH', name: 'Section 83(i) deferrals', effect: 'info',
+    meaning: 'The total amount you’ve deferred under section 83(i) elections, as of the end of the year.',
+    action: 'Nothing to do.',
+  },
+  {
+    code: 'II', name: 'Medicaid waiver payments', effect: 'excluded',
+    meaning: 'Payments for caring for someone in your home under a Medicaid waiver program, excluded from income under IRS Notice 2014-7.',
+    action: 'Not in Box 1. You may still choose to count them as earned income for the Earned Income Tax Credit.',
+  },
+  {
+    code: 'TA', name: 'Trump Account contributions', effect: 'info', section: 'code-ta',
+    meaning: 'Your employer’s contributions to a Trump Account, a savings account for a child created by the One Big Beautiful Bill Act.',
+    action: 'Generally not taxable up to $2,500 a year. It has nothing to do with tips or overtime.',
+  },
+  {
+    code: 'TP', name: 'Qualified tips', effect: 'new', section: 'code-tp',
+    meaning: 'Tips your employer identified as qualified for the federal “no tax on tips” deduction.',
+    action: 'Starting amount for Schedule 1-A, Part II. You apply the $25,000 cap and the income phase-out yourself.',
+  },
+  {
+    code: 'TT', name: 'Qualified overtime', effect: 'new', section: 'code-tt',
+    meaning: 'The overtime premium (the extra “half” in time-and-a-half) that qualifies for the federal overtime deduction.',
+    action: 'Starting amount for Schedule 1-A, Part III. You apply the $12,500 cap and the income phase-out yourself.',
+  },
 ];
+
+/** Every code has one anchor: the new codes point to their full section, the rest to their entry in the list. */
+const anchor = (c: Code) => c.section ?? `code-${c.code.toLowerCase()}`;
 
 const sources = [
   { label: 'IRS: About Form W-2, Wage and Tax Statement', href: 'https://www.irs.gov/forms-pubs/about-form-w-2' },
@@ -103,262 +252,256 @@ const jsonLd = {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
-        { '@type': 'ListItem', position: 2, name: 'W-2 Box 12 Guide', item: 'https://netwagetax.com/guides/w2-box-12-guide/' },
+        { '@type': 'ListItem', position: 2, name: 'W-2 Box 12 codes', item: 'https://netwagetax.com/guides/w2-box-12-guide/' },
       ],
     },
   ],
 };
+
+const linkClass = 'text-link underline underline-offset-[3px] hover:decoration-2';
 ---
 
 <BaseLayout title={title} description={description} ogType="article">
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-  <div class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <nav aria-label="Breadcrumb" class="text-sm text-slate-500 dark:text-slate-400">
-        <ol class="flex items-center gap-2">
-          <li><a href="/" class="hover:text-navy-700 dark:hover:text-navy-300">Home</a></li>
-          <li aria-hidden="true">/</li>
-          <li aria-current="page" class="text-slate-700 dark:text-slate-300">W-2 Box 12 Guide</li>
+  <PageHeader
+    title="W-2 Box 12 codes: what each code means"
+    lead="Box 12 is where your employer reports amounts that don’t fit anywhere else on your W-2: retirement savings, health benefits, and, starting with the One Big Beautiful Bill Act, your qualified tips and overtime. Find your code below to see what it is and whether it changes your tax return."
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'W-2 Box 12 codes' }]}
+  >
+    <p class="mt-6 text-[15px] text-ink-2">
+      By the <a href="/about/" class={linkClass}>NetWageTax Editorial Team</a>. Last reviewed{' '}
+      <time datetime={REVIEWED}>{reviewedLabel}</time>. Sources: IRS instructions and the statute.
+    </p>
+  </PageHeader>
+
+  <div class="container-page py-10">
+    <div class="max-w-3xl">
+      <nav aria-labelledby="find-code-heading">
+        <h2 id="find-code-heading" class="text-xl/[1.3] font-bold text-ink">Find your code</h2>
+        <ul class="mt-3 grid grid-cols-6 gap-x-2 gap-y-1 text-lg sm:grid-cols-9">
+          {
+            codes.map((c) => (
+              <li>
+                <a href={`#${anchor(c)}`} class={`${linkClass} inline-flex min-h-11 min-w-11 items-center font-semibold`}>
+                  {c.code}
+                  <span class="sr-only">: {c.name}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <nav aria-labelledby="toc-heading" class="mt-8 border-t border-line pt-6">
+        <h2 id="toc-heading" class="text-xl/[1.3] font-bold text-ink">On this page</h2>
+        <ol class="mt-3 list-decimal space-y-1.5 pl-6">
+          {
+            toc.map(({ id, label }) => (
+              <li>
+                <a href={`#${id}`} class={linkClass}>
+                  {label}
+                </a>
+              </li>
+            ))
+          }
         </ol>
       </nav>
-      <h1 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
-        Form W-2 Box 12 Codes: Complete 2025–2026 Reference Guide
-      </h1>
-      <p class="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-        Box 12 is where your employer reports amounts that don’t fit anywhere else on your W-2: retirement savings,
-        health benefits, and, starting with the One Big Beautiful Bill Act, your qualified tips and overtime. Here is
-        what each code means and which ones change your tax return.
-      </p>
-      <p class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-        <span>By the <a href="/about/" class="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300">NetWageTax Editorial Team</a></span>
-        <span aria-hidden="true">·</span>
-        <span>Last reviewed <time datetime={REVIEWED}>{reviewedLabel}</time></span>
-        <span aria-hidden="true">·</span>
-        <span>Sources: IRS and statute text</span>
-      </p>
-    </div>
-  </div>
 
-  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-    <nav aria-labelledby="toc-heading" class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <h2 id="toc-heading" class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">In this guide</h2>
-      <ol class="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
-        {
-          toc.map(({ id, label }, i) => (
-            <li>
-              <a href={`#${id}`} class="text-slate-700 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-400">
-                <span class="mr-1.5 tabular-nums text-slate-400">{i + 1}.</span>
-                {label}
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </nav>
-
-    <article class="prose-page mt-10">
-      <h2 id="what-is-box-12">What Box 12 is</h2>
-      <p>
-        Form W-2 reports your wages and the taxes withheld from them. Boxes 1 through 11 cover the big numbers: taxable
-        wages, Social Security and Medicare wages, and withholding. Box 12 is for everything else your employer is
-        required to report, identified by a one- or two-letter code followed by a dollar amount.
-      </p>
-      <p>
-        Box 12 has room for four entries (12a through 12d). If your employer needs to report more, you’ll receive a
-        second W-2 with the additional codes. The code tells you <strong>what</strong> the amount is. It doesn’t tell
-        you whether the amount is taxable. Some Box 12 amounts are already included in your Box 1 wages, some are
-        excluded, and some are purely informational. The table <a href="#all-codes">further down</a> sorts every code
-        into those groups.
-      </p>
-
-      <h2 id="new-codes">The new codes: TA, TP, and TT</h2>
-      <p>
-        The One Big Beautiful Bill Act (H.R. 1, Public Law 119-21), signed on July 4, 2025, created two temporary
-        federal income tax deductions, one for qualified tips and one for qualified overtime, available for tax years
-        2025 through 2028. It also created Trump Accounts, a new savings account for children. To give workers the
-        numbers they need, the IRS added three Box 12 codes to Form W-2.
-      </p>
-      <p>
-        Two of them, <strong>TP</strong> and <strong>TT</strong>, are the starting point for the new deductions. Both
-        are claimed on the new <strong>Schedule 1-A</strong> and flow to Form 1040, line 13b. They’re available whether
-        you take the standard deduction or itemize. They lower your taxable income, not your adjusted gross income
-        (AGI), and they don’t reduce Social Security or Medicare (FICA) taxes.
-      </p>
-
-      <h3 id="code-tp">Code TP: qualified tips</h3>
-      <p>
-        Code TP reports the tips your employer identified as <em>qualified tips</em>: voluntary cash or charged tips
-        paid by customers, received in an occupation that customarily and regularly received tips on or before December
-        31, 2024. The Treasury Department publishes the list of qualifying occupations. Mandatory service charges, such
-        as an automatic 18% gratuity for large parties, are not qualified tips.
-      </p>
-      <ul>
-        <li><strong>Cap:</strong> up to $25,000 per return. The cap is the same for joint filers; it doesn’t double.</li>
-        <li>
-          <strong>Income phase-out:</strong> the deduction shrinks by $100 for every full $1,000 of modified AGI above
-          $150,000 ($300,000 if married filing jointly).
-        </li>
-        <li>
-          <strong>Who qualifies:</strong> you need a valid Social Security number, and married couples must file
-          jointly. Self-employed workers can also qualify, unless the tips come from a specified service trade or
-          business (such as health, law, or consulting).
-        </li>
-      </ul>
-      <p>
-        Your employer reports the full qualified amount. <strong>They don’t apply the $25,000 cap or the phase-out</strong>;
-        you apply those on Schedule 1-A.
-      </p>
-
-      <h3 id="code-tt">Code TT: qualified overtime</h3>
-      <p>
-        Code TT reports <em>qualified overtime compensation</em>: overtime pay required by Section 7 of the Fair Labor
-        Standards Act (FLSA), usually hours over 40 in a workweek. Only the <strong>premium</strong> portion counts,
-        meaning the pay above your regular rate. For time-and-a-half, that’s the extra “half.”
-      </p>
-      <p>
-        <strong>Example:</strong> you earn $20 an hour and work 10 overtime hours at $30 an hour. Your overtime pay is
-        $300, but your qualified overtime is only $100 (10 hours × the $10 premium). Code TT should show $100.
-      </p>
-      <ul>
-        <li><strong>Cap:</strong> up to $12,500 per return, or $25,000 if married filing jointly.</li>
-        <li><strong>Income phase-out:</strong> the same $100-per-$1,000 reduction above $150,000 ($300,000 joint).</li>
-        <li>
-          <strong>Who qualifies:</strong> employees who are non-exempt under the FLSA. Overtime that’s paid under a
-          union contract or state law, but not required by the FLSA, doesn’t qualify.
-        </li>
-      </ul>
-
-      <h3 id="code-ta">Code TA: Trump Account contributions</h3>
-      <p>
-        Code TA reports contributions your employer made to a Trump Account, a tax-advantaged investment account for a
-        child created under new IRC §530A. Employers can contribute up to $2,500 a year per employee, and that amount is
-        generally excluded from your income. Contributions to these accounts can begin in July 2026.
-      </p>
-      <p>
-        <strong>Code TA has nothing to do with tips or overtime.</strong> Don’t enter it in a tips or overtime
-        calculator or on Schedule 1-A.
-      </p>
-
-    </article>
-
-    <aside
-        aria-label="Calculator"
-        class="my-10 rounded-2xl border border-emerald-300 bg-emerald-50 p-6 dark:border-emerald-500/40 dark:bg-emerald-500/10"
-      >
-        <p class="text-sm font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
-          Have a TP or TT amount?
+      <section aria-labelledby="all-codes" class="mt-12">
+        <h2 id="all-codes" class="scroll-mt-20 text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">
+          Every Box 12 code, A to TT
+        </h2>
+        <p class="mt-3 text-ink">
+          Each entry on your W-2 is a code and a dollar amount. <strong class="font-semibold">Not in Box 1</strong> means
+          the amount was left out of your taxable wages, usually because it went into a pre-tax account.{' '}
+          <strong class="font-semibold">Already in Box 1</strong> means it’s part of your taxable wages, so don’t add it
+          again. <strong class="font-semibold">Tax you owe</strong> means you pay something extra with your return.
         </p>
-        <p class="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-          See how much it saves you in federal tax.
+
+        <ul class="mt-6 border-t border-line">
+          {
+            codes.map((c) => (
+              <li id={c.section ? undefined : anchor(c)} class="scroll-mt-20 border-b border-line py-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                  <h3 class="text-xl/[1.3] font-bold text-ink">
+                    Code {c.code}: {c.name}
+                  </h3>
+                  <span class={`rounded-[2px] px-2 py-0.5 text-sm font-semibold ${EFFECT_CLASS[c.effect]}`}>
+                    {EFFECT_LABEL[c.effect]}
+                  </span>
+                </div>
+                <p class="mt-2 text-ink">{c.meaning}</p>
+                <p class="mt-2 text-ink-2">
+                  <span class="font-semibold text-ink">What to do:</span> {c.action}
+                  {c.section && (
+                    <>
+                      {' '}
+                      <a href={`#${c.section}`} class={linkClass}>
+                        Full explanation of Code {c.code}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <article class="prose-page mt-12">
+        <h2 id="what-is-box-12">What Box 12 is</h2>
+        <p>
+          Form W-2 reports your wages and the taxes withheld from them. Boxes 1 through 11 cover the big numbers: taxable
+          wages, Social Security and Medicare wages, and withholding. Box 12 is for everything else your employer is
+          required to report, identified by a one- or two-letter code followed by a dollar amount.
         </p>
-        <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">
-          Enter your Box 12 amounts and income. The calculator applies the caps and phase-out, estimates your tax
+        <p>
+          Box 12 has room for four entries (12a through 12d). If your employer needs to report more, you’ll receive a
+          second W-2 with the additional codes. The code tells you <strong>what</strong> the amount is. It doesn’t tell you
+          whether the amount is taxable. Some Box 12 amounts are already included in your Box 1 wages, some are excluded,
+          and some are purely informational. The <a href="#all-codes">code list</a> sorts every code into those groups.
+        </p>
+
+        <h2 id="new-codes">The new codes: TA, TP, and TT</h2>
+        <p>
+          The One Big Beautiful Bill Act (H.R. 1, Public Law 119-21), signed on July 4, 2025, created two temporary
+          federal income tax deductions, one for qualified tips and one for qualified overtime, available for tax years
+          2025 through 2028. It also created Trump Accounts, a new savings account for children. To give workers the
+          numbers they need, the IRS added three Box 12 codes to Form W-2.
+        </p>
+        <p>
+          Two of them, <strong>TP</strong> and <strong>TT</strong>, are the starting point for the new deductions. Both
+          are claimed on the new <strong>Schedule 1-A</strong> and flow to Form 1040, line 13b. They’re available whether
+          you take the standard deduction or itemize. They lower your taxable income, not your adjusted gross income
+          (AGI), and they don’t reduce Social Security or Medicare (FICA) taxes.
+        </p>
+
+        <h3 id="code-tp" class="scroll-mt-20">Code TP: qualified tips</h3>
+        <p>
+          Code TP reports the tips your employer identified as <em>qualified tips</em>: voluntary cash or charged tips
+          paid by customers, received in an occupation that customarily and regularly received tips on or before December
+          31, 2024. The Treasury Department publishes the list of qualifying occupations. Mandatory service charges, such
+          as an automatic 18% gratuity for large parties, are not qualified tips.
+        </p>
+        <ul>
+          <li><strong>Cap:</strong> up to $25,000 per return. The cap is the same for joint filers; it doesn’t double.</li>
+          <li>
+            <strong>Income phase-out:</strong> the deduction shrinks by $100 for every full $1,000 of modified AGI above
+            $150,000 ($300,000 if married filing jointly).
+          </li>
+          <li>
+            <strong>Who qualifies:</strong> you need a valid Social Security number, and married couples must file
+            jointly. Self-employed workers can also qualify, unless the tips come from a specified service trade or
+            business (such as health, law, or consulting).
+          </li>
+        </ul>
+        <p>
+          Your employer reports the full qualified amount. <strong>They don’t apply the $25,000 cap or the phase-out</strong>;
+          you apply those on Schedule 1-A.
+        </p>
+
+        <h3 id="code-tt" class="scroll-mt-20">Code TT: qualified overtime</h3>
+        <p>
+          Code TT reports <em>qualified overtime compensation</em>: overtime pay required by Section 7 of the Fair Labor
+          Standards Act (FLSA), usually hours over 40 in a workweek. Only the <strong>premium</strong> portion counts,
+          meaning the pay above your regular rate. For time-and-a-half, that’s the extra “half.”
+        </p>
+        <p>
+          <strong>Example:</strong> you earn $20 an hour and work 10 overtime hours at $30 an hour. Your overtime pay is
+          $300, but your qualified overtime is only $100 (10 hours × the $10 premium). Code TT should show $100.
+        </p>
+        <ul>
+          <li><strong>Cap:</strong> up to $12,500 per return, or $25,000 if married filing jointly.</li>
+          <li><strong>Income phase-out:</strong> the same $100-per-$1,000 reduction above $150,000 ($300,000 joint).</li>
+          <li>
+            <strong>Who qualifies:</strong> employees who are non-exempt under the FLSA. Overtime that’s paid under a union
+            contract or state law, but not required by the FLSA, doesn’t qualify.
+          </li>
+        </ul>
+
+        <h3 id="code-ta" class="scroll-mt-20">Code TA: Trump Account contributions</h3>
+        <p>
+          Code TA reports contributions your employer made to a Trump Account, a tax-advantaged investment account for a
+          child created under new IRC §530A. Employers can contribute up to $2,500 a year per employee, and that amount is
+          generally excluded from your income. Contributions to these accounts can begin in July 2026.
+        </p>
+        <p>
+          <strong>Code TA has nothing to do with tips or overtime.</strong> Don’t enter it in a tips or overtime calculator
+          or on Schedule 1-A.
+        </p>
+      </article>
+
+      <aside aria-labelledby="calc-heading" class="my-10 border-y border-line py-6">
+        <h2 id="calc-heading" class="text-xl/[1.3] font-bold text-ink">Have a TP or TT amount?</h2>
+        <p class="mt-2 text-ink-2">
+          Enter your Box 12 amounts and income. The calculator applies the caps and phase-out, estimates your federal tax
           savings, and exports a one-page summary.
         </p>
         <a
           href="/tools/obbba-tax-calculator/"
-          class="mt-4 inline-flex items-center gap-2 rounded-lg btn-primary px-5 py-2.5 text-sm font-semibold"
+          class="btn-primary mt-4 inline-flex h-11 items-center rounded-control px-5 font-semibold"
         >
-          Open the Tips &amp; Overtime Calculator <span aria-hidden="true">→</span>
+          Estimate your tips and overtime deduction
         </a>
-    </aside>
+      </aside>
 
-    <article class="prose-page">
-      <h2 id="2025-vs-2026">2025 vs. 2026 Forms W-2</h2>
-      <p>
-        The deductions apply to tax year 2025, but the law passed mid-year, after payroll systems were set. For 2025,
-        the IRS kept Form W-2 unchanged and gave employers transition relief. Many employers reported qualified tips
-        and overtime in <strong>Box 14</strong> or on a separate statement instead of in Box 12. If your 2025 W-2 has
-        no TP or TT code, look there, or use your final pay stub, and ask your payroll department if you’re unsure.
-      </p>
-      <p>
-        The redesigned <strong>2026 Form W-2</strong>, which you’ll receive in early 2027, carries Codes TA, TP, and TT
-        in Box 12. It also splits Box 14, adding a separate box (14b) for the Treasury tipped occupation code that
-        identifies your tipped job.
-      </p>
+      <article class="prose-page">
+        <h2 id="2025-vs-2026">2025 vs. 2026 Forms W-2</h2>
+        <p>
+          The deductions apply to tax year 2025, but the law passed mid-year, after payroll systems were set. For 2025, the
+          IRS kept Form W-2 unchanged and gave employers transition relief. Many employers reported qualified tips and
+          overtime in <strong>Box 14</strong> or on a separate statement instead of in Box 12. If your 2025 W-2 has no TP
+          or TT code, look there, or use your final pay stub, and ask your payroll department if you’re unsure.
+        </p>
+        <p>
+          The redesigned <strong>2026 Form W-2</strong>, which you’ll receive in early 2027, carries Codes TA, TP, and TT in
+          Box 12. It also splits Box 14, adding a separate box (14b) for the Treasury tipped occupation code that
+          identifies your tipped job.
+        </p>
 
-      <h2 id="all-codes">Every Box 12 code at a glance</h2>
-      <p>
-        “Not in Box 1” means the amount was excluded from your taxable wages, usually because it went into a pre-tax
-        account. “Already in Box 1” means it’s already part of your taxable wages, so don’t add it again.
-      </p>
-    </article>
+        <h2 id="mistakes">Common mistakes</h2>
+        <ul>
+          <li>
+            <strong>Entering total overtime pay instead of the premium.</strong> Code TT is only the extra half. If your pay
+            stub shows $6,000 of overtime at time-and-a-half, the qualified amount is $2,000.
+          </li>
+          <li>
+            <strong>Adding Box 12 amounts to your wages.</strong> Codes like D, W, and DD don’t increase your taxable
+            income. Box 1 already reflects the right number.
+          </li>
+          <li>
+            <strong>Assuming the cap is applied for you.</strong> Your employer reports the full TP and TT amounts. The
+            $25,000 and $12,500 caps and the income phase-out are applied on your return.
+          </li>
+          <li>
+            <strong>Expecting lower payroll taxes.</strong> The deductions reduce federal income tax only. Social Security
+            and Medicare still apply to 100% of your tips and overtime, and most states still tax them.
+          </li>
+          <li>
+            <strong>Filing separately.</strong> Married couples must file jointly to claim either deduction.
+          </li>
+        </ul>
 
-    <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-      <table class="w-full min-w-[40rem] border-collapse text-left text-sm">
-        <caption class="sr-only">Form W-2 Box 12 codes, what they report, and how they affect your return</caption>
-        <thead class="bg-slate-50 text-slate-900 dark:bg-slate-800/60 dark:text-slate-100">
-          <tr>
-            <th scope="col" class="w-16 px-4 py-3 font-semibold">Code</th>
-            <th scope="col" class="px-4 py-3 font-semibold">What it reports</th>
-            <th scope="col" class="w-36 px-4 py-3 font-semibold">Tax effect</th>
-            <th scope="col" class="px-4 py-3 font-semibold">What to do</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900">
+        <h2 id="sources">Sources and review</h2>
+        <p>
+          This guide is written and reviewed by the NetWageTax editorial team from primary sources: the statute and IRS
+          forms, instructions, and guidance. It is educational information, not tax advice. For your situation, confirm
+          with the official Form W-2 and Schedule 1-A instructions or a CPA or enrolled agent.
+        </p>
+        <ul>
           {
-            codes.map(({ code, reports, effect, action }) => (
-              <tr class={effect === 'new' || code === 'TA' ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : ''}>
-                <th scope="row" class="px-4 py-3 align-top font-mono font-bold text-slate-900 dark:text-slate-100">
-                  {code}
-                </th>
-                <td class="px-4 py-3 align-top text-slate-700 dark:text-slate-300">{reports}</td>
-                <td class="px-4 py-3 align-top">
-                  <span class={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${EFFECT_CLASS[effect]}`}>
-                    {EFFECT_LABEL[effect]}
-                  </span>
-                </td>
-                <td class="px-4 py-3 align-top text-slate-600 dark:text-slate-400">{action}</td>
-              </tr>
+            sources.map(({ label, href }) => (
+              <li>
+                <a href={href} rel="noopener" target="_blank">{label}</a>
+              </li>
             ))
           }
-        </tbody>
-      </table>
+        </ul>
+        <p>
+          Spotted something out of date? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we’ll review it.
+        </p>
+      </article>
     </div>
-
-    <article class="prose-page mt-10">
-      <h2 id="mistakes">Common mistakes</h2>
-      <ul>
-        <li>
-          <strong>Entering total overtime pay instead of the premium.</strong> Code TT is only the extra half. If your
-          pay stub shows $6,000 of overtime at time-and-a-half, the qualified amount is $2,000.
-        </li>
-        <li>
-          <strong>Adding Box 12 amounts to your wages.</strong> Codes like D, W, and DD don’t increase your taxable
-          income. Box 1 already reflects the right number.
-        </li>
-        <li>
-          <strong>Assuming the cap is applied for you.</strong> Your employer reports the full TP and TT amounts. The
-          $25,000 and $12,500 caps and the income phase-out are applied on your return.
-        </li>
-        <li>
-          <strong>Expecting lower payroll taxes.</strong> The deductions reduce federal income tax only. Social
-          Security and Medicare still apply to 100% of your tips and overtime, and most states still tax them.
-        </li>
-        <li>
-          <strong>Filing separately.</strong> Married couples must file jointly to claim either deduction.
-        </li>
-      </ul>
-
-      <h2 id="sources">Sources and review</h2>
-      <p>
-        This guide is written and reviewed by the NetWageTax editorial team from primary sources: the statute and IRS
-        forms, instructions, and guidance. It is educational information, not tax advice. For your situation, confirm
-        with the official Form W-2 and Schedule 1-A instructions or a CPA or enrolled agent.
-      </p>
-      <ul>
-        {
-          sources.map(({ label, href }) => (
-            <li>
-              <a href={href} rel="noopener" target="_blank">{label}</a>
-            </li>
-          ))
-        }
-      </ul>
-      <p>
-        Spotted something out of date? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we’ll review it.
-      </p>
-    </article>
   </div>
 </BaseLayout>

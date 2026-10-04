@@ -31,7 +31,7 @@ describe('tips & overtime .xlsx', () => {
   const rows = rowsOf(ws);
 
   it('has the banner, reference, and parameters', () => {
-    expect(rows[0][0]).toBe('NetWageTax - 2026 Federal Tips & Overtime Deduction Worksheet');
+    expect(rows[0][0]).toBe('NetWageTax: 2026 tips and overtime deduction worksheet');
     expect(rows[1]).toContain(summary.referenceId);
     expect(find(rows, 'Filing status')?.[1]).toBe('Single');
     expect(find(rows, 'State')?.[1]).toBe('Illinois');
@@ -67,7 +67,7 @@ describe('paycheck .xlsx', () => {
   const rows = rowsOf(ws);
 
   it('has the banner, estimate labels, and pay details', () => {
-    expect(rows[0][0]).toBe('NetWageTax - 2026 Paycheck & Take-Home Pay Estimate');
+    expect(rows[0][0]).toBe('NetWageTax: 2026 paycheck and take-home pay estimate');
     expect(rows[1]).toContain(summary.referenceId);
     expect(rows[2][0]).toMatch(/Not a pay stub/);
     expect(find(rows, 'Gross wages (annual)')?.[1]).toBe(61_750);

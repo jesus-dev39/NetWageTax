@@ -15,7 +15,7 @@ const COLS = 4;
 
 export function buildPaycheckWorkbook(s: PaycheckSummary): WorkBook {
   const rows: Cell[][] = [
-    [wide(`NetWageTax - ${s.taxYear} Paycheck & Take-Home Pay Estimate`, COLS)],
+    [wide(`NetWageTax: ${s.taxYear} paycheck and take-home pay estimate`, COLS)],
     ['Estimate reference', s.referenceId, 'Generated', s.generatedAt],
     [wide(PAYCHECK_NOT_A_PAYSTUB, COLS)],
     [],
@@ -44,7 +44,7 @@ export function buildPaycheckWorkbook(s: PaycheckSummary): WorkBook {
 
   const wb = utils.book_new();
   utils.book_append_sheet(wb, buildSheet(rows, [34, 18, 18, 14]), 'Paycheck Estimate');
-  wb.Props = { Title: `NetWageTax ${s.taxYear} Paycheck Estimate`, Author: 'NetWageTax' };
+  wb.Props = { Title: `NetWageTax: ${s.taxYear} paycheck estimate`, Author: 'NetWageTax' };
   return wb;
 }
 

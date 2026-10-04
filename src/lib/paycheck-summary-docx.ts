@@ -20,7 +20,7 @@ import {
 } from 'docx';
 import { saveBlob } from './save-blob';
 import { formatUSDCents } from '../components/CurrencyInput';
-import { cellBorder, metaRow, MUTED, NAVY, noBorder, RULE, text, TOTAL_FILL, TOTAL_TEXT } from './deduction-summary-docx';
+import { cellBorder, FONT, GREEN, GREEN_TINT, INK, INK_2, LINE, metaRow, noBorder, SURFACE, text, totalBorder } from './deduction-summary-docx';
 import {
   PAYCHECK_DISCLAIMER,
   PAYCHECK_DOCX_FILENAME,
@@ -34,11 +34,12 @@ const COLS = [5160, 2100, 2100];
 
 const margins = { top: 90, bottom: 90, left: 140, right: 140 };
 
-function cell(paragraphs: Paragraph[], width: number, fill?: string) {
+function cell(paragraphs: Paragraph[], width: number, fill?: string, topRule = false) {
   return new TableCell({
     width: { size: width, type: WidthType.DXA },
     verticalAlign: VerticalAlignTable.CENTER,
     shading: fill ? { type: ShadingType.CLEAR, fill, color: 'auto' } : undefined,
+    borders: topRule ? { top: totalBorder } : undefined,
     margins,
     children: paragraphs,
   });
@@ -46,7 +47,7 @@ function cell(paragraphs: Paragraph[], width: number, fill?: string) {
 
 function headerRow(): TableRow {
   const head = (value: string, align: (typeof AlignmentType)[keyof typeof AlignmentType], width: number) =>
-    cell([new Paragraph({ alignment: align, children: [text(value, { bold: true, size: 19, color: 'FFFFFF' })] })], width, NAVY);
+    cell([new Paragraph({ alignment: align, children: [text(value, { bold: true, size: 19 })] })], width, SURFACE);
   return new TableRow({
     tableHeader: true,
     children: [
@@ -57,26 +58,31 @@ function headerRow(): TableRow {
   });
 }
 
-function bodyRow(r: PaycheckSummaryRow, zebra: boolean): TableRow {
+// Net pay: 2px ink rule and the result's green tint; other rows: 1px rules, no zebra stripes.
+function bodyRow(r: PaycheckSummaryRow): TableRow {
   const strong = r.kind === 'gross' || r.kind === 'subtotal' || r.kind === 'net';
-  const color = r.kind === 'net' ? TOTAL_TEXT : undefined;
-  const fill = r.kind === 'net' ? TOTAL_FILL : zebra ? 'F8FAFC' : undefined;
-  const label = [new Paragraph({ children: [text(r.label, { bold: strong, color })] })];
-  if (r.detail) label.push(new Paragraph({ children: [text(r.detail, { size: 17, color: MUTED })] }));
+  const net = r.kind === 'net';
+  const fill = net ? GREEN_TINT : undefined;
+  const label = [new Paragraph({ children: [text(r.label, { bold: strong })] })];
+  if (r.detail) label.push(new Paragraph({ children: [text(r.detail, { size: 17, color: INK_2 })] }));
   const money = (n: number) =>
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [text(formatUSDCents(n), { bold: strong, color })] });
+    new Paragraph({ alignment: AlignmentType.RIGHT, children: [text(formatUSDCents(n), { bold: strong })] });
   return new TableRow({
     cantSplit: true,
-    children: [cell(label, COLS[0], fill), cell([money(r.perPeriod)], COLS[1], fill), cell([money(r.annual)], COLS[2], fill)],
+    children: [
+      cell(label, COLS[0], fill, net),
+      cell([money(r.perPeriod)], COLS[1], fill, net),
+      cell([money(r.annual)], COLS[2], fill, net),
+    ],
   });
 }
 
 export function buildPaycheckDocument(s: PaycheckSummary): Document {
   return new Document({
     creator: 'NetWageTax',
-    title: `NetWageTax - ${s.taxYear} Paycheck & Take-Home Pay Estimate`,
+    title: `NetWageTax: ${s.taxYear} paycheck and take-home pay estimate`,
     description: PAYCHECK_NOT_A_PAYSTUB,
-    styles: { default: { document: { run: { font: 'Calibri' } } } },
+    styles: { default: { document: { run: { font: FONT } } } },
     sections: [
       {
         properties: {
@@ -87,8 +93,8 @@ export function buildPaycheckDocument(s: PaycheckSummary): Document {
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                border: { top: { style: BorderStyle.SINGLE, size: 4, color: RULE, space: 6 } },
-                children: [text(PAYCHECK_NOT_A_PAYSTUB, { bold: true, size: 16, color: MUTED })],
+                border: { top: { style: BorderStyle.SINGLE, size: 4, color: LINE, space: 6 } },
+                children: [text(PAYCHECK_NOT_A_PAYSTUB, { bold: true, size: 16, color: INK_2 })],
               }),
             ],
           }),
@@ -97,15 +103,14 @@ export function buildPaycheckDocument(s: PaycheckSummary): Document {
           new Paragraph({
             spacing: { after: 60 },
             children: [
-              text('NetWage', { bold: true, size: 22, color: NAVY }),
-              text('Tax', { bold: true, size: 22, color: TOTAL_TEXT }),
-              text(`  ·  NetWageTax.com · ${s.taxYear} Paycheck Estimate`, { size: 20, color: MUTED }),
+              text('NetWageTax', { bold: true, size: 22, color: GREEN }),
+              text(`  ·  NetWageTax.com · ${s.taxYear} paycheck estimate`, { size: 20, color: INK_2 }),
             ],
           }),
           new Paragraph({
             spacing: { after: 240 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: NAVY, space: 8 } },
-            children: [text(`${s.taxYear} Paycheck & Take-Home Pay Estimate`, { bold: true, size: 34 })],
+            border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: INK, space: 8 } },
+            children: [text(`${s.taxYear} paycheck and take-home pay estimate`, { bold: true, size: 34 })],
           }),
           metaRow('Date generated', s.generatedAt),
           metaRow('Estimate reference', s.referenceId),
@@ -115,12 +120,11 @@ export function buildPaycheckDocument(s: PaycheckSummary): Document {
           metaRow('State', s.stateName ?? 'Not selected'),
           new Paragraph({
             spacing: { before: 280, after: 120 },
-            shading: { type: ShadingType.CLEAR, fill: TOTAL_FILL, color: 'auto' },
+            shading: { type: ShadingType.CLEAR, fill: GREEN_TINT, color: 'auto' },
             children: [
-              text('Estimated take-home: ', { bold: true, color: TOTAL_TEXT, size: 24 }),
+              text('Estimated take-home: ', { bold: true, size: 24 }),
               text(`${formatUSDCents(s.net.perPeriod)} per paycheck · ${formatUSDCents(s.net.annual)} per year`, {
                 bold: true,
-                color: TOTAL_TEXT,
                 size: 24,
               }),
             ],
@@ -136,10 +140,10 @@ export function buildPaycheckDocument(s: PaycheckSummary): Document {
               insideHorizontal: cellBorder,
               insideVertical: noBorder,
             },
-            rows: [headerRow(), ...s.rows.map((r, i) => bodyRow(r, i % 2 === 1))],
+            rows: [headerRow(), ...s.rows.map(bodyRow)],
           }),
           new Paragraph({ spacing: { before: 280 }, children: [text(PAYCHECK_NOT_A_PAYSTUB, { bold: true, size: 20 })] }),
-          new Paragraph({ spacing: { before: 60 }, children: [text(PAYCHECK_DISCLAIMER, { size: 18, color: MUTED })] }),
+          new Paragraph({ spacing: { before: 60 }, children: [text(PAYCHECK_DISCLAIMER, { size: 18, color: INK_2 })] }),
         ],
       },
     ],

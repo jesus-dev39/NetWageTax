@@ -11,7 +11,7 @@ import {
 import { formatUSD } from './CurrencyInput';
 import ExportAdModal, { type ExportFormat, type ExportRequest } from './ExportAdModal';
 import ExportToolbar from './ExportToolbar';
-import Logo from './Logo';
+import { VoucherFigure, VoucherFooter, VoucherHeader } from './VoucherParts';
 
 type Props = SummaryInput;
 
@@ -93,43 +93,33 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
   const minus = (n: number) => (n > 0 ? `−${formatUSD(n)}` : formatUSD(0));
 
   return (
-    <div className="print-voucher hidden min-h-[245mm] flex-col bg-white text-[13px] text-slate-900 print:flex" aria-hidden="true">
-      {/* Header banner */}
-      <header className="rounded-xl bg-slate-900 px-6 py-5 text-white">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <Logo tone="dark" />
-            <p className="mt-1 text-xs text-slate-400">NetWageTax.com · {summary.taxYear} Tax Estimate</p>
-          </div>
-          <div className="text-right text-xs">
-            <p className="uppercase tracking-wider text-slate-400">Reference</p>
-            <p className="font-mono text-sm font-semibold text-emerald-400">{summary.referenceId}</p>
-            <p className="mt-1 text-slate-400">{summary.generatedAt}</p>
-          </div>
-        </div>
-        <div className="mt-5 border-t border-white/10 pt-4">
-          <h1 className="text-2xl font-bold tracking-tight">{summary.taxYear} Tax Deduction Worksheet</h1>
-          <p className="mt-0.5 text-slate-300">
-            Federal Tips &amp; Overtime Deduction · Schedule 1-A method · {summary.filingStatus}
-            {summary.stateTax ? ` · ${summary.stateTax.name}` : ''}
-          </p>
-        </div>
-      </header>
+    <div className="print-voucher hidden min-h-[245mm] flex-col bg-page text-[13px] text-ink print:flex" aria-hidden="true">
+      <VoucherHeader
+        subtitle={`NetWageTax.com · ${summary.taxYear} tax estimate`}
+        referenceLabel="Reference"
+        referenceId={summary.referenceId}
+        generatedAt={summary.generatedAt}
+      />
+      <h1 className="mt-4 text-2xl/[1.2] font-bold tracking-[-0.01em]">
+        {summary.taxYear} tips and overtime deduction worksheet
+      </h1>
+      <p className="mt-1 text-ink-2">
+        Federal deduction for qualified tips and overtime · Schedule 1-A method · {summary.filingStatus}
+        {summary.stateTax ? ` · ${summary.stateTax.name}` : ''}
+      </p>
 
-      {/* Highlight cards */}
       <section className="mt-5 grid grid-cols-3 gap-3 break-inside-avoid">
-        <HighlightCard label="Total income (MAGI)" value={formatUSD(summary.magi)} />
-        <HighlightCard label="Net deduction (Schedule 1-A)" value={formatUSD(summary.totalDeduction)} />
-        <HighlightCard label="Net tax savings" value={`${summary.savings > 0 ? '+' : ''}${formatUSD(summary.savings)}`} accent />
+        <VoucherFigure label="Total income (MAGI)" value={formatUSD(summary.magi)} />
+        <VoucherFigure label="Net deduction (Schedule 1-A)" value={formatUSD(summary.totalDeduction)} />
+        <VoucherFigure label="Federal tax savings" value={formatUSD(summary.savings)} accent />
       </section>
-      {summary.savingsNote && <p className="mt-2 text-xs text-emerald-800">✓ {summary.savingsNote}</p>}
+      {summary.savingsNote && <p className="mt-2 text-xs text-ink-2">{summary.savingsNote}</p>}
 
-      {/* Worksheet */}
       <section className="mt-6 break-inside-avoid">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Deduction worksheet</h2>
+        <h2 className="text-[15px] font-bold">Deduction worksheet</h2>
         <table className="mt-2 w-full border-collapse text-left">
           <thead>
-            <tr className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-600">
+            <tr className="bg-surface text-xs">
               <th scope="col" className="px-3 py-2 font-semibold">Category</th>
               <th scope="col" className="px-3 py-2 text-right font-semibold">Reported</th>
               <th scope="col" className="px-3 py-2 text-right font-semibold">Statutory cap</th>
@@ -138,48 +128,45 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
               <th scope="col" className="px-3 py-2 text-right font-semibold">Allowed</th>
             </tr>
           </thead>
-          <tbody className="tabular-nums">
-            {summary.worksheet.map((r, i) => (
-              <tr key={r.code} className={i % 2 ? 'bg-slate-50' : ''}>
-                <th scope="row" className="px-3 py-2.5 font-medium">
-                  {r.label} <span className="font-mono text-[11px] text-slate-500">({r.code})</span>
-                  {r.note && <span className="block text-[11px] font-normal text-slate-500">{r.note}</span>}
+          <tbody>
+            {summary.worksheet.map((r) => (
+              <tr key={r.code} className="border-b border-line">
+                <th scope="row" className="px-3 py-2.5 font-semibold">
+                  {r.label} <span className="text-[11px] font-normal text-ink-2">(Code {r.code})</span>
+                  {r.note && <span className="block text-[11px] font-normal text-ink-2">{r.note}</span>}
                 </th>
                 <td className="px-3 py-2.5 text-right">{formatUSD(r.reported)}</td>
-                <td className="px-3 py-2.5 text-right text-slate-500">{formatUSD(r.cap)}</td>
+                <td className="px-3 py-2.5 text-right text-ink-2">{formatUSD(r.cap)}</td>
                 <td className="px-3 py-2.5 text-right">{formatUSD(r.afterCap)}</td>
                 <td className="px-3 py-2.5 text-right">{minus(r.phaseoutReduction)}</td>
                 <td className="px-3 py-2.5 text-right font-semibold">{formatUSD(r.allowed)}</td>
               </tr>
             ))}
-            <tr className="border-t-2 border-slate-900 bg-emerald-50 font-semibold">
+            <tr className="border-t-2 border-ink font-bold">
               <th scope="row" className="px-3 py-2.5">Total</th>
               <td className="px-3 py-2.5 text-right">{formatUSD(totals.reported)}</td>
               <td className="px-3 py-2.5" />
               <td className="px-3 py-2.5 text-right">{formatUSD(totals.afterCap)}</td>
               <td className="px-3 py-2.5 text-right">{minus(totals.phaseout)}</td>
-              <td className="px-3 py-2.5 text-right text-emerald-700">{formatUSD(totals.allowed)}</td>
+              <td className="px-3 py-2.5 text-right">{formatUSD(totals.allowed)}</td>
             </tr>
           </tbody>
         </table>
       </section>
 
-      {/* Tax impact */}
       <section className="mt-6 break-inside-avoid">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tax impact</h2>
-        <table className="mt-2 w-full border-collapse text-left">
-          <tbody className="tabular-nums">
+        <h2 className="text-[15px] font-bold">Tax impact</h2>
+        <table className="mt-2 w-full border-collapse border-t border-line text-left">
+          <tbody>
             <ImpactRow
               label={SAVINGS_LINE_LABEL}
               detail={`${summary.taxYear} standard deduction and federal brackets`}
               value={formatUSD(summary.savings)}
-              good
             />
             <ImpactRow
-              label="Estimated FICA still owed on tips & overtime"
-              detail="Social Security & Medicare, employee share"
+              label="Estimated FICA still owed on tips and overtime"
+              detail="Social Security and Medicare, employee share"
               value={formatUSD(summary.fica)}
-              striped
             />
             {summary.stateTax && (
               <ImpactRow
@@ -194,48 +181,31 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
             )}
           </tbody>
         </table>
-        <p className="mt-2 text-xs text-amber-800">
+        <p className="mt-3 border-l-4 border-warning bg-warning-tint px-3 py-2 text-xs">
           <span className="font-semibold">Important: </span>
           {summary.ficaNotice}
         </p>
       </section>
 
-      {/* Compliance & disclaimer, pinned to the bottom of the page */}
-      <footer className="mt-auto break-inside-avoid rounded-lg border border-slate-300 p-4 pt-3.5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
-            <span aria-hidden="true">✓</span> Calculated under IRC §224 / §225 &amp; FLSA §7 rules
-          </span>
-          <span className="text-[11px] text-slate-500">
-            Generated {summary.generatedAt} · {summary.referenceId}
-          </span>
-        </div>
-        <p className="mt-3 text-xs font-semibold text-slate-900">{SUMMARY_DISCLAIMER}</p>
-        <p className="mt-1 text-[10.5px] leading-relaxed text-slate-600">{SUMMARY_LEGAL_NOTICE}</p>
-      </footer>
+      <VoucherFooter
+        basis="Calculated under IRC §224 and §225 and FLSA §7 rules."
+        generatedAt={summary.generatedAt}
+        referenceId={summary.referenceId}
+        headline={SUMMARY_DISCLAIMER}
+        body={SUMMARY_LEGAL_NOTICE}
+      />
     </div>
   );
 }
 
-function HighlightCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function ImpactRow(props: { label: string; detail: string; value: string }) {
   return (
-    <div className={`rounded-lg px-4 py-3 ${accent ? 'border-2 border-emerald-600 bg-emerald-50' : 'border border-slate-200 bg-slate-50'}`}>
-      <p className={`text-[10.5px] font-semibold uppercase leading-tight tracking-wide ${accent ? 'text-emerald-800' : 'text-slate-500'}`}>
-        {label}
-      </p>
-      <p className={`mt-1 font-bold tabular-nums ${accent ? 'text-3xl text-emerald-700' : 'text-2xl text-slate-900'}`}>{value}</p>
-    </div>
-  );
-}
-
-function ImpactRow(props: { label: string; detail: string; value: string; good?: boolean; striped?: boolean }) {
-  return (
-    <tr className={props.striped ? 'bg-slate-50' : ''}>
-      <th scope="row" className="px-3 py-2 font-medium">
+    <tr className="border-b border-line">
+      <th scope="row" className="px-3 py-2 font-semibold">
         {props.label}
-        <span className="block text-[11px] font-normal text-slate-500">{props.detail}</span>
+        <span className="block text-[11px] font-normal text-ink-2">{props.detail}</span>
       </th>
-      <td className={`px-3 py-2 text-right font-semibold ${props.good ? 'text-emerald-700' : ''}`}>{props.value}</td>
+      <td className="px-3 py-2 text-right font-semibold">{props.value}</td>
     </tr>
   );
 }
