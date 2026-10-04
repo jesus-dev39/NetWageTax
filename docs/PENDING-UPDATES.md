@@ -27,17 +27,16 @@ publish the next year's numbers, and all states every January.
       2027 is 4.865% or stays at 4.99%. The single standard deduction rises to $15,000 in 2027 (update
       `exemptAmount` from $12,000), with later $375 steps also tied to revenue. The state's own
       tips/overtime exclusion ($1,750 each) runs through 2028. Source: `RATE_SOURCES.GA`.
-- [ ] **Arizona: confirm the 2026 single standard deduction (pending decision).** The site uses
-      $16,100. A.R.S. 43-1041 (https://www.azleg.gov/ars/43/01041.htm) now lists $15,750 for a single
-      filer, indexed for inflation "in the same manner" as the federal standard deduction (subsection H),
-      and A.R.S. 43-105 conforms to the Internal Revenue Code as in effect on January 1, 2026 (HB 4168,
-      2026 omnibus). That points to $16,100 for 2026, not $8,350, but azdor.gov blocked automated access
-      and the figure isn't confirmed by an ADOR publication yet (2026 Form 140 instructions or
-      withholding tables). Confirm before changing `exemptAmount` or the note.
-- [ ] **Michigan: link the official notice.** `TIPS_OVERTIME_NOTES.MI` is based on Treasury's notice
-      "New Deductions for Qualified Overtime Compensation and Qualified Tips" (January 6, 2026), which
-      blocked automated access. Open it in a browser, confirm the wording, and check the 2026 rate
-      (Treasury's April 15, 2026 rate determination; the site uses 4.25%).
+- [ ] **Arizona: confirm the 2026 single standard deduction when ADOR publishes the 2026 forms.** The site
+      uses $16,100: A.R.S. 43-1041 (https://www.azleg.gov/ars/43/01041.htm) lists $15,750 for a single
+      filer, indexed "in the same manner" as the federal standard deduction (subsection H), and HB 4168
+      (2026, signed June 13, 2026) conforms to the IRC as of January 1, 2026. Check the figure against the
+      2026 Form 140 instructions or withholding tables. HB 4168 also adds a state subtraction for
+      qualified tips and the overtime premium, matching the federal deduction (`AZ` is marked as
+      following it, with a `tipsOvertimeNote`).
+- [x] **Michigan: link the official notice.** Treasury's notice on the new deductions for qualified
+      overtime and tips (https://www.michigan.gov/treasury/reference/taxpayer-notices/notice-regarding-new-deductions-for-qualified-overtime-compensation-and-qualified-tips)
+      confirms `TIPS_OVERTIME_NOTES.MI` and "follows"; the April 15, 2026 rate notice confirms 4.25%.
 - [ ] **Progressive states: review the 2026 data (October 2026).** Check `estimateRate`, `exemptAmount`,
       `bracketRange` and the note of every `GRAD` state against an official 2026 source, and add a
       `rateSource` for each one verified.
@@ -47,21 +46,33 @@ publish the next year's numbers, and all states every January.
   - [x] **Nebraska, Oregon, Rhode Island, Vermont, Virginia:** 2026 exempt amounts and `estimateRate`
         recalibrated at $65,000. The bracket thresholds used for the calibration come from the Tax
         Foundation's February 2026 table: confirm them against each state's 2026 publication. Personal
-        exemption credits (Arkansas $29, Nebraska $176, Oregon $256) aren't applied.
-  - [ ] **South Carolina: bracket indexing.** H.4216 indexes the $30,000 threshold under Section 12-6-520;
-        confirm the 2026 figure in the SCDOR tax tables (SC1040TT) when they're published.
-  - [ ] **Maine (pending decision):** MRS's 2026 withholding tables (revised August 2026) give a $15,700
-        single basic standard deduction plus a $5,300 personal exemption ($21,000; the site uses $21,250),
-        phased out above $102,250 of Maine income. Neither $16,100 nor $8,350.
+        exemption credits (Arkansas $29, Nebraska $176) aren't applied; Oregon's $256 is (see below).
+  - [x] **Maine:** $21,000 ($15,700 basic standard deduction + $5,300 personal exemption, MRS 2026
+        withholding tables, revised August 2026), phased out above $102,250 of Maine income.
         https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/26_wh_tab_instr_August2026.pdf
-  - [ ] **Hawaii (pending decision):** Department of Taxation Announcement 2024-03 confirms Act 46's
-        $8,000 single standard deduction for 2026 (and 2027). With the $1,144 personal exemption that's
-        $9,144; the site uses $9,100. https://files.hawaii.gov/tax/news/announce/ann24-03.pdf
-  - [ ] **Wisconsin (pending decision):** 2026 single standard deduction is $13,960 less 12% of Wisconsin
-        income over $20,120 (Form 1-ES instructions, D-101A R. 1-26). At $65,000 that's $8,574, plus the $700
-        exemption = $9,274; the site uses $7,200.
-        https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf
+  - [x] **Hawaii:** $9,144 ($8,000 standard deduction under Act 46, Announcement 2024-03, + $1,144
+        exemption). https://files.hawaii.gov/tax/news/announce/ann24-03.pdf
+  - [x] **Wisconsin:** $9,274 at $65,000 ($13,960 less 12% of income over $20,120, + $700 exemption;
+        Form 1-ES instructions, D-101A R. 1-26). https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf
+  - [x] **Oregon:** `estimateRate` recalibrated to 7.03% with the federal income tax subtraction ($5,620
+        at $65,000, under the cap) and the $256 exemption credit. Confirm the 2026 subtraction cap when
+        the 2026 Form OR-40 instructions are published.
+  - [ ] **Vermont:** waiting for the single brackets and 2026 exemption from the official "2026 VT Rate
+        Schedules" PDF (the user will provide them). Don't change `VT` until then.
   - [ ] Then the rest of the progressive states, alphabetically.
+- [ ] **South Carolina: 2027 bracket indexing (January 2027).** The $30,000 threshold is the 2026 figure;
+      H.4216 indexes it under Section 12-6-520 starting in 2027. Update `BRACKETS.SC` and the
+      `estimateRate` once SCDOR publishes the 2027 figure.
 - [ ] **All states: review the 2027 data (January 15, 2027).** Rates, `exemptAmount`, `estimateRate`,
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
       Then update `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` and the tax year shown on the pages.
+
+## After the redesign ships
+
+- [ ] **Bracket engine (approved October 4, 2026).** Replace `exemptAmount × estimateRate` with a
+      calculation from `BRACKETS`, in the approved phases. The model has four pieces: deductions and
+      exemptions, the bracket schedule, credits, and a **federal income tax deduction** (Oregon with
+      its cap, Alabama, and Missouri). Decisions: Arkansas uses the schedule for net income up to
+      $94,700, with a note for higher incomes; New York and Connecticut recapture stays a note, not part
+      of the calculation; California's 1% Behavioral Health Services Tax is its own row in the
+      calculation.

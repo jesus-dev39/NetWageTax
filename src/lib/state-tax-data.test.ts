@@ -206,5 +206,21 @@ describe('progressive states reviewed October 2026', () => {
     expect(STATES_BY_CODE.RI.exemptAmount).toBe(16_450);
     expect(STATES_BY_CODE.VT.exemptAmount).toBe(12_950);
     expect(STATES_BY_CODE.VA.exemptAmount).toBe(9_680);
+    expect(STATES_BY_CODE.ME.exemptAmount).toBe(15_700 + 5_300);
+    expect(STATES_BY_CODE.HI.exemptAmount).toBe(8_000 + 1_144);
+    expect(STATES_BY_CODE.WI.exemptAmount).toBe(13_960 - Math.round(0.12 * (65_000 - 20_120)) + 700);
+  });
+
+  it('calibrates Oregon with the federal tax subtraction and the $256 credit', () => {
+    const federalTax = 12_400 * 0.1 + (65_000 - 16_100 - 12_400) * 0.12;
+    const taxable = 65_000 - 2_910 - federalTax;
+    const exact = 4_550 * 0.0475 + 6_850 * 0.0675 + (taxable - 11_400) * 0.0875 - 256;
+    expect(Math.abs(calculateStateIncomeTax(65_000, 'OR') - exact)).toBeLessThan(5);
+  });
+
+  it('marks Arizona as following the federal tips and overtime deduction (HB 4168)', () => {
+    expect(STATES_BY_CODE.AZ.followsFederalTipsOvertime).toBe(true);
+    expect(STATES_BY_CODE.AZ.tipsOvertimeNote).toContain('HB 4168');
+    expect(STATES_BY_CODE.AZ.exemptAmount).toBe(16_100);
   });
 });
