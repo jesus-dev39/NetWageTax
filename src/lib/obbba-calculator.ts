@@ -12,6 +12,7 @@ import {
   PARAMS_BY_YEAR,
   PHASEOUT_STEP_SIZE_USD,
   PHASEOUT_REDUCTION_PER_STEP_USD,
+  TIPS_OVERTIME_PHASEOUT,
   FICA_STILL_OWED_NOTICE,
   W2_CODE_EXPLANATIONS,
   SUPPORTED_TAX_YEARS,
@@ -23,6 +24,7 @@ import {
   type CategoryYearParams,
   type IneligibilityReason,
 } from './obbba-params';
+import { phaseoutReduction } from './phaseout';
 
 // ---------------------------------------------------------------------------
 // Helpers internos
@@ -30,9 +32,7 @@ import {
 
 /** Paso 3: reducción de phase-out, con redondeo hacia abajo por tramos de $1,000. */
 function computePhaseoutReduction(magi: number, threshold: number): number {
-  const excess = Math.max(0, magi - threshold);
-  const steps = Math.floor(excess / PHASEOUT_STEP_SIZE_USD);
-  return steps * PHASEOUT_REDUCTION_PER_STEP_USD;
+  return phaseoutReduction(magi, threshold, TIPS_OVERTIME_PHASEOUT);
 }
 
 /** MAGI a partir del cual la deducción de esta categoría llega exactamente a $0. */

@@ -10,6 +10,8 @@
  * esta tabla, nunca de números embebidos.
  */
 
+import type { PhaseoutRule } from './phaseout';
+
 // ---------------------------------------------------------------------------
 // Tipos base
 // ---------------------------------------------------------------------------
@@ -100,6 +102,14 @@ export const PHASEOUT_STEP_SIZE_USD = 1000;
 
 /** Reducción de deducción aplicada por cada tramo completo de PHASEOUT_STEP_SIZE_USD. */
 export const PHASEOUT_REDUCTION_PER_STEP_USD = 100;
+
+/** Regla de phase-out de propinas y horas extra: $100 por cada $1,000 completo (ver phaseout.ts). */
+export const TIPS_OVERTIME_PHASEOUT: PhaseoutRule = {
+  kind: 'step',
+  stepSize: PHASEOUT_STEP_SIZE_USD,
+  perStep: PHASEOUT_REDUCTION_PER_STEP_USD,
+  rounding: 'down',
+};
 
 // ---------------------------------------------------------------------------
 // Parámetros por año (SPEC.md §2.1)

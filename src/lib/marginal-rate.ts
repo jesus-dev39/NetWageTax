@@ -55,6 +55,45 @@ export function getMarginalRate(taxableIncome: number, filingStatus: FilingStatu
 }
 
 /**
+ * Deducción estándar adicional por edad (65+) en 2026, IRC §63(f), Rev. Proc. 2025-32 §3.14(3):
+ * $2,050 para quien no está casado (ni es surviving spouse) y $1,650 por cónyuge casado.
+ */
+export const ADDITIONAL_STANDARD_DEDUCTION_AGED_2026 = { unmarried: 2_050, married: 1_650 } as const;
+
+/** Deducción estándar adicional por edad para `people65` personas de 65+ en la declaración. */
+export function agedAdditionalStandardDeduction(filingStatus: FilingStatus, people65: number): number {
+  const married = filingStatus === 'mfj' || filingStatus === 'mfs';
+  const perPerson = married ? ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.married : ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.unmarried;
+  return perPerson * Math.max(0, people65);
+}
+
+export interface FederalTaxComparison {
+  /** Impuesto federal sin la deducción del Schedule 1-A. */
+  before: number;
+  /** Impuesto federal con la deducción. */
+  after: number;
+  /** before − after. */
+  saved: number;
+}
+
+/**
+ * Impuesto federal con y sin la deducción, asumiendo deducción estándar (más
+ * `extraStandardDeduction`, p. ej. la adicional por edad).
+ */
+export function compareFederalTax(
+  magi: number,
+  deduction: number,
+  filingStatus: FilingStatus,
+  extraStandardDeduction = 0,
+): FederalTaxComparison {
+  const taxableBefore = Math.max(0, magi - STANDARD_DEDUCTION_2026[filingStatus] - extraStandardDeduction);
+  const taxableAfter = Math.max(0, taxableBefore - deduction);
+  const before = computeFederalIncomeTax(taxableBefore, filingStatus);
+  const after = computeFederalIncomeTax(taxableAfter, filingStatus);
+  return { before, after, saved: before - after };
+}
+
+/**
  * Ahorro estimado = impuesto sin la deducción − impuesto con la deducción,
  * asumiendo deducción estándar. Más preciso que deducción × tipo marginal
  * cuando la deducción cruza un límite de tramo.
@@ -63,19 +102,15 @@ export function estimateFederalTaxSavings(
   magi: number,
   deduction: number,
   filingStatus: FilingStatus,
+  extraStandardDeduction = 0,
 ): number {
-  const taxableBefore = Math.max(0, magi - STANDARD_DEDUCTION_2026[filingStatus]);
-  const taxableAfter = Math.max(0, taxableBefore - deduction);
-  return (
-    computeFederalIncomeTax(taxableBefore, filingStatus) -
-    computeFederalIncomeTax(taxableAfter, filingStatus)
-  );
+  return compareFederalTax(magi, deduction, filingStatus, extraStandardDeduction).saved;
 }
 
 /**
  * True cuando la deducción estándar ya cubre toda la renta: no hay impuesto
  * federal que reducir, así que el ahorro OBBBA es $0 aunque haya deducción.
  */
-export function isCoveredByStandardDeduction(magi: number, filingStatus: FilingStatus): boolean {
-  return magi > 0 && magi <= STANDARD_DEDUCTION_2026[filingStatus];
+export function isCoveredByStandardDeduction(magi: number, filingStatus: FilingStatus, extraStandardDeduction = 0): boolean {
+  return magi > 0 && magi <= STANDARD_DEDUCTION_2026[filingStatus] + extraStandardDeduction;
 }
