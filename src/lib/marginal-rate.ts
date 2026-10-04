@@ -5,7 +5,7 @@
  *
  * Fuente: IRS Rev. Proc. 2025-32 (ajustes por inflación 2026).
  * Simplificación v1: se asume deducción estándar y MAGI ≈ AGI. La deducción
- * OBBBA reduce la base imponible (Form 1040 línea 13b), no el AGI.
+ * OBBBA reduce la base imponible (Schedule 1-A → Form 1040), no el AGI.
  */
 
 import type { FilingStatus } from './obbba-params';

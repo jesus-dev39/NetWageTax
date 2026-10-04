@@ -39,7 +39,7 @@ const CODES: CodeInfo[] = [
     qualifiesNote:
       'Yes. This is the starting point for the qualified tips deduction under IRC §224, capped at $25,000 per return and reduced once MAGI passes $150,000 ($300,000 if married filing jointly).',
     formImpact:
-      'Schedule 1-A, Part II (No Tax on Tips). The total from Schedule 1-A flows to Form 1040, line 13b.',
+      'Schedule 1-A, Part II (No Tax on Tips). The total from Schedule 1-A carries to Form 1040.',
     watchOut:
       'Your employer does not apply the $25,000 cap or the income phase-out. You figure those on your return.',
   },
@@ -53,7 +53,7 @@ const CODES: CodeInfo[] = [
     qualifiesNote:
       'Yes. This is the starting point for the qualified overtime deduction, capped at $12,500 ($25,000 if married filing jointly) and reduced once MAGI passes $150,000 ($300,000 if married filing jointly).',
     formImpact:
-      'Schedule 1-A, Part III (No Tax on Overtime). The total from Schedule 1-A flows to Form 1040, line 13b.',
+      'Schedule 1-A, Part III (No Tax on Overtime). The total from Schedule 1-A carries to Form 1040.',
     watchOut:
       'Only the premium portion is deductible. If you earn $20/hour and work overtime at $30/hour, only $10 of each overtime hour counts.',
   },

@@ -169,7 +169,7 @@ export default function TaxCalculatorApp() {
       detail:
         result.totalCombinedDeduction > 0
           ? hasSsn
-            ? `Claim ${formatUSD(result.totalCombinedDeduction)} on Schedule 1-A; it flows to Form 1040, line 13b.`
+            ? `Claim ${formatUSD(result.totalCombinedDeduction)} on Schedule 1-A; the total carries to Form 1040.`
             : 'Confirm your SSN to complete eligibility.'
           : 'Complete the items above to see your Schedule 1-A amount.',
     },
@@ -214,7 +214,7 @@ export default function TaxCalculatorApp() {
           <Field
             id="magi"
             label="Modified adjusted gross income (MAGI)"
-            hint="Your adjusted gross income from Form 1040, line 11. If you have foreign or U.S. territory income, your MAGI may be higher than your AGI."
+            hint="Your adjusted gross income (AGI) from Form 1040. If you have foreign or U.S. territory income, your MAGI may be higher than your AGI."
           >
             <div className="sm:max-w-xs">
               <CurrencyInput id="magi" value={magi} onValueChange={setMagi} placeholder="65,000" describedBy="magi-hint" />
