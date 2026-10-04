@@ -4,6 +4,7 @@ import HomePaycheckEstimate from '../components/HomePaycheckEstimate';
 import { formatUSD } from '../components/CurrencyInput';
 import { SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
 import { STANDARD_DEDUCTION_2026, TAX_BRACKETS_2026 } from '../lib/marginal-rate';
+import { SCHEDULE_1A_TOOLS } from '../lib/schedule-1a-tools';
 import { SITE_TAX_YEAR } from '../lib/site';
 import { statePagePath, STATES, type TaxStructure } from '../lib/state-tax-data';
 
@@ -17,11 +18,7 @@ const facts = [
 ];
 
 const tools = [
-  {
-    href: '/tools/obbba-tax-calculator/',
-    title: 'Tips and overtime deduction',
-    body: `Estimate your ${SITE_TAX_YEAR} Schedule 1-A deduction and what it saves in federal tax.`,
-  },
+  ...SCHEDULE_1A_TOOLS,
   {
     href: '/guides/w2-box-12-guide/',
     title: 'W-2 Box 12 codes',
@@ -97,7 +94,7 @@ const jsonLd = {
   <section aria-labelledby="tools-heading">
     <div class="container-page py-10 sm:py-14">
       <h2 id="tools-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Other tools</h2>
-      <ul class="mt-4 grid border-t border-line md:grid-cols-2 md:gap-x-8">
+      <ul class="mt-4 grid border-t border-line md:grid-cols-2 md:gap-x-8 lg:grid-cols-3">
         {
           tools.map(({ href, title, body }) => (
             <li class="border-b border-line py-5">

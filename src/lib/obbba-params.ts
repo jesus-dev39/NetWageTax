@@ -10,6 +10,8 @@
  * esta tabla, nunca de números embebidos.
  */
 
+import type { PhaseoutRule } from './phaseout';
+
 // ---------------------------------------------------------------------------
 // Tipos base
 // ---------------------------------------------------------------------------
@@ -101,6 +103,14 @@ export const PHASEOUT_STEP_SIZE_USD = 1000;
 /** Reducción de deducción aplicada por cada tramo completo de PHASEOUT_STEP_SIZE_USD. */
 export const PHASEOUT_REDUCTION_PER_STEP_USD = 100;
 
+/** Regla de phase-out de propinas y horas extra: $100 por cada $1,000 completo (ver phaseout.ts). */
+export const TIPS_OVERTIME_PHASEOUT: PhaseoutRule = {
+  kind: 'step',
+  stepSize: PHASEOUT_STEP_SIZE_USD,
+  perStep: PHASEOUT_REDUCTION_PER_STEP_USD,
+  rounding: 'down',
+};
+
 // ---------------------------------------------------------------------------
 // Parámetros por año (SPEC.md §2.1)
 // ---------------------------------------------------------------------------
@@ -141,6 +151,70 @@ export const PARAMS_BY_YEAR: Record<TaxYear, ObbbaYearParams> = {
   2026: OBBBA_2026_PARAMS,
   2027: OBBBA_2026_PARAMS,
   2028: OBBBA_2026_PARAMS,
+};
+
+// ---------------------------------------------------------------------------
+// Deducción para mayores de 65 (IRC §151(d)(5)(C), Schedule 1-A Parte V)
+// ---------------------------------------------------------------------------
+
+export interface SeniorYearParams {
+  /** Importe por persona que cumple los requisitos (no se ajusta por inflación). */
+  amountPerPerson: number;
+  thresholdSingleOrHoh: number;
+  thresholdMfj: number;
+  phaseout: PhaseoutRule;
+}
+
+/** Valores estatutarios 2025–2028: $6,000 por persona, −6 % del MAGI por encima de $75,000 ($150,000 MFJ). */
+const SENIOR_PARAMS: SeniorYearParams = {
+  amountPerPerson: 6_000,
+  thresholdSingleOrHoh: 75_000,
+  thresholdMfj: 150_000,
+  phaseout: { kind: 'rate', rate: 0.06 },
+};
+
+export const SENIOR_PARAMS_BY_YEAR: Record<TaxYear, SeniorYearParams> = {
+  2025: SENIOR_PARAMS,
+  2026: SENIOR_PARAMS,
+  2027: SENIOR_PARAMS,
+  2028: SENIOR_PARAMS,
+};
+
+/**
+ * Hay que cumplir 65 antes de que acabe el año fiscal, y se considera que una persona los
+ * cumple el día anterior a su cumpleaños (instrucciones del Schedule 1-A). Por eso el corte
+ * es "nacido antes del 2 de enero de (año − 64)": 2026 → January 2, 1962.
+ */
+export function seniorBirthCutoffLabel(taxYear: TaxYear): string {
+  return `January 2, ${taxYear - 64}`;
+}
+
+// ---------------------------------------------------------------------------
+// Intereses de préstamos de vehículos (IRC §163(h)(4), Schedule 1-A Parte IV)
+// ---------------------------------------------------------------------------
+
+export interface CarLoanYearParams {
+  /** Tope por declaración, sea cual sea el estado civil (TD 10054, §1.163-16(h)(1)). */
+  capPerReturn: number;
+  /** Umbral para todos los estados civiles salvo MFJ (MFS incluido: la ley no exige declaración conjunta). */
+  thresholdOther: number;
+  thresholdMfj: number;
+  phaseout: PhaseoutRule;
+}
+
+/** Valores estatutarios 2025–2028: tope $10,000; −$200 por cada $1,000 o fracción por encima de $100,000 ($200,000 MFJ). */
+const CAR_LOAN_PARAMS: CarLoanYearParams = {
+  capPerReturn: 10_000,
+  thresholdOther: 100_000,
+  thresholdMfj: 200_000,
+  phaseout: { kind: 'step', stepSize: 1_000, perStep: 200, rounding: 'up' },
+};
+
+export const CAR_LOAN_PARAMS_BY_YEAR: Record<TaxYear, CarLoanYearParams> = {
+  2025: CAR_LOAN_PARAMS,
+  2026: CAR_LOAN_PARAMS,
+  2027: CAR_LOAN_PARAMS,
+  2028: CAR_LOAN_PARAMS,
 };
 
 // ---------------------------------------------------------------------------

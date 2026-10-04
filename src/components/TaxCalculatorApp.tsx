@@ -7,6 +7,7 @@ import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import { estimateStateTax, findState, STATES, type StateCode } from '../lib/state-tax-data';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
 import ExportSummaryActions from './ExportSummaryActions';
+import { QualificationChecklist, ResultPanel, Row, minusUSD, type CheckItem } from './calculator-parts';
 import { Checkbox, Field, RadioGroup, Reveal, type RadioOption } from './form';
 import IncomeBreakdownBar from './IncomeBreakdownBar';
 import NativeSelect from './NativeSelect';
@@ -124,6 +125,11 @@ export default function TaxCalculatorApp() {
       label: 'Valid Social Security number',
       status: hasSsn ? 'pass' : 'pending',
       detail: 'Required for both deductions. An SSN valid for employment; ITINs don’t qualify.',
+      control: (
+        <Checkbox id="has-ssn" checked={hasSsn} onChange={setHasSsn}>
+          I have a valid SSN (we never ask for the number)
+        </Checkbox>
+      ),
     },
     {
       key: 'filing',
@@ -169,7 +175,7 @@ export default function TaxCalculatorApp() {
       detail:
         result.totalCombinedDeduction > 0
           ? hasSsn
-            ? `Claim ${formatUSD(result.totalCombinedDeduction)} on Schedule 1-A; it flows to Form 1040, line 13b.`
+            ? `Claim ${formatUSD(result.totalCombinedDeduction)} on Schedule 1-A; the total carries to Form 1040.`
             : 'Confirm your SSN to complete eligibility.'
           : 'Complete the items above to see your Schedule 1-A amount.',
     },
@@ -214,7 +220,7 @@ export default function TaxCalculatorApp() {
           <Field
             id="magi"
             label="Modified adjusted gross income (MAGI)"
-            hint="Your adjusted gross income from Form 1040, line 11. If you have foreign or U.S. territory income, your MAGI may be higher than your AGI."
+            hint="Your adjusted gross income (AGI) from Form 1040. If you have foreign or U.S. territory income, your MAGI may be higher than your AGI."
           >
             <div className="sm:max-w-xs">
               <CurrencyInput id="magi" value={magi} onValueChange={setMagi} placeholder="65,000" describedBy="magi-hint" />
@@ -260,25 +266,25 @@ export default function TaxCalculatorApp() {
             </Reveal>
           </div>
 
-          <QualificationChecklist items={checklist} hasSsn={hasSsn} onSsnChange={setHasSsn} />
+          <QualificationChecklist title={`${TAX_YEAR} filing checklist`} items={checklist} />
         </form>
 
         {/* ------------------------------ Results ----------------------------- */}
         <aside aria-labelledby="results-heading" className="flex flex-col gap-6 lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
-          <div className="rounded-panel border border-line bg-green-tint p-5 sm:p-6">
-            <h3 id="results-heading" className="font-semibold text-ink">
-              Federal income tax saved
-            </h3>
-            <p className="num mt-1 text-[2.5rem]/[1.05] font-bold tracking-[-0.02em] text-ink sm:text-5xl/[1.05]">{formatUSD(savings)}</p>
-            <p className="num mt-1 text-ink-2">
-              Schedule 1-A deduction: <span className="font-semibold text-ink">{formatUSD(result.totalCombinedDeduction)}</span>
-            </p>
+          <ResultPanel
+            id="results-heading"
+            label="Federal income tax saved"
+            value={formatUSD(savings)}
+            context={
+              <>
+                Schedule 1-A deduction: <span className="font-semibold text-ink">{formatUSD(result.totalCombinedDeduction)}</span>
+              </>
+            }
+            liveText={`Estimated federal income tax saved ${formatUSD(savings)}. Total federal deduction ${formatUSD(result.totalCombinedDeduction)}.`}
+          >
             {coveredByStandardDeduction && <p className="mt-3 text-[15px] text-ink">{STANDARD_DEDUCTION_COVERS_NOTICE}</p>}
             {isMfs && <p className="mt-3 text-[15px] font-semibold text-ink">{MFS_NOTE}</p>}
-            <p className="sr-only" aria-live="polite">
-              Estimated federal income tax saved {formatUSD(savings)}. Total federal deduction {formatUSD(result.totalCombinedDeduction)}.
-            </p>
-          </div>
+          </ResultPanel>
 
           <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} filingStatus={filingStatus} stateTax={stateTax} />
 
@@ -292,7 +298,7 @@ export default function TaxCalculatorApp() {
             </ul>
             <dl className="num">
               <Row label="Base deduction (after caps)" value={formatUSD(baseTotal)} />
-              <Row label="MAGI phase-out reduction" value={reductionTotal > 0 ? `−${formatUSD(reductionTotal)}` : formatUSD(0)} />
+              <Row label="MAGI phase-out reduction" value={minusUSD(reductionTotal)} />
               <Row label="Total deduction" value={formatUSD(result.totalCombinedDeduction)} strong />
             </dl>
           </section>
@@ -322,15 +328,6 @@ export default function TaxCalculatorApp() {
 // Presentational helpers
 // ---------------------------------------------------------------------------
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className={`flex items-center justify-between gap-4 py-2 ${strong ? 'border-t-2 border-ink font-bold' : 'border-t border-line'}`}>
-      <dt className={strong ? 'text-ink' : 'text-ink-2'}>{label}</dt>
-      <dd className="text-ink">{value}</dd>
-    </div>
-  );
-}
-
 function categoryStatus(category: CategoryResult, enabled: boolean, note?: string | null): string | null {
   const reduction = Math.min(category.phaseoutReduction, category.deductionBeforePhaseout);
   if (note) return note;
@@ -356,66 +353,5 @@ function CategoryRow(props: { title: string; category: CategoryResult; enabled: 
       </div>
       <span className={`num shrink-0 font-semibold ${category.deductionFinal > 0 ? 'text-ink' : 'text-ink-2'}`}>{formatUSD(category.deductionFinal)}</span>
     </li>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// 2026 filing qualification checklist
-// ---------------------------------------------------------------------------
-
-type CheckStatus = 'pass' | 'fail' | 'warn' | 'pending' | 'na';
-
-interface CheckItem {
-  key: string;
-  label: string;
-  status: CheckStatus;
-  detail: string;
-}
-
-// Text status tags (docs/DESIGN.md §6) instead of colored icons; the words carry the meaning.
-const CHECK_TAGS: Record<CheckStatus, { text: string; className: string }> = {
-  pass: { text: 'Met', className: 'bg-green-tint text-green' },
-  fail: { text: 'Not met', className: 'bg-page text-error ring-1 ring-inset ring-error' },
-  warn: { text: 'Partly met', className: 'bg-warning-tint text-ink ring-1 ring-inset ring-warning' },
-  pending: { text: 'To confirm', className: 'bg-surface text-ink-2' },
-  na: { text: 'Not needed', className: 'text-muted' },
-};
-
-function QualificationChecklist(props: { items: CheckItem[]; hasSsn: boolean; onSsnChange: (v: boolean) => void }) {
-  const { items, hasSsn, onSsnChange } = props;
-  const met = items.filter((i) => i.status === 'pass').length;
-  const applicable = items.filter((i) => i.status !== 'na').length;
-  return (
-    <section aria-labelledby="checklist-heading" className="border-t border-line pt-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 id="checklist-heading" className="text-xl/[1.3] font-bold text-ink">
-          {TAX_YEAR} filing checklist
-        </h3>
-        <span className="num text-[15px] text-ink-2">
-          {met} of {applicable} met
-        </span>
-      </div>
-      <ul className="mt-3">
-        {items.map((item) => {
-          const tag = CHECK_TAGS[item.status];
-          return (
-            <li key={item.key} className="flex items-start justify-between gap-4 border-b border-line py-3 last:border-b-0">
-              <div className="min-w-0">
-                <p className="font-semibold text-ink">{item.label}</p>
-                <p className="text-[15px] text-ink-2">{item.detail}</p>
-                {item.key === 'ssn' && (
-                  <div className="mt-2">
-                    <Checkbox id="has-ssn" checked={hasSsn} onChange={onSsnChange}>
-                      I have a valid SSN (we never ask for the number)
-                    </Checkbox>
-                  </div>
-                )}
-              </div>
-              <span className={`shrink-0 rounded-[2px] px-2 py-0.5 text-sm font-semibold ${tag.className}`}>{tag.text}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }

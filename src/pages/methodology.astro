@@ -9,8 +9,8 @@ import {
   SOCIAL_SECURITY_RATE,
   SOCIAL_SECURITY_WAGE_BASE_2026,
 } from '../lib/fica';
-import { STANDARD_DEDUCTION_2026, TAX_BRACKETS_2026 } from '../lib/marginal-rate';
-import { PARAMS_BY_YEAR } from '../lib/obbba-params';
+import { ADDITIONAL_STANDARD_DEDUCTION_AGED_2026, STANDARD_DEDUCTION_2026, TAX_BRACKETS_2026 } from '../lib/marginal-rate';
+import { CAR_LOAN_PARAMS_BY_YEAR, PARAMS_BY_YEAR, SENIOR_PARAMS_BY_YEAR } from '../lib/obbba-params';
 import { OVERTIME_MULTIPLIER } from '../lib/paycheck';
 import { formatLongDate, SITE_TAX_YEAR } from '../lib/site';
 import { GRADUATED_REFERENCE_WAGE, STATE_TAX_DATA_AS_OF, STATE_TAX_LAST_UPDATED, STATES } from '../lib/state-tax-data';
@@ -20,6 +20,10 @@ const pct = (r: number) => `${+(r * 100).toFixed(2)}%`;
 const rates = TAX_BRACKETS_2026.single.map((b) => b.rate);
 const bracketRange = `${pct(Math.min(...rates))} to ${pct(Math.max(...rates))}`;
 const obbba = PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const senior = SENIOR_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const carLoan = CAR_LOAN_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const carLoanStep = carLoan.phaseout.kind === 'step' ? carLoan.phaseout : null;
+const seniorRate = senior.phaseout.kind === 'rate' ? senior.phaseout.rate : 0;
 
 const summary: { label: string; value: string; note?: string }[] = [
   { label: 'Tax year', value: String(SITE_TAX_YEAR) },
@@ -74,12 +78,19 @@ const summary: { label: string; value: string; note?: string }[] = [
         ({formatUSD(ADDITIONAL_MEDICARE_THRESHOLD.mfj)} married filing jointly).
       </li>
       <li>
-        <strong>Tips and overtime deduction.</strong> The One Big Beautiful Bill Act (Public Law 119-21), which added
-        sections 224 and 225 to the Internal Revenue Code, and the IRS instructions for Schedule 1-A. The deduction is
-        capped at {formatUSD(obbba.tips.capSingleOrHoh)} for qualified tips and {formatUSD(obbba.overtime.capSingleOrHoh)}{' '}
+        <strong>Schedule 1-A deductions.</strong> The One Big Beautiful Bill Act (Public Law 119-21), the Internal
+        Revenue Code sections it added, and the IRS Schedule 1-A and its instructions. The tips and overtime deduction
+        (sections 224 and 225) is capped at {formatUSD(obbba.tips.capSingleOrHoh)} for qualified tips and {formatUSD(obbba.overtime.capSingleOrHoh)}{' '}
         for qualified overtime ({formatUSD(obbba.overtime.capMfj)} married filing jointly), and phases out above{' '}
         {formatUSD(obbba.tips.phaseoutThresholdSingleOrHoh)} of modified AGI ({formatUSD(obbba.tips.phaseoutThresholdMfj)}{' '}
-        married filing jointly).
+        married filing jointly). The enhanced deduction for seniors (section 151(d)(5)(C)) is{' '}
+        {formatUSD(senior.amountPerPerson)} for each person 65 or older, reduced by {pct(seniorRate)} of modified AGI
+        above {formatUSD(senior.thresholdSingleOrHoh)} ({formatUSD(senior.thresholdMfj)} married filing jointly). The
+        car loan interest deduction (section 163(h)(4)) is capped at {formatUSD(carLoan.capPerReturn)} per return and
+        reduced by {formatUSD(carLoanStep?.perStep ?? 0)} for each {formatUSD(carLoanStep?.stepSize ?? 0)}, or part of it,
+        of modified AGI above {formatUSD(carLoan.thresholdOther)} ({formatUSD(carLoan.thresholdMfj)} married filing
+        jointly), following the Treasury's final regulations (TD 10054). The senior and car loan interest calculators
+        follow the {SITE_TAX_YEAR} draft Schedule 1-A until the IRS publishes the final form and instructions.
       </li>
       <li>
         <strong>State income tax.</strong> Each state's tax agency. Every <a href="/state-taxes/">state page</a> links
@@ -90,8 +101,8 @@ const summary: { label: string; value: string; note?: string }[] = [
     <h2 id="exact-vs-estimated">What's calculated exactly and what's estimated</h2>
     <p>
       <strong>Calculated from the published rules:</strong> federal income tax on your taxable income, Social Security,
-      Medicare (including the additional Medicare tax), and the tips and overtime deduction with its caps and
-      phase-out. For the inputs you enter, these follow the law step by step.
+      Medicare (including the additional Medicare tax), and the Schedule 1-A deductions with their caps and
+      phase-outs. For the inputs you enter, these follow the law step by step.
     </p>
     <p>
       <strong>Estimated:</strong> state income tax. We use one simplified formula for all {STATES.length}{' '}
@@ -130,6 +141,12 @@ const summary: { label: string; value: string; note?: string }[] = [
         In the paycheck calculator: 52 weeks of pay a year, overtime paid at {OVERTIME_MULTIPLIER}× your hourly rate,
         and no tips and overtime deduction (use the <a href="/tools/obbba-tax-calculator/">tips and overtime
         calculator</a> for that).
+      </li>
+      <li>
+        In the <a href="/tools/senior-deduction-calculator/">senior deduction calculator</a>: the standard deduction
+        plus the additional amount for age 65 ({formatUSD(ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.unmarried)} unmarried,{' '}
+        {formatUSD(ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.married)} for each spouse 65 or older), and income that may
+        not be wages, so no Social Security or Medicare.
       </li>
     </ul>
 

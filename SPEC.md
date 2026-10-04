@@ -38,7 +38,7 @@ Los tres códigos son **nuevos a partir del W-2 del año fiscal 2025** (el que e
 | MAGI donde la deducción llega a $0 — Soltero/HoH | $400,000 *($150,000 + $25,000/0.10)* | $275,000 *($150,000 + $12,500/0.10)* |
 | MAGI donde la deducción llega a $0 — MFJ | $550,000 *($300,000 + $25,000/0.10)* | $550,000 *($300,000 + $25,000/0.10)* |
 | Requiere SSN válido | Sí | Sí |
-| Disponible con deducción estándar o itemizada | Ambas (es "above-the-line", Schedule 1-A → Form 1040 línea 13b) | Ambas |
+| Disponible con deducción estándar o itemizada | Ambas (es "above-the-line", Schedule 1-A → Form 1040; línea 13b en 2025, 13a en el borrador 2026) | Ambas |
 | FICA (Seguro Social + Medicare) | **No se ve afectado** — se sigue pagando sobre el 100% de las propinas/horas extra | **No se ve afectado** |
 | Restricción de ocupación | Solo ocupaciones en la lista del Tesoro (~68 ocupaciones publicadas, cultura de propinas reconocida antes del 31/12/2024). Excluye trabajadores por cuenta propia en un *Specified Service Trade or Business* (SSTB) bajo IRC §199A. | Solo empleados no exentos bajo FLSA §7 (con derecho legal a horas extra). Empleados exentos asalariados no califican. |
 

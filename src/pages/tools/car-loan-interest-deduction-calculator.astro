@@ -1,0 +1,154 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CarLoanInterestApp from '../../components/CarLoanInterestApp';
+import AdSlot from '../../components/AdSlot';
+import FaqList from '../../components/FaqList.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import RelatedDeductions from '../../components/RelatedDeductions.astro';
+import { formatUSD } from '../../components/CurrencyInput';
+import { CAR_LOAN_PARAMS_BY_YEAR } from '../../lib/obbba-params';
+import { SITE_TAX_YEAR } from '../../lib/site';
+
+// Every figure comes from the constants the calculator uses.
+const p = CAR_LOAN_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const step = p.phaseout.kind === 'step' ? p.phaseout : { stepSize: 1_000, perStep: 0 };
+const cap = formatUSD(p.capPerReturn);
+const other = formatUSD(p.thresholdOther);
+const joint = formatUSD(p.thresholdMfj);
+const perStep = formatUSD(step.perStep);
+const lastStep = (Math.ceil(p.capPerReturn / step.perStep) - 1) * step.stepSize;
+const otherEnd = formatUSD(p.thresholdOther + lastStep);
+const jointEnd = formatUSD(p.thresholdMfj + lastStep);
+
+const title = `${SITE_TAX_YEAR} Car Loan Interest Deduction Calculator (No Tax on Car Loans)`;
+const description = `Estimate your ${SITE_TAX_YEAR} car loan interest deduction: up to ${cap} of interest on a new, U.S.-assembled vehicle financed after 2024, the phase-out above ${other} of MAGI, and your federal tax savings.`;
+const path = '/tools/car-loan-interest-deduction-calculator/';
+
+// Answers are plain text so they can be reused verbatim in FAQPage structured data.
+const faqs = [
+  {
+    question: 'Which vehicles qualify for the car loan interest deduction?',
+    answer: [
+      'The vehicle must be new, meaning its original use started with you, and its final assembly must have taken place in the United States. It must be a car, minivan, van, SUV, pickup truck, or motorcycle with a gross vehicle weight rating under 14,000 pounds, made mainly for use on public roads.',
+      'The loan must have been taken out after December 31, 2024, to buy the vehicle, be secured by a first lien on it, and be for a vehicle you expect to use for personal use more than 50% of the time. The deduction applies to tax years 2025 through 2028 and is claimed on Schedule 1-A, Part IV, with each vehicle’s VIN.',
+    ],
+  },
+  {
+    question: 'Do used cars or leased cars qualify?',
+    answer: [
+      'No. Used vehicles don’t qualify, and lease payments aren’t loan interest. Buying a car at the end of a lease usually doesn’t qualify either, because the vehicle’s original use started with the leasing company.',
+      'A new vehicle from a previous model year still counts as new if you are its first owner.',
+    ],
+  },
+  {
+    question: 'How do I check where my car was assembled?',
+    answer: [
+      'The final assembly point is printed on the label attached to new vehicles at the dealer, and you can rely on it. You can also enter your VIN in the National Highway Traffic Safety Administration’s VIN decoder, which shows the plant of manufacture.',
+    ],
+  },
+  {
+    question: 'I bought my car in 2024. Can I deduct the interest?',
+    answer: [
+      'No. Only loans taken out after December 31, 2024, qualify, even if you are still paying interest in 2026 on an earlier loan. If you refinance a loan that qualifies, interest on the new loan still counts, up to the balance that was refinanced, as long as the new loan is secured by a first lien on the same vehicle.',
+    ],
+  },
+  {
+    question: 'How does the income phase-out work, and why is it rounded up?',
+    answer: [
+      `The deduction, after the ${cap} cap, is reduced by ${perStep} for each $1,000 of modified adjusted gross income (MAGI) above ${other}, or ${joint} if you are married filing jointly. The law counts any part of $1,000 as a full step, so $1 over the threshold already costs ${perStep}.`,
+      `The full ${cap} is gone once MAGI passes ${otherEnd}, or ${jointEnd} on a joint return. Smaller amounts are phased out sooner.`,
+      'For most people, MAGI is the adjusted gross income on Form 1040. It can be higher if you exclude foreign earned income or income from U.S. territories.',
+    ],
+  },
+  {
+    question: `Can married couples filing separately claim it, and is the ${cap} limit per person?`,
+    answer: [
+      `Yes, married people filing separately can claim it: the law doesn’t require a joint return, and the phase-out starts at ${other}. The ${cap} limit applies per return, whatever your filing status, so a married couple filing jointly can deduct no more than ${cap} in total, even with two qualifying vehicles.`,
+    ],
+  },
+  {
+    question: 'What is Form 1098-VLI?',
+    answer: [
+      'It is the form lenders use to report the interest you paid on a qualifying vehicle loan, in box 1. Lenders send it when they receive $600 or more of interest in a year. If you don’t get one, use your loan statements.',
+    ],
+  },
+  {
+    question: 'I also use my car for rideshare or business. Does it still qualify?',
+    answer: [
+      'Yes, as long as you expected, when you took out the loan, to use the vehicle for personal use more than 50% of the time. Interest you deduct as a business expense on Schedule C, E, or F can’t be deducted again here, so enter only the rest.',
+    ],
+  },
+  {
+    question: 'Which financed costs count?',
+    answer: [
+      'Interest on the price of the vehicle and on items usually financed with it, such as sales tax, vehicle fees, extended warranties, and service plans, counts. Interest on the unpaid loan of a trade-in rolled into the new loan (negative equity), insurance, or a trailer doesn’t.',
+    ],
+  },
+  {
+    question: 'I file as a qualifying surviving spouse. Can I use this calculator?',
+    answer: [
+      `Qualifying surviving spouses can claim the deduction, with the ${other} phase-out threshold. But they also have a different, larger standard deduction (the same as married filing jointly), which this calculator doesn’t include, so its savings estimate wouldn’t be right for you. Use the Schedule 1-A instructions or tax software for your figures.`,
+    ],
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer.join(' ') },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Car loan interest calculator', item: `https://netwagetax.com${path}` },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <PageHeader
+    title={`${SITE_TAX_YEAR} car loan interest deduction calculator`}
+    lead={`See how much of the interest on your new car loan you can deduct after the ${cap} cap and the income phase-out, and what it saves in federal income tax.`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Car loan interest calculator' }]}
+  />
+
+  <div class="container-page flex flex-col gap-12 py-10">
+    <!--
+      Ad placement 1: below the page title, above the calculator. Add slotId="…" from the AdSense dashboard to go live.
+      md+ only, as on the tips and overtime page: on phones it would push the first input below the fold.
+    -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="calculator-top" />
+    </div>
+    <CarLoanInterestApp client:load />
+    <RelatedDeductions current={path} />
+  </div>
+
+  <section aria-labelledby="faq-heading" class="border-t border-line">
+    <div class="container-page py-12">
+      <div class="max-w-3xl">
+        <h2 id="faq-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Frequently asked questions</h2>
+        <div class="mt-5">
+          <FaqList faqs={faqs} />
+        </div>
+        <!-- Ad placement: after the FAQ list, before the disclaimer. -->
+        <AdSlot client:visible format="leaderboard" placement="calculator-bottom" className="mt-10" />
+        <p class="mt-8 text-[15px] text-ink-2">
+          This calculator provides educational estimates and is not tax advice. Results are not a tax return. Verify your
+          figures with the official IRS Schedule 1-A instructions or a CPA or enrolled agent.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

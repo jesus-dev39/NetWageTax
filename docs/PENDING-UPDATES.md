@@ -73,6 +73,14 @@ publish the next year's numbers, and all states every January.
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
       Then update `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` and the tax year shown on the pages.
 
+- [ ] **Schedule 1-A: final 2026 form and instructions (when the IRS publishes them).** The senior deduction
+      and car loan interest calculators follow the 2026 draft Schedule 1-A (https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf)
+      and the 2025 instructions. When the final form and the 2026 instructions are out, check the amounts,
+      thresholds, the birth date cutoff (January 2, 1962), the car loan rounding (part steps rounded up), the
+      vehicle and loan requirements (also in TD 10054, effective November 9, 2026), and the wording of each calculator against them,
+      then remove `SCHEDULE_1A_DRAFT_NOTICE` (`src/lib/site.ts`) from their assumptions. The draft carries the
+      total to Form 1040 line 13a (13b in 2025): the site cites no 1040 line numbers for 2026 until then.
+
 ## After the redesign ships
 
 - [ ] **Bracket engine (approved October 4, 2026).** Replace `exemptAmount × estimateRate` with a

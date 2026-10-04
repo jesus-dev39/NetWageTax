@@ -20,6 +20,13 @@ export const ADSENSE_CLIENT = 'ca-pub-2086612186107816';
 /** Tax year the site's calculators and state pages describe (shown in the status strip). */
 export const SITE_TAX_YEAR = 2026;
 
+/**
+ * Shown in the assumptions of the senior and car loan interest calculators until the IRS publishes
+ * the final 2026 Schedule 1-A and its instructions (docs/PENDING-UPDATES.md).
+ */
+export const SCHEDULE_1A_DRAFT_NOTICE =
+  'Based on the 2026 draft Schedule 1-A; we’ll update this page when the IRS publishes the final form and instructions.';
+
 /** "2026-09-27" → "September 27, 2026". Noon avoids the date shifting a day in time zones west of UTC. */
 export function formatLongDate(isoDate: string): string {
   return new Date(`${isoDate}T12:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

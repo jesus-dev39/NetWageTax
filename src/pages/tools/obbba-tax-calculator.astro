@@ -5,6 +5,7 @@ import TaxCalculatorApp from '../../components/TaxCalculatorApp';
 import AdSlot from '../../components/AdSlot';
 import FaqList from '../../components/FaqList.astro';
 import PageHeader from '../../components/PageHeader.astro';
+import RelatedDeductions from '../../components/RelatedDeductions.astro';
 
 const title = '2026 No Tax on Tips & Overtime Calculator (OBBBA)';
 const description =
@@ -41,7 +42,14 @@ const faqs = [
     answer: [
       'For 2026, both deductions begin to phase out when your modified adjusted gross income (MAGI) exceeds $150,000 for single and head of household filers, or $300,000 for married couples filing jointly.',
       'For every full $1,000 of MAGI above the threshold, your deduction is reduced by $100. The qualified tips deduction is fully phased out at $400,000 of MAGI for single and head of household filers, and $550,000 for joint filers. The qualified overtime deduction is fully phased out at $275,000 for single and head of household filers, and $550,000 for joint filers.',
-      'For most taxpayers, MAGI is the same as the adjusted gross income on Form 1040, line 11. It can be higher if you exclude foreign earned income or income from U.S. territories.',
+      'For most taxpayers, MAGI is the same as the adjusted gross income (AGI) on your Form 1040. It can be higher if you exclude foreign earned income or income from U.S. territories.',
+    ],
+  },
+  {
+    question: 'What other deductions are on Schedule 1-A?',
+    answer: [
+      'Schedule 1-A also has two other deductions. The enhanced deduction for seniors is up to $6,000 for each person 65 or older, reduced once MAGI passes $75,000 ($150,000 if married filing jointly). The car loan interest deduction is up to $10,000 of interest on a loan taken out after 2024 for a new vehicle assembled in the United States, reduced once MAGI passes $100,000 ($200,000 if married filing jointly). We have a separate calculator for each.',
+      'The deductions on Schedule 1-A add up to one total that reduces your taxable income, whether you take the standard deduction or itemize.',
     ],
   },
 ];
@@ -90,6 +98,7 @@ const faqSchema = {
     <div class="border-t border-line pt-10">
       <TaxCalculatorApp client:load />
     </div>
+    <RelatedDeductions current="/tools/obbba-tax-calculator/" />
   </div>
 
   <section aria-labelledby="faq-heading" class="border-t border-line">
