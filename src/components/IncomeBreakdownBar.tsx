@@ -30,7 +30,9 @@ export function stateTaxHint(stateTax: StateTaxEstimate): string {
         ? `${lead} ${info.tipsOvertimeNote} Our estimate doesn’t apply that exclusion: it taxes your full income.`
         : `${lead} ${stateTax.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
     case 'follows':
-      return `${lead} ${stateTax.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
+      return info.tipsOvertimeNote
+        ? `${lead} ${info.tipsOvertimeNote} Our estimate doesn’t apply those deductions: it taxes your full income.`
+        : `${lead} ${stateTax.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
     default:
       return `${lead} Our estimate taxes tips and overtime at the state level.`;
   }

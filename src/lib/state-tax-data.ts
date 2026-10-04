@@ -107,16 +107,16 @@ const ROWS: Row[] = [
   FLAT('GA', 'Georgia', 0.0499, 12_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). Further cuts of 0.125 point a year toward 3.99% depend on state revenue.'),
   GRAD('HI', 'Hawaii', 0.064, 9_100, [0.014, 0.11], 'Twelve brackets up to 11%. Recent laws are doubling the standard deduction and widening brackets through 2031.'),
   FLAT('ID', 'Idaho', 0.053, 20_900, 'Flat 5.3% on income above a 0% band, after the federal standard deduction.'),
-  FLAT('IL', 'Illinois', 0.0495, 2_850, 'Flat 4.95%, set by the Illinois Constitution, which requires a single rate.'),
+  FLAT('IL', 'Illinois', 0.0495, 2_925, 'Flat 4.95%, set by the Illinois Constitution, which requires a single rate.'),
   FLAT('IN', 'Indiana', 0.0295, 1_000, 'Flat rate cut to 2.95% for 2026.', 'All 92 counties add a local income tax, typically 1%–3%.'),
   FLAT('IA', 'Iowa', 0.038, 16_100, 'Flat 3.8% since 2025, calculated from federal taxable income. Retirement income is exempt.', 'Some school districts add a surtax as a percentage of state tax.'),
   GRAD('KS', 'Kansas', 0.054, 12_765, [0.052, 0.0558], 'Two brackets (5.2% and 5.58%) since 2024.', 'Some localities tax interest and dividends; wages are not locally taxed.'),
-  FLAT('KY', 'Kentucky', 0.035, 3_300, 'Flat rate cut to 3.5% for 2026.', 'Most cities and counties charge occupational license taxes on wages (often 1%–2.5%).'),
-  FLAT('LA', 'Louisiana', 0.03, 12_500, 'Flat 3% since 2025, with a $12,500 standard deduction.'),
+  FLAT('KY', 'Kentucky', 0.035, 3_360, 'Flat rate cut to 3.5% for 2026.', 'Most cities and counties charge occupational license taxes on wages (often 1%–2.5%).'),
+  FLAT('LA', 'Louisiana', 0.03, 12_875, 'Flat 3% since 2025, with a $12,875 standard deduction for 2026.'),
   GRAD('ME', 'Maine', 0.062, 21_250, [0.058, 0.0715], 'Three brackets (5.8%–7.15%). Uses the federal standard deduction plus a personal exemption.'),
   GRAD('MD', 'Maryland', 0.047, 6_550, [0.02, 0.065], 'State brackets from 2% to 6.5%, with new top brackets added in 2025.', 'Every county adds a local income tax of 2.25%–3.3%, not included here.'),
   FLAT('MA', 'Massachusetts', 0.05, 4_400, 'Flat 5%, plus a 4% surtax on income above about $1.08 million (the "millionaires tax").'),
-  FLAT('MI', 'Michigan', 0.0425, 5_800, 'Flat 4.25%.', 'Detroit (2.4%) and about 20 other cities levy their own income tax.'),
+  FLAT('MI', 'Michigan', 0.0425, 5_900, 'Flat 4.25%.', 'Detroit (2.4%) and about 20 other cities levy their own income tax.'),
   GRAD('MN', 'Minnesota', 0.059, 15_300, [0.0535, 0.0985], 'Four brackets from 5.35% to 9.85%.'),
   FLAT('MS', 'Mississippi', 0.04, 18_300, 'The first $10,000 of taxable income is exempt, then 4% for 2026, stepping down to 3% by 2030.'),
   GRAD('MO', 'Missouri', 0.044, 16_100, [0.02, 0.047], 'Brackets up to 4.7%, reached at a low income. Uses the federal standard deduction.', 'Kansas City and St. Louis charge a 1% earnings tax.'),
@@ -129,7 +129,8 @@ const ROWS: Row[] = [
   GRAD('NY', 'New York', 0.051, 8_000, [0.039, 0.109], 'Nine brackets up to 10.9%. Rates for the lower brackets were trimmed starting in 2026.', 'New York City adds 3.078%–3.876%; Yonkers adds a resident surcharge.'),
   FLAT('NC', 'North Carolina', 0.0399, 12_750, 'Flat rate cut to 3.99% for 2026, with further cuts possible if revenue triggers are met.'),
   GRAD('ND', 'North Dakota', 0.0195, 64_575, [0, 0.025], 'Most workers owe nothing: the first ~$48,000 of taxable income is taxed at 0%, then 1.95% and 2.5%.'),
-  FLAT('OH', 'Ohio', 0.0275, 26_050, 'New flat 2.75% for 2026 on income above $26,050.', 'Most cities and many school districts levy income taxes of 1%–2.5%.'),
+  // $26,050 0% band + the $2,150 personal exemption for MAGI of $40,000–$80,000 (the tier of the reference wage).
+  FLAT('OH', 'Ohio', 0.0275, 28_200, 'New flat 2.75% for 2026 on income above $26,050, after a personal exemption that depends on income: $2,400 up to $40,000 of modified AGI, $2,150 from $40,000 to $80,000, and $1,900 from $80,000 to $500,000. Our estimate uses the $2,150 exemption at every income.', 'Most cities and many school districts levy income taxes of 1%–2.5%.'),
   GRAD('OK', 'Oklahoma', 0.041, 7_350, [0.025, 0.045], 'Brackets consolidated and the top rate cut to 4.5% for 2026.'),
   GRAD('OR', 'Oregon', 0.069, 2_800, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
   FLAT('PA', 'Pennsylvania', 0.0307, 0, 'Flat 3.07% with no standard deduction or personal exemption.', 'Most municipalities levy an earned income tax (usually ~1%; Philadelphia 3.74%).'),
@@ -138,7 +139,8 @@ const ROWS: Row[] = [
   NO_TAX('SD', 'South Dakota', 'South Dakota has no personal income tax.'),
   NO_TAX('TN', 'Tennessee', 'No tax on wages. The Hall tax on investment income was fully repealed in 2021, and the Tennessee Constitution bans a payroll tax.'),
   NO_TAX('TX', 'Texas', 'Texas has 0% state income tax. Article VIII, Section 24-a of the Texas Constitution prohibits a personal income tax.'),
-  FLAT('UT', 'Utah', 0.045, 0, 'Flat 4.5%. A taxpayer credit (not included) lowers the tax for most low- and middle-income filers.'),
+  // SB 60 (2026, Chapter 250): 4.45% for taxable years beginning on or after January 1, 2026.
+  FLAT('UT', 'Utah', 0.0445, 0, 'Flat 4.45% for 2026, cut from 4.5% in 2026 and applied back to January 1. A taxpayer credit (not included) lowers the tax for most low- and middle-income filers.'),
   GRAD('VT', 'Vermont', 0.036, 12_500, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
   GRAD('VA', 'Virginia', 0.053, 9_430, [0.02, 0.0575], 'Four brackets; the 5.75% top rate starts at just $17,000 of taxable income.'),
   NO_TAX('WA', 'Washington', 'No tax on wages. Washington taxes only long-term capital gains above a large exemption.'),
@@ -151,7 +153,7 @@ const ROWS: Row[] = [
  * Date the rules behind the estimates (federal, FICA, and state) were last reviewed by hand (ISO).
  * Shown in the site-wide status strip, on /methodology/, and on the state pages. Update it after every review.
  */
-export const STATE_TAX_LAST_UPDATED = '2026-09-27';
+export const STATE_TAX_LAST_UPDATED = '2026-10-04';
 
 /**
  * Official revenue department sites. Leave '' when unsure; pages then omit the link.
@@ -215,16 +217,22 @@ const SOURCE_URLS: Record<StateCode, string> = {
 const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
   CA: false,
   GA: false,
+  MI: true,
 };
 
 /** Verified notes on a state's own treatment of tips and overtime. */
 const TIPS_OVERTIME_NOTES: Partial<Record<StateCode, string>> = {
   GA: 'Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028.',
+  MI: 'Michigan has its own temporary deductions for qualified tips and overtime for 2026 through 2028. They match the amounts you deduct on your federal return (Schedule 1-A); nonresidents can deduct only tips and overtime earned for work in Michigan.',
 };
 
 /** Official documents for current rates, added state by state as each is verified. */
 const RATE_SOURCES: Partial<Record<StateCode, { url: string; label: string }>> = {
   GA: { url: 'https://gov.georgia.gov/document/2026-signed-legislation/hb-463/download', label: 'HB 463 (2026), as passed (PDF)' },
+  UT: {
+    url: 'https://le.utah.gov/xcode/title59/chapter10/C59-10-S104_2026050620260506.pdf',
+    label: 'Utah Code § 59-10-104, as amended by SB 60 (2026) (PDF)',
+  },
 };
 
 interface BracketSchedule {

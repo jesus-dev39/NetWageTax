@@ -271,13 +271,24 @@ const revenueLink = s.sourceUrl
           ))
       }
       {
-        tipsStatus === 'follows' && (
-          <p>
-            <strong>{s.name} follows the federal tips and overtime deduction</strong>, so the qualified tips and overtime
-            you deduct on Schedule 1-A also reduce your {s.name} taxable income. Our estimate doesn’t subtract them yet:
-            it applies the state tax to your full wages.
-          </p>
-        )
+        tipsStatus === 'follows' &&
+          (s.tipsOvertimeNote ? (
+            <>
+              <p>
+                <strong>{s.tipsOvertimeNote}</strong>
+              </p>
+              <p>
+                Our estimate doesn’t apply {s.name}’s deductions: it applies the state tax to your full wages, so it can
+                overstate your {s.name} tax if you have qualifying tips or overtime.
+              </p>
+            </>
+          ) : (
+            <p>
+              <strong>{s.name} follows the federal tips and overtime deduction</strong>, so the qualified tips and overtime
+              you deduct on Schedule 1-A also reduce your {s.name} taxable income. Our estimate doesn’t subtract them yet:
+              it applies the state tax to your full wages.
+            </p>
+          ))
       }
       {
         tipsStatus === 'unknown' && (

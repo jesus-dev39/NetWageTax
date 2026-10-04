@@ -142,3 +142,28 @@ describe('Georgia (HB 463, 2026)', () => {
     expect(ga.rateSource?.url).toMatch(/^https:\/\/gov\.georgia\.gov\//);
   });
 });
+
+describe('Flat-tax states reviewed October 2026', () => {
+  it('uses the verified 2026 exempt amounts', () => {
+    expect(STATES_BY_CODE.IL.exemptAmount).toBe(2_925);
+    expect(STATES_BY_CODE.KY.exemptAmount).toBe(3_360);
+    expect(STATES_BY_CODE.LA.exemptAmount).toBe(12_875);
+    expect(STATES_BY_CODE.MI.exemptAmount).toBe(5_900);
+  });
+
+  it('adds the $2,150 Ohio personal exemption to the $26,050 0% band', () => {
+    expect(STATES_BY_CODE.OH.exemptAmount).toBe(26_050 + 2_150);
+    expect(calculateStateIncomeTax(65_000, 'OH')).toBeCloseTo((65_000 - 28_200) * 0.0275);
+  });
+
+  it('uses the 4.45% Utah rate from SB 60 (2026) and cites the code', () => {
+    expect(STATES_BY_CODE.UT.estimateRate).toBe(0.0445);
+    expect(formatStateRate(STATES_BY_CODE.UT)).toBe('4.45% flat tax');
+    expect(STATES_BY_CODE.UT.rateSource?.url).toMatch(/^https:\/\/le\.utah\.gov\//);
+  });
+
+  it('notes Michigan’s own 2026–2028 tips and overtime deductions', () => {
+    expect(STATES_BY_CODE.MI.followsFederalTipsOvertime).toBe(true);
+    expect(STATES_BY_CODE.MI.tipsOvertimeNote).toContain('2026 through 2028');
+  });
+});

@@ -52,7 +52,7 @@ describe('tips & overtime .xlsx', () => {
 
   it('includes the tax impact and the legal note', () => {
     expect(find(rows, 'Estimated federal income tax savings')?.[1]).toBe(6_600);
-    expect(find(rows, 'Estimated state income tax (IL)')?.[1]).toBeCloseTo((160_000 - 2_850) * 0.0495, 1);
+    expect(find(rows, 'Estimated state income tax (IL)')?.[1]).toBeCloseTo((160_000 - 2_925) * 0.0495, 1);
     expect(rows.some((r) => String(r[0]).startsWith('For estimation purposes only'))).toBe(true);
   });
 });
