@@ -57,9 +57,15 @@ publish the next year's numbers, and all states every January.
   - [x] **Oregon:** `estimateRate` recalibrated to 7.03% with the federal income tax subtraction ($5,620
         at $65,000, under the cap) and the $256 exemption credit. Confirm the 2026 subtraction cap when
         the 2026 Form OR-40 instructions are published.
-  - [ ] **Vermont:** waiting for the single brackets and 2026 exemption from the official "2026 VT Rate
-        Schedules" PDF (the user will provide them). Don't change `VT` until then.
+  - [x] **Vermont:** 2025 tax-year brackets (official rate schedule) with the inflation note, like
+        California; 2026 personal exemption $5,400 (TaxTables-2026) + the 2025 standard deduction $7,650
+        = $13,050; `estimateRate` 3.51% ($1,823 at $65,000). The "VT Rate Schedules" are withholding
+        tables: don't use them for the income tax brackets.
   - [ ] Then the rest of the progressive states, alphabetically.
+- [ ] **Vermont: 2026 brackets and standard deduction (January 2027).** When the "Tax Year 2026 Vermont
+      Tax Rate Schedules" are published, replace `BRACKETS.VT` (now 2025) and set `year: 2026`, update the
+      standard deduction in `exemptAmount` (now the 2025 $7,650 + the 2026 $5,400 exemption), and
+      recalibrate `estimateRate` at $65,000.
 - [ ] **South Carolina: 2027 bracket indexing (January 2027).** The $30,000 threshold is the 2026 figure;
       H.4216 indexes it under Section 12-6-520 starting in 2027. Update `BRACKETS.SC` and the
       `estimateRate` once SCDOR publishes the 2027 figure.

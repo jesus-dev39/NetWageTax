@@ -96,8 +96,8 @@ describe('state page data', () => {
 describe('bracket schedules', () => {
   const withBrackets = STATES.filter((s) => s.brackets);
 
-  it('includes the verified CA, NY, SC, and WV schedules', () => {
-    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY', 'SC', 'WV']);
+  it('includes the verified CA, NY, SC, VT, and WV schedules', () => {
+    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY', 'SC', 'VT', 'WV']);
   });
 
   it('has a year and an official https source for every schedule', () => {
@@ -190,8 +190,8 @@ describe('progressive states reviewed October 2026', () => {
       return income > b.over ? t + (Math.min(income, top) - b.over) * b.rate : t;
     }, 0);
 
-  it('matches the SC and WV 2026 schedules at $65,000 within $5', () => {
-    for (const code of ['SC', 'WV'] as const) {
+  it('matches the SC and WV 2026 schedules and the VT 2025 schedule at $65,000 within $5', () => {
+    for (const code of ['SC', 'WV', 'VT'] as const) {
       const s = STATES_BY_CODE[code];
       const exact = taxFromBrackets(65_000 - s.exemptAmount, s.brackets!);
       expect(Math.abs(calculateStateIncomeTax(65_000, code) - exact)).toBeLessThan(5);
@@ -204,7 +204,7 @@ describe('progressive states reviewed October 2026', () => {
     expect(STATES_BY_CODE.NE.exemptAmount).toBe(8_850);
     expect(STATES_BY_CODE.OR.exemptAmount).toBe(2_910);
     expect(STATES_BY_CODE.RI.exemptAmount).toBe(16_450);
-    expect(STATES_BY_CODE.VT.exemptAmount).toBe(12_950);
+    expect(STATES_BY_CODE.VT.exemptAmount).toBe(7_650 + 5_400);
     expect(STATES_BY_CODE.VA.exemptAmount).toBe(9_680);
     expect(STATES_BY_CODE.ME.exemptAmount).toBe(15_700 + 5_300);
     expect(STATES_BY_CODE.HI.exemptAmount).toBe(8_000 + 1_144);

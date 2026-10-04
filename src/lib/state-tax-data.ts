@@ -154,8 +154,9 @@ const ROWS: Row[] = [
   NO_TAX('TX', 'Texas', 'Texas has 0% state income tax. Article VIII, Section 24-a of the Texas Constitution prohibits a personal income tax.'),
   // SB 60 (2026, Chapter 250): 4.45% for taxable years beginning on or after January 1, 2026.
   FLAT('UT', 'Utah', 0.0445, 0, 'Flat 4.45% for 2026, cut from 4.5% in 2026 and applied back to January 1. A taxpayer credit (not included) lowers the tax for most low- and middle-income filers.'),
-  // $7,650 standard deduction + $5,300 exemption; estimateRate: 3.35% / 6.6% over $49,400 on $52,050.
-  GRAD('VT', 'Vermont', 0.0352, 12_950, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
+  // $7,650 standard deduction (2025, until the 2026 figure is published) + the $5,400 2026 exemption (TaxTables-2026);
+  // estimateRate: 2025 brackets, 3.35% / 6.6% over $49,400, on $51,950 = $1,823.
+  GRAD('VT', 'Vermont', 0.0351, 13_050, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
   // $8,750 standard deduction + $930 exemption; estimateRate: 2% / 3% / 5% / 5.75% over $17,000 on $55,320.
   GRAD('VA', 'Virginia', 0.0528, 9_680, [0.02, 0.0575], 'Four brackets; the 5.75% top rate starts at just $17,000 of taxable income.'),
   NO_TAX('WA', 'Washington', 'No tax on wages. Washington taxes only long-term capital gains above a large exemption.'),
@@ -333,6 +334,17 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
       { over: 742_953, rate: 0.123 },
     ],
     note: 'California adds a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) on taxable income over $1,000,000, for a top marginal rate of 13.3%.',
+  },
+  VT: {
+    year: 2025,
+    source: 'https://tax.vermont.gov/sites/tax/files/documents/TaxRateSched-2025.pdf',
+    brackets: [
+      { over: 0, rate: 0.0335 },
+      { over: 49_400, rate: 0.066 },
+      { over: 119_700, rate: 0.076 },
+      { over: 249_700, rate: 0.0875 },
+    ],
+    note: 'If your adjusted gross income is over $150,000, Vermont tax is the greater of 3% of AGI or the rate schedule amount.',
   },
   NY: {
     year: 2026,
