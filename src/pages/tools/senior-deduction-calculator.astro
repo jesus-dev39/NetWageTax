@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SeniorDeductionApp from '../../components/SeniorDeductionApp';
+import AdSlot from '../../components/AdSlot';
+import FaqList from '../../components/FaqList.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import RelatedDeductions from '../../components/RelatedDeductions.astro';
+import { formatUSD } from '../../components/CurrencyInput';
+import { ADDITIONAL_STANDARD_DEDUCTION_AGED_2026, STANDARD_DEDUCTION_2026 } from '../../lib/marginal-rate';
+import { SENIOR_PARAMS_BY_YEAR, seniorBirthCutoffLabel } from '../../lib/obbba-params';
+import { SITE_TAX_YEAR } from '../../lib/site';
+
+// Every figure comes from the constants the calculator uses.
+const p = SENIOR_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const rate = p.phaseout.kind === 'rate' ? p.phaseout.rate : 0;
+const ratePct = `${+(rate * 100).toFixed(2)}%`;
+const amount = formatUSD(p.amountPerPerson);
+const couple = formatUSD(p.amountPerPerson * 2);
+const single = formatUSD(p.thresholdSingleOrHoh);
+const joint = formatUSD(p.thresholdMfj);
+const singleEnd = formatUSD(p.thresholdSingleOrHoh + p.amountPerPerson / rate);
+const jointEnd = formatUSD(p.thresholdMfj + p.amountPerPerson / rate);
+const cutoff = seniorBirthCutoffLabel(SITE_TAX_YEAR);
+const agedUnmarried = formatUSD(ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.unmarried);
+const agedMarried = formatUSD(ADDITIONAL_STANDARD_DEDUCTION_AGED_2026.married);
+
+const title = `${SITE_TAX_YEAR} Senior Deduction Calculator: ${amount} Deduction for Age 65+`;
+const description = `Estimate your ${SITE_TAX_YEAR} enhanced deduction for seniors: up to ${amount} per person 65 or older (${couple} per couple), the ${ratePct} phase-out above ${single} of MAGI, and your federal tax savings.`;
+const path = '/tools/senior-deduction-calculator/';
+
+// Answers are plain text so they can be reused verbatim in FAQPage structured data.
+const faqs = [
+  {
+    question: `Who qualifies for the ${amount} senior deduction in ${SITE_TAX_YEAR}?`,
+    answer: [
+      `You qualify if you are 65 or older by the end of ${SITE_TAX_YEAR}, which means you were born before ${cutoff}, and you have a Social Security number valid for employment. If you are married, you must file a joint return.`,
+      `The deduction is ${amount} for each qualifying person, so a married couple filing jointly can deduct up to ${couple} when both spouses are 65 or older. It applies to tax years 2025 through 2028 and is claimed on Schedule 1-A, Part V.`,
+    ],
+  },
+  {
+    question: 'Does this mean no tax on Social Security?',
+    answer: [
+      'No. The law did not change how Social Security benefits are taxed. Depending on your other income, up to 85% of your benefits can still be taxable, and the taxable part is included in your adjusted gross income.',
+      `The senior deduction lowers your taxable income by up to ${amount} per person, which can offset some or all of the tax on your benefits. It is available to anyone who qualifies by age, whether or not they receive Social Security.`,
+    ],
+  },
+  {
+    question: 'Is it on top of the extra standard deduction for people 65 and older?',
+    answer: [
+      `Yes. The senior deduction is separate from the additional standard deduction for age 65, which for ${SITE_TAX_YEAR} is ${agedUnmarried} if you are unmarried and ${agedMarried} for each spouse 65 or older if you are married. A single filer who is 65 can subtract the ${formatUSD(STANDARD_DEDUCTION_2026.single)} standard deduction, the ${agedUnmarried} additional amount, and up to ${amount} more.`,
+    ],
+  },
+  {
+    question: 'Do I have to itemize to claim it?',
+    answer: [
+      'No. You can claim the senior deduction whether you take the standard deduction or itemize. It reduces your taxable income, not your adjusted gross income.',
+    ],
+  },
+  {
+    question: 'How does the income phase-out work?',
+    answer: [
+      `The ${amount} is reduced by ${ratePct} of your modified adjusted gross income (MAGI) above ${single}, or ${joint} if you are married filing jointly. That is ${formatUSD(rate * 1_000)} less for every $1,000 of income above the threshold, with no rounding to whole steps.`,
+      `The deduction reaches $0 at ${singleEnd} of MAGI for single and head of household filers, and ${jointEnd} for joint filers. On a joint return the reduction comes off each spouse’s ${amount}, so a couple where both qualify loses twice as much in dollars.`,
+      'For most people, MAGI is the adjusted gross income on Form 1040. It can be higher if you exclude foreign earned income or income from U.S. territories.',
+    ],
+  },
+  {
+    question: 'What if only one spouse is 65 or older?',
+    answer: [
+      `On a joint return, only the spouse who qualifies gets the ${amount}, so the maximum is ${amount}. The phase-out still starts at ${joint} of MAGI.`,
+    ],
+  },
+  {
+    question: 'Can I claim it if I am married filing separately?',
+    answer: ['No. Married taxpayers must file a joint return to claim the senior deduction.'],
+  },
+  {
+    question: 'I file as a qualifying surviving spouse. Can I use this calculator?',
+    answer: [
+      `Qualifying surviving spouses can claim the senior deduction, with the same ${single} phase-out threshold as single filers. But they also have a different, larger standard deduction (the same as married filing jointly), which this calculator doesn’t include, so its savings estimate wouldn’t be right for you. Use the Schedule 1-A instructions or tax software for your figures.`,
+    ],
+  },
+  {
+    question: 'Why does the calculator show $0 in federal tax saved?',
+    answer: [
+      'If your standard deduction, including the extra amount for age 65, already covers all of your income, you owe no federal income tax, so the senior deduction has nothing left to reduce. You can still claim it, but it won’t change your tax.',
+    ],
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer.join(' ') },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Senior deduction calculator', item: `https://netwagetax.com${path}` },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <PageHeader
+    title={`${SITE_TAX_YEAR} senior deduction calculator`}
+    lead={`See how much of the new ${amount} deduction for people 65 and older you can claim after the income phase-out, and what it saves in federal income tax.`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Senior deduction calculator' }]}
+  />
+
+  <div class="container-page flex flex-col gap-12 py-10">
+    <!--
+      Ad placement 1: below the page title, above the calculator. Add slotId="…" from the AdSense dashboard to go live.
+      md+ only, as on the tips and overtime page: on phones it would push the first input below the fold.
+    -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="calculator-top" />
+    </div>
+    <SeniorDeductionApp client:load />
+    <RelatedDeductions current={path} />
+  </div>
+
+  <section aria-labelledby="faq-heading" class="border-t border-line">
+    <div class="container-page py-12">
+      <div class="max-w-3xl">
+        <h2 id="faq-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Frequently asked questions</h2>
+        <div class="mt-5">
+          <FaqList faqs={faqs} />
+        </div>
+        <!-- Ad placement: after the FAQ list, before the disclaimer. -->
+        <AdSlot client:visible format="leaderboard" placement="calculator-bottom" className="mt-10" />
+        <p class="mt-8 text-[15px] text-ink-2">
+          This calculator provides educational estimates and is not tax advice. Results are not a tax return. Verify your
+          figures with the official IRS Schedule 1-A instructions or a CPA or enrolled agent.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

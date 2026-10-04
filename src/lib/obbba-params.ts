@@ -154,6 +154,42 @@ export const PARAMS_BY_YEAR: Record<TaxYear, ObbbaYearParams> = {
 };
 
 // ---------------------------------------------------------------------------
+// Deducción para mayores de 65 (IRC §151(d)(5)(C), Schedule 1-A Parte V)
+// ---------------------------------------------------------------------------
+
+export interface SeniorYearParams {
+  /** Importe por persona que cumple los requisitos (no se ajusta por inflación). */
+  amountPerPerson: number;
+  thresholdSingleOrHoh: number;
+  thresholdMfj: number;
+  phaseout: PhaseoutRule;
+}
+
+/** Valores estatutarios 2025–2028: $6,000 por persona, −6 % del MAGI por encima de $75,000 ($150,000 MFJ). */
+const SENIOR_PARAMS: SeniorYearParams = {
+  amountPerPerson: 6_000,
+  thresholdSingleOrHoh: 75_000,
+  thresholdMfj: 150_000,
+  phaseout: { kind: 'rate', rate: 0.06 },
+};
+
+export const SENIOR_PARAMS_BY_YEAR: Record<TaxYear, SeniorYearParams> = {
+  2025: SENIOR_PARAMS,
+  2026: SENIOR_PARAMS,
+  2027: SENIOR_PARAMS,
+  2028: SENIOR_PARAMS,
+};
+
+/**
+ * Hay que cumplir 65 antes de que acabe el año fiscal, y se considera que una persona los
+ * cumple el día anterior a su cumpleaños (instrucciones del Schedule 1-A). Por eso el corte
+ * es "nacido antes del 2 de enero de (año − 64)": 2026 → January 2, 1962.
+ */
+export function seniorBirthCutoffLabel(taxYear: TaxYear): string {
+  return `January 2, ${taxYear - 64}`;
+}
+
+// ---------------------------------------------------------------------------
 // Textos fijos (SPEC.md §1, §3.2)
 // ---------------------------------------------------------------------------
 
