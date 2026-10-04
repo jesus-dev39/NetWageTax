@@ -10,7 +10,7 @@ import {
   SOCIAL_SECURITY_WAGE_BASE_2026,
 } from '../lib/fica';
 import { ADDITIONAL_STANDARD_DEDUCTION_AGED_2026, STANDARD_DEDUCTION_2026, TAX_BRACKETS_2026 } from '../lib/marginal-rate';
-import { PARAMS_BY_YEAR, SENIOR_PARAMS_BY_YEAR } from '../lib/obbba-params';
+import { CAR_LOAN_PARAMS_BY_YEAR, PARAMS_BY_YEAR, SENIOR_PARAMS_BY_YEAR } from '../lib/obbba-params';
 import { OVERTIME_MULTIPLIER } from '../lib/paycheck';
 import { formatLongDate, SITE_TAX_YEAR } from '../lib/site';
 import { GRADUATED_REFERENCE_WAGE, STATE_TAX_DATA_AS_OF, STATE_TAX_LAST_UPDATED, STATES } from '../lib/state-tax-data';
@@ -21,6 +21,8 @@ const rates = TAX_BRACKETS_2026.single.map((b) => b.rate);
 const bracketRange = `${pct(Math.min(...rates))} to ${pct(Math.max(...rates))}`;
 const obbba = PARAMS_BY_YEAR[SITE_TAX_YEAR];
 const senior = SENIOR_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const carLoan = CAR_LOAN_PARAMS_BY_YEAR[SITE_TAX_YEAR];
+const carLoanStep = carLoan.phaseout.kind === 'step' ? carLoan.phaseout : null;
 const seniorRate = senior.phaseout.kind === 'rate' ? senior.phaseout.rate : 0;
 
 const summary: { label: string; value: string; note?: string }[] = [
@@ -84,8 +86,11 @@ const summary: { label: string; value: string; note?: string }[] = [
         married filing jointly). The enhanced deduction for seniors (section 151(d)(5)(C)) is{' '}
         {formatUSD(senior.amountPerPerson)} for each person 65 or older, reduced by {pct(seniorRate)} of modified AGI
         above {formatUSD(senior.thresholdSingleOrHoh)} ({formatUSD(senior.thresholdMfj)} married filing jointly). The
-        senior deduction calculator follows the {SITE_TAX_YEAR} draft Schedule 1-A until the IRS publishes the final
-        form and instructions.
+        car loan interest deduction (section 163(h)(4)) is capped at {formatUSD(carLoan.capPerReturn)} per return and
+        reduced by {formatUSD(carLoanStep?.perStep ?? 0)} for each {formatUSD(carLoanStep?.stepSize ?? 0)}, or part of it,
+        of modified AGI above {formatUSD(carLoan.thresholdOther)} ({formatUSD(carLoan.thresholdMfj)} married filing
+        jointly), following the Treasury's final regulations (TD 10054). The senior and car loan interest calculators
+        follow the {SITE_TAX_YEAR} draft Schedule 1-A until the IRS publishes the final form and instructions.
       </li>
       <li>
         <strong>State income tax.</strong> Each state's tax agency. Every <a href="/state-taxes/">state page</a> links

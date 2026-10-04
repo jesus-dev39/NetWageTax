@@ -190,6 +190,34 @@ export function seniorBirthCutoffLabel(taxYear: TaxYear): string {
 }
 
 // ---------------------------------------------------------------------------
+// Intereses de préstamos de vehículos (IRC §163(h)(4), Schedule 1-A Parte IV)
+// ---------------------------------------------------------------------------
+
+export interface CarLoanYearParams {
+  /** Tope por declaración, sea cual sea el estado civil (TD 10054, §1.163-16(h)(1)). */
+  capPerReturn: number;
+  /** Umbral para todos los estados civiles salvo MFJ (MFS incluido: la ley no exige declaración conjunta). */
+  thresholdOther: number;
+  thresholdMfj: number;
+  phaseout: PhaseoutRule;
+}
+
+/** Valores estatutarios 2025–2028: tope $10,000; −$200 por cada $1,000 o fracción por encima de $100,000 ($200,000 MFJ). */
+const CAR_LOAN_PARAMS: CarLoanYearParams = {
+  capPerReturn: 10_000,
+  thresholdOther: 100_000,
+  thresholdMfj: 200_000,
+  phaseout: { kind: 'step', stepSize: 1_000, perStep: 200, rounding: 'up' },
+};
+
+export const CAR_LOAN_PARAMS_BY_YEAR: Record<TaxYear, CarLoanYearParams> = {
+  2025: CAR_LOAN_PARAMS,
+  2026: CAR_LOAN_PARAMS,
+  2027: CAR_LOAN_PARAMS,
+  2028: CAR_LOAN_PARAMS,
+};
+
+// ---------------------------------------------------------------------------
 // Textos fijos (SPEC.md §1, §3.2)
 // ---------------------------------------------------------------------------
 
