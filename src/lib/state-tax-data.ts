@@ -98,7 +98,9 @@ const ROWS: Row[] = [
   GRAD('AL', 'Alabama', 0.044, 4_000, [0.02, 0.05], 'Three brackets (2%–5%). Alabama is one of the few states that lets you deduct federal income tax paid.', 'Some cities (e.g., Birmingham) levy a 1% occupational tax.'),
   NO_TAX('AK', 'Alaska', 'Alaska has no state income tax or statewide sales tax, and pays residents an annual Permanent Fund Dividend.'),
   FLAT('AZ', 'Arizona', 0.025, 16_100, 'Flat 2.5% since 2023, one of the lowest flat rates in the country. Uses the federal standard deduction.'),
-  GRAD('AR', 'Arkansas', 0.032, 2_410, [0.02, 0.039], 'Top rate cut to 3.9% in 2024. Low-income filers pay reduced rates.'),
+  // HB 1001 (2026 First Extraordinary Session): net income up to $94,700 uses 0% / 2% / 3% / 3.4% / 3.7%.
+  // estimateRate = that schedule on $65,000 − $2,470 (the $29 personal credit isn't applied).
+  GRAD('AR', 'Arkansas', 0.0311, 2_470, [0.02, 0.037], 'Top rate cut to 3.7% for 2026 by HB 1001 (2026), applied back to January 1. Filers with net income up to $94,700 use a schedule that starts at 0%.'),
   GRAD('CA', 'California', 0.033, 5_700, [0.01, 0.133], 'Nine brackets from 1% to 12.3%, plus a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) above $1 million. California does not follow the federal tips and overtime deduction.'),
   FLAT('CO', 'Colorado', 0.044, 16_100, 'Flat 4.4%, calculated from federal taxable income. TABOR refunds can temporarily lower the rate.', 'Denver and a few other cities charge a small monthly occupational privilege tax.'),
   GRAD('CT', 'Connecticut', 0.0435, 0, [0.02, 0.0699], 'Seven brackets (2%–6.99%). The personal exemption phases out by about $44,000 for single filers.'),
@@ -116,17 +118,18 @@ const ROWS: Row[] = [
   FLAT('KY', 'Kentucky', 0.035, 3_360, 'Flat rate cut to 3.5% for 2026.', 'Most cities and counties charge occupational license taxes on wages (often 1%–2.5%).'),
   FLAT('LA', 'Louisiana', 0.03, 12_875, 'Flat 3% since 2025, with a $12,875 standard deduction for 2026.'),
   GRAD('ME', 'Maine', 0.062, 21_250, [0.058, 0.0715], 'Three brackets (5.8%–7.15%). Uses the federal standard deduction plus a personal exemption.'),
-  GRAD('MD', 'Maryland', 0.047, 6_550, [0.02, 0.065], 'State brackets from 2% to 6.5%, with new top brackets added in 2025.', 'Every county adds a local income tax of 2.25%–3.3%, not included here.'),
+  GRAD('MD', 'Maryland', 0.047, 6_550, [0.02, 0.065], 'State brackets from 2% to 6.5%, with new top brackets added in 2025.', 'Every county and Baltimore City add a local income tax of 2.25%–3.3%, not included here.'),
   FLAT('MA', 'Massachusetts', 0.05, 4_400, 'Flat 5%, plus a 4% surtax on income above about $1.08 million (the "millionaires tax").'),
   FLAT('MI', 'Michigan', 0.0425, 5_900, 'Flat 4.25%.', 'Detroit (2.4%) and about 20 other cities levy their own income tax.'),
   GRAD('MN', 'Minnesota', 0.059, 15_300, [0.0535, 0.0985], 'Four brackets from 5.35% to 9.85%.'),
   FLAT('MS', 'Mississippi', 0.04, 18_300, 'The first $10,000 of taxable income is exempt, then 4% for 2026, stepping down to 3% by 2030.'),
   GRAD('MO', 'Missouri', 0.044, 16_100, [0.02, 0.047], 'Brackets up to 4.7%, reached at a low income. Uses the federal standard deduction.', 'Kansas City and St. Louis charge a 1% earnings tax.'),
   GRAD('MT', 'Montana', 0.052, 16_100, [0.047, 0.0565], 'Two brackets; the top rate drops to 5.65% for 2026. Starts from federal taxable income.'),
-  GRAD('NE', 'Nebraska', 0.037, 8_600, [0.0246, 0.0455], 'The top rate drops to 4.55% for 2026 on the way to 3.99%.'),
+  // estimateRate: 2026 brackets (2.46% / 3.51% over $4,130 / 4.55% over $24,760) on $65,000 − $8,850.
+  GRAD('NE', 'Nebraska', 0.0401, 8_850, [0.0246, 0.0455], 'The top rate drops to 4.55% for 2026 on the way to 3.99%.'),
   NO_TAX('NV', 'Nevada', 'Nevada has no personal income tax. The Nevada Constitution (Article 10, Section 1) prohibits one.'),
   NO_TAX('NH', 'New Hampshire', 'No tax on wages. The Interest and Dividends Tax was fully repealed starting in 2025.'),
-  GRAD('NJ', 'New Jersey', 0.032, 1_000, [0.014, 0.1075], 'Seven brackets from 1.4% to 10.75%.', 'Newark charges employers a 1% payroll tax.'),
+  GRAD('NJ', 'New Jersey', 0.032, 1_000, [0.014, 0.1075], 'Seven brackets from 1.4% to 10.75%.', 'Newark and Jersey City charge employers a 1% payroll tax.'),
   GRAD('NM', 'New Mexico', 0.039, 16_100, [0.015, 0.059], 'Six brackets from 1.5% to 5.9%, restructured in 2025. Uses the federal standard deduction.'),
   GRAD('NY', 'New York', 0.051, 8_000, [0.039, 0.109], 'Nine brackets up to 10.9%. Rates for the lower brackets were trimmed starting in 2026.', 'New York City adds 3.078%–3.876%; Yonkers adds a resident surcharge.'),
   FLAT('NC', 'North Carolina', 0.0399, 12_750, 'Flat rate cut to 3.99% for 2026, with further cuts possible if revenue triggers are met.'),
@@ -134,19 +137,26 @@ const ROWS: Row[] = [
   // $26,050 0% band + the $2,150 personal exemption for MAGI of $40,000–$80,000 (the tier of the reference wage).
   FLAT('OH', 'Ohio', 0.0275, 28_200, 'New flat 2.75% for 2026 on income above $26,050, after a personal exemption that depends on income: $2,400 up to $40,000 of modified AGI, $2,150 from $40,000 to $80,000, and $1,900 from $80,000 to $500,000. Our estimate uses the $2,150 exemption at every income.', 'Most cities and many school districts levy income taxes of 1%–2.5%.'),
   GRAD('OK', 'Oklahoma', 0.041, 7_350, [0.025, 0.045], 'Brackets consolidated and the top rate cut to 4.5% for 2026.'),
-  GRAD('OR', 'Oregon', 0.069, 2_800, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
+  // estimateRate: 2026 brackets (4.75% / 6.75% over $4,550 / 8.75% over $11,400) on $65,000 − $2,910; the $256 exemption credit isn't applied.
+  GRAD('OR', 'Oregon', 0.0824, 2_910, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
   FLAT('PA', 'Pennsylvania', 0.0307, 0, 'Flat 3.07% with no standard deduction or personal exemption.', 'Most municipalities levy an earned income tax (usually ~1%; Philadelphia 3.74%).'),
-  GRAD('RI', 'Rhode Island', 0.0375, 16_000, [0.0375, 0.0599], 'Three brackets (3.75%–5.99%).'),
-  GRAD('SC', 'South Carolina', 0.047, 16_100, [0, 0.06], 'Brackets of 0%, 3% and 6%, calculated from federal taxable income.'),
+  // $11,200 standard deduction + $5,250 exemption; $48,550 taxable stays in the 3.75% bracket.
+  GRAD('RI', 'Rhode Island', 0.0375, 16_450, [0.0375, 0.0599], 'Three brackets (3.75%–5.99%).'),
+  // H.4216 (Act 110 of 2026). exemptAmount = the SCIAD at $65,000 of federal AGI ($15,000 less 25/55, rounded down to $10);
+  // estimateRate = 1.99% / 5.21% on the remaining $56,810.
+  GRAD('SC', 'South Carolina', 0.0351, 8_190, [0.0199, 0.0521], 'Two brackets for 2026, 1.99% and 5.21%, under H.4216 (2026). South Carolina no longer uses the federal standard deduction: its own deduction (SCIAD) is $15,000 for single filers, shrinks once federal AGI passes $40,000, and is gone at $95,000.'),
   NO_TAX('SD', 'South Dakota', 'South Dakota has no personal income tax.'),
   NO_TAX('TN', 'Tennessee', 'No tax on wages. The Hall tax on investment income was fully repealed in 2021, and the Tennessee Constitution bans a payroll tax.'),
   NO_TAX('TX', 'Texas', 'Texas has 0% state income tax. Article VIII, Section 24-a of the Texas Constitution prohibits a personal income tax.'),
   // SB 60 (2026, Chapter 250): 4.45% for taxable years beginning on or after January 1, 2026.
   FLAT('UT', 'Utah', 0.0445, 0, 'Flat 4.45% for 2026, cut from 4.5% in 2026 and applied back to January 1. A taxpayer credit (not included) lowers the tax for most low- and middle-income filers.'),
-  GRAD('VT', 'Vermont', 0.036, 12_500, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
-  GRAD('VA', 'Virginia', 0.053, 9_430, [0.02, 0.0575], 'Four brackets; the 5.75% top rate starts at just $17,000 of taxable income.'),
+  // $7,650 standard deduction + $5,300 exemption; estimateRate: 3.35% / 6.6% over $49,400 on $52,050.
+  GRAD('VT', 'Vermont', 0.0352, 12_950, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
+  // $8,750 standard deduction + $930 exemption; estimateRate: 2% / 3% / 5% / 5.75% over $17,000 on $55,320.
+  GRAD('VA', 'Virginia', 0.0528, 9_680, [0.02, 0.0575], 'Four brackets; the 5.75% top rate starts at just $17,000 of taxable income.'),
   NO_TAX('WA', 'Washington', 'No tax on wages. Washington taxes only long-term capital gains above a large exemption.'),
-  GRAD('WV', 'West Virginia', 0.035, 2_000, [0.0222, 0.0482], 'Five brackets, cut several times since 2023 (2025 schedule shown).'),
+  // SB 392 (2026): estimateRate = the 2026 schedule on $65,000 − $2,000.
+  GRAD('WV', 'West Virginia', 0.0331, 2_000, [0.0211, 0.0458], 'Five brackets from 2.11% to 4.58% for 2026, under SB 392 (2026), applied back to January 1.'),
   GRAD('WI', 'Wisconsin', 0.046, 7_200, [0.035, 0.0765], 'Four brackets from 3.5% to 7.65%. The standard deduction phases down as income rises.'),
   NO_TAX('WY', 'Wyoming', 'Wyoming has no personal or corporate income tax.'),
 ];
@@ -233,10 +243,10 @@ const LOCAL_TAX_LABELS: Partial<Record<StateCode, string>> = {
   IN: 'Every county',
   IA: 'Some school districts',
   KS: 'None on wages',
-  MD: 'Every county',
+  MD: 'Every county and Baltimore City',
   MI: 'Some cities',
   MO: 'Kansas City and St. Louis',
-  NJ: 'Newark, paid by employers',
+  NJ: 'Newark and Jersey City, paid by employers',
   NY: 'New York City and Yonkers',
   OH: 'Cities and school districts',
   PA: 'Most municipalities',
@@ -255,6 +265,15 @@ const RATE_SOURCES: Partial<Record<StateCode, { url: string; label: string }>> =
     url: 'https://le.utah.gov/xcode/title59/chapter10/C59-10-S104_2026050620260506.pdf',
     label: 'Utah Code § 59-10-104, as amended by SB 60 (2026) (PDF)',
   },
+  AR: {
+    url: 'https://arkleg.state.ar.us/Home/FTPDocument?path=%2FBills%2F2026S1%2FPublic%2FHB1001.pdf',
+    label: 'HB 1001 (2026 First Extraordinary Session) (PDF)',
+  },
+  SC: { url: 'https://www.scstatehouse.gov/sess126_2025-2026/bills/4216.htm', label: 'H.4216 (Act 110 of 2026)' },
+  WV: {
+    url: 'https://www.wvlegislature.gov/Bill_Text_HTML/2026_SESSIONS/RS/bills/sb392%20sub1%20enr.htm',
+    label: 'SB 392 (2026), enrolled',
+  },
 };
 
 interface BracketSchedule {
@@ -269,6 +288,27 @@ interface BracketSchedule {
  * pages pick them up automatically. Display only: calculateStateIncomeTax still uses estimateRate.
  */
 const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
+  SC: {
+    year: 2026,
+    source: 'https://www.scstatehouse.gov/sess126_2025-2026/bills/4216.htm',
+    brackets: [
+      { over: 0, rate: 0.0199 },
+      { over: 30_000, rate: 0.0521 },
+    ],
+    note: 'Brackets apply to South Carolina taxable income, after the SCIAD deduction: $15,000 for single filers, reduced by the share of federal AGI above $40,000 over $55,000 (so $8,190 at $65,000 and $0 from $95,000).',
+  },
+  WV: {
+    year: 2026,
+    source: 'https://www.wvlegislature.gov/Bill_Text_HTML/2026_SESSIONS/RS/bills/sb392%20sub1%20enr.htm',
+    brackets: [
+      { over: 0, rate: 0.0211 },
+      { over: 10_000, rate: 0.0281 },
+      { over: 25_000, rate: 0.0316 },
+      { over: 40_000, rate: 0.0422 },
+      { over: 60_000, rate: 0.0458 },
+    ],
+    note: 'Brackets apply to West Virginia taxable income, after the $2,000 personal exemption.',
+  },
   CA: {
     year: 2025,
     source: 'https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf',

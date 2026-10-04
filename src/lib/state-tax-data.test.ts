@@ -96,8 +96,8 @@ describe('state page data', () => {
 describe('bracket schedules', () => {
   const withBrackets = STATES.filter((s) => s.brackets);
 
-  it('includes the verified CA and NY schedules', () => {
-    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY']);
+  it('includes the verified CA, NY, SC, and WV schedules', () => {
+    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY', 'SC', 'WV']);
   });
 
   it('has a year and an official https source for every schedule', () => {
@@ -180,5 +180,31 @@ describe('local income tax labels', () => {
   it('uses "Some cities" where only cities tax wages', () => {
     expect(STATES_BY_CODE.MI.localTaxLabel).toBe('Some cities');
     expect(STATES_BY_CODE.KY.localTaxLabel).toBe('Some cities and counties');
+  });
+});
+
+describe('progressive states reviewed October 2026', () => {
+  const taxFromBrackets = (income: number, brackets: { over: number; rate: number }[]) =>
+    brackets.reduce((t, b, i) => {
+      const top = brackets[i + 1]?.over ?? Infinity;
+      return income > b.over ? t + (Math.min(income, top) - b.over) * b.rate : t;
+    }, 0);
+
+  it('matches the SC and WV 2026 schedules at $65,000 within $5', () => {
+    for (const code of ['SC', 'WV'] as const) {
+      const s = STATES_BY_CODE[code];
+      const exact = taxFromBrackets(65_000 - s.exemptAmount, s.brackets!);
+      expect(Math.abs(calculateStateIncomeTax(65_000, code) - exact)).toBeLessThan(5);
+    }
+  });
+
+  it('uses the 2026 exempt amounts and the Arkansas 3.7% top rate', () => {
+    expect(STATES_BY_CODE.AR.exemptAmount).toBe(2_470);
+    expect(STATES_BY_CODE.AR.bracketRange![1]).toBe(0.037);
+    expect(STATES_BY_CODE.NE.exemptAmount).toBe(8_850);
+    expect(STATES_BY_CODE.OR.exemptAmount).toBe(2_910);
+    expect(STATES_BY_CODE.RI.exemptAmount).toBe(16_450);
+    expect(STATES_BY_CODE.VT.exemptAmount).toBe(12_950);
+    expect(STATES_BY_CODE.VA.exemptAmount).toBe(9_680);
   });
 });
