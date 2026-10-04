@@ -66,7 +66,7 @@ const facts = [
   // "Tax type" already says there's no tax; don't repeat it as the rate.
   { label: 'Rate', value: s.structure === 'none' ? '0%' : formatStateRate(s) },
   { label: `Estimated tax on ${formatUSD(EXAMPLE_WAGE)} (single filer)`, value: formatUSD(tax) },
-  { label: 'Local income taxes', value: s.localTaxNote ? 'Some cities and counties' : 'None' },
+  { label: 'Local income taxes', value: s.localTaxLabel },
 ];
 
 // Tax year the pages describe; older bracket schedules get an inflation-indexing note.

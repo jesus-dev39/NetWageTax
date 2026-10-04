@@ -48,6 +48,8 @@ export interface StateTaxInfo {
   note: string;
   /** Local income taxes that the estimate does not include. */
   localTaxNote?: string;
+  /** Short answer for "Local income taxes" in summary tables: 'None' without a localTaxNote, else LOCAL_TAX_LABELS or 'Some cities and counties'. */
+  localTaxLabel: string;
   /** Official state revenue department website ('' = not yet verified). */
   sourceUrl: string;
   /**
@@ -77,7 +79,7 @@ export interface TaxBracket {
   rate: number;
 }
 
-type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors'>;
+type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel'>;
 
 const NO_TAX = (code: StateCode, name: string, note: string): Row => ({
   code, name, structure: 'none', estimateRate: 0, exemptAmount: 0, note,
@@ -220,6 +222,26 @@ const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
   MI: true,
 };
 
+/**
+ * Short "Local income taxes" answer where the default ('Some cities and counties') would be wrong.
+ * Must agree with the state's localTaxNote.
+ */
+const LOCAL_TAX_LABELS: Partial<Record<StateCode, string>> = {
+  AL: 'Some cities',
+  CO: 'Some cities',
+  DE: 'Wilmington only',
+  IN: 'Every county',
+  IA: 'Some school districts',
+  KS: 'None on wages',
+  MD: 'Every county',
+  MI: 'Some cities',
+  MO: 'Kansas City and St. Louis',
+  NJ: 'Newark, paid by employers',
+  NY: 'New York City and Yonkers',
+  OH: 'Cities and school districts',
+  PA: 'Most municipalities',
+};
+
 /** Verified notes on a state's own treatment of tips and overtime. */
 const TIPS_OVERTIME_NOTES: Partial<Record<StateCode, string>> = {
   GA: 'Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028.',
@@ -342,6 +364,7 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   ...r,
   slug: slugify(r.name),
   sourceUrl: SOURCE_URLS[r.code],
+  localTaxLabel: r.localTaxNote ? (LOCAL_TAX_LABELS[r.code] ?? 'Some cities and counties') : 'None',
   followsFederalTipsOvertime: FOLLOWS_FEDERAL_TIPS_OVERTIME[r.code],
   tipsOvertimeNote: TIPS_OVERTIME_NOTES[r.code],
   rateSource: RATE_SOURCES[r.code],

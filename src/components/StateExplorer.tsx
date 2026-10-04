@@ -154,7 +154,7 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
         </div>
         <div className="flex justify-between gap-4 border-b border-line py-2">
           <dt className="text-ink-2">Local income taxes</dt>
-          <dd className="text-right font-semibold text-ink">{info.localTaxNote ? 'Some cities and counties' : 'None'}</dd>
+          <dd className="text-right font-semibold text-ink">{info.localTaxLabel}</dd>
         </div>
       </dl>
       <ul className="mt-4 flex flex-col gap-2" aria-label={`More about ${info.name}`}>

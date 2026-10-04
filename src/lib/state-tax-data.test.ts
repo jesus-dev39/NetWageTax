@@ -167,3 +167,18 @@ describe('Flat-tax states reviewed October 2026', () => {
     expect(STATES_BY_CODE.MI.tipsOvertimeNote).toContain('2026 through 2028');
   });
 });
+
+describe('local income tax labels', () => {
+  it('says None without a local tax note and gives every state with one a label', () => {
+    for (const s of STATES) {
+      if (!s.localTaxNote) expect(s.localTaxLabel).toBe('None');
+      else expect(s.localTaxLabel).not.toBe('None');
+    }
+    expect(STATES.filter((s) => s.localTaxNote)).toHaveLength(15);
+  });
+
+  it('uses "Some cities" where only cities tax wages', () => {
+    expect(STATES_BY_CODE.MI.localTaxLabel).toBe('Some cities');
+    expect(STATES_BY_CODE.KY.localTaxLabel).toBe('Some cities and counties');
+  });
+});
