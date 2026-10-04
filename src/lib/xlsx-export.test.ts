@@ -31,12 +31,24 @@ describe('tips & overtime .xlsx', () => {
   const rows = rowsOf(ws);
 
   it('has the banner, reference, and parameters', () => {
-    expect(rows[0][0]).toBe('NetWageTax - 2026 Federal Tips & Overtime Deduction Worksheet');
+    expect(rows[0][0]).toBe('NetWageTax: 2026 tips and overtime deduction worksheet');
     expect(rows[1]).toContain(summary.referenceId);
     expect(find(rows, 'Filing status')?.[1]).toBe('Single');
     expect(find(rows, 'State')?.[1]).toBe('Illinois');
     expect(find(rows, 'MAGI / AGI')?.[1]).toBe(160_000);
     expect(ws['!merges']?.some((m) => m.s.r === 0 && m.e.c === 5)).toBe(true);
+  });
+
+  it('adds the state tips and overtime note under the state row only for verified states', () => {
+    const ga = buildDeductionSummary(
+      { result, tipsReported: 30_000, overtimeReported: 5_000, savings: 6_600, stateTax: estimateStateTax(160_000, 'GA') },
+      at,
+    );
+    const gaRows = rowsOf(sheetOf(deductionWorkbookBytes(ga)));
+    const i = gaRows.findIndex((r) => r[0] === 'Estimated state income tax (GA)');
+    expect(gaRows[i + 1][0]).toBe(ga.stateTipsOvertimeNote);
+    expect(String(gaRows[i + 1][0])).toContain('$1,750');
+    expect(summary.stateTipsOvertimeNote).toBeUndefined();
   });
 
   it('stores the breakdown as formatted numbers with SUM totals', () => {
@@ -52,7 +64,7 @@ describe('tips & overtime .xlsx', () => {
 
   it('includes the tax impact and the legal note', () => {
     expect(find(rows, 'Estimated federal income tax savings')?.[1]).toBe(6_600);
-    expect(find(rows, 'Estimated state income tax (IL)')?.[1]).toBeCloseTo((160_000 - 2_850) * 0.0495, 1);
+    expect(find(rows, 'Estimated state income tax (IL)')?.[1]).toBeCloseTo((160_000 - 2_925) * 0.0495, 1);
     expect(rows.some((r) => String(r[0]).startsWith('For estimation purposes only'))).toBe(true);
   });
 });
@@ -67,11 +79,11 @@ describe('paycheck .xlsx', () => {
   const rows = rowsOf(ws);
 
   it('has the banner, estimate labels, and pay details', () => {
-    expect(rows[0][0]).toBe('NetWageTax - 2026 Paycheck & Take-Home Pay Estimate');
+    expect(rows[0][0]).toBe('NetWageTax: 2026 paycheck and take-home pay estimate');
     expect(rows[1]).toContain(summary.referenceId);
     expect(rows[2][0]).toMatch(/Not a pay stub/);
     expect(find(rows, 'Gross wages (annual)')?.[1]).toBe(61_750);
-    expect(find(rows, 'Pay frequency')?.[1]).toBe('Bi-Weekly (26 paychecks/year)');
+    expect(find(rows, 'Pay frequency')?.[1]).toBe('Biweekly (26 paychecks/year)');
     expect(find(rows, 'State')?.[1]).toBe('Georgia');
   });
 
@@ -81,13 +93,14 @@ describe('paycheck .xlsx', () => {
     expect(federal[2]).toBe(-5_230);
     expect(federal[1]).toBeCloseTo(-5_230 / 26, 2);
     const net = find(rows, 'Net take-home pay')!;
-    expect(net[2]).toBeCloseTo(49_263.85, 2);
+    // Georgia 2026: 4.99% on $61,750 − $12,000 = $2,482.53 (HB 463).
+    expect(net[2]).toBeCloseTo(49_313.6, 2);
     const r = rows.findIndex((row) => row[0] === 'Federal income tax');
     expect(ws[utils.encode_cell({ r, c: 3 })].z).toBe(FMT_PCT);
   });
 
   it('ends with the take-home totals', () => {
-    expect(find(rows, 'Per bi-weekly paycheck')?.[1]).toBeCloseTo(1_894.76, 2);
-    expect(find(rows, 'Per year')?.[1]).toBeCloseTo(49_263.85, 2);
+    expect(find(rows, 'Per biweekly paycheck')?.[1]).toBeCloseTo(1_896.68, 2);
+    expect(find(rows, 'Per year')?.[1]).toBeCloseTo(49_313.6, 2);
   });
 });

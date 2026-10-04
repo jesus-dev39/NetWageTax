@@ -144,6 +144,26 @@ export function tipsOvertimeStatus(s: StateTaxInfo): 'no-wage-tax' | 'follows' |
   return 'unknown';
 }
 
+/**
+ * What the state does with tips and overtime, and what our estimate does about it, for the
+ * state tax row of the tips & overtime calculator and its exports. Only for verified states
+ * (followsFederalTipsOvertime set); undefined otherwise, so nothing is claimed.
+ */
+export function stateTipsOvertimeNote(s: StateTaxInfo): string | undefined {
+  switch (tipsOvertimeStatus(s)) {
+    case 'does-not-follow':
+      return s.tipsOvertimeNote
+        ? `${s.tipsOvertimeNote} Our estimate doesn’t apply that exclusion: it taxes your full income.`
+        : `${s.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
+    case 'follows':
+      return s.tipsOvertimeNote
+        ? `${s.tipsOvertimeNote} Our estimate doesn’t apply those deductions: it taxes your full income.`
+        : `${s.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
+    default:
+      return undefined;
+  }
+}
+
 function listJoin(items: string[]): string {
   if (items.length <= 1) return items.join('');
   if (items.length === 2) return `${items[0]} and ${items[1]}`;

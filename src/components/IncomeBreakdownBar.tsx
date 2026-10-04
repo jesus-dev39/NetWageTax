@@ -1,140 +1,110 @@
-import { estimateEmployeeFica, SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
-import type { StateTaxEstimate } from '../lib/state-tax-data';
+import { SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
+import { buildIncomeBreakdown } from '../lib/income-breakdown';
+import type { FilingStatus } from '../lib/obbba-params';
+import { stateTipsOvertimeNote, tipsOvertimeStatus } from '../lib/state-page-content';
+import { STATES_BY_CODE, type StateTaxEstimate } from '../lib/state-tax-data';
+import BreakdownBar from './BreakdownBar';
 import { formatUSD } from './CurrencyInput';
-import { useAnimatedNumber } from './useAnimatedNumber';
 
 interface Props {
   magi: number;
   /** Final combined OBBBA deduction (after the phase-out). */
   deduction: number;
-  /** Estimated federal income tax saved by the deduction. */
-  savings: number;
+  filingStatus: FilingStatus;
   /** Estimated state income tax; null when no state is selected. */
   stateTax?: StateTaxEstimate | null;
 }
 
-interface Segment {
-  key: string;
-  label: string;
-  hint: string;
-  value: number;
-  swatch: string;
+/**
+ * What the state row says about tips and overtime. Only claim what a state does when it's
+ * verified (followsFederalTipsOvertime / tipsOvertimeNote); otherwise describe what our estimate does.
+ */
+export function stateTaxHint(stateTax: StateTaxEstimate): string {
+  const info = STATES_BY_CODE[stateTax.code];
+  const lead = `${stateTax.name}, ${stateTax.rateLabel}.`;
+  if (tipsOvertimeStatus(info) === 'no-wage-tax') return `${stateTax.name}: no state income tax.`;
+  return `${lead} ${stateTipsOvertimeNote(info) ?? 'Our estimate taxes tips and overtime at the state level.'}`;
 }
 
-export default function IncomeBreakdownBar({ magi, deduction, savings, stateTax = null }: Props) {
-  const fica = estimateEmployeeFica(magi).total;
-  const deductible = Math.min(deduction, magi);
-  const state = stateTax?.tax ?? 0;
-  const base = Math.max(0, magi - deductible - fica - state);
-  const total = base + deductible + fica + state;
-  const isEmpty = total <= 0;
+export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stateTax = null }: Props) {
+  const b = buildIncomeBreakdown(magi, deduction, filingStatus, stateTax?.tax ?? 0);
+  const isEmpty = b.total <= 0;
+  const pct = (v: number) => (isEmpty ? 0 : (v / b.total) * 100);
 
-  const segments: Segment[] = [
+  const rows = [
     {
-      key: 'base',
-      label: 'Base income',
-      hint: stateTax ? 'Wages and other income, after FICA and state tax' : 'Wages and other income, after FICA',
-      value: base,
-      swatch: 'bg-slate-700 dark:bg-slate-500',
+      key: 'federal',
+      label: 'Federal income tax',
+      hint: deduction > 0 ? `After your ${formatUSD(deduction)} tips and overtime deduction` : 'No tips or overtime deduction applied',
+      value: b.federalWithDeduction,
+      color: 'bg-data-federal',
     },
-    {
-      key: 'deduction',
-      label: 'Tips & overtime deduction',
-      hint: savings > 0 ? `Shielded from federal income tax · saves ~${formatUSD(savings)}` : 'Shielded from federal income tax',
-      value: deductible,
-      swatch: 'bg-emerald-500',
-    },
-    {
-      key: 'fica',
-      label: 'FICA taxes (7.65%)',
-      hint: 'Social Security 6.2% + Medicare 1.45%, still owed',
-      value: fica,
-      swatch: 'bg-amber-400',
-    },
+    { key: 'fica', label: 'Social Security & Medicare', hint: 'Still owed on tips and overtime', value: b.fica, color: 'bg-data-fica' },
     ...(stateTax
-      ? [
-          {
-            key: 'state',
-            label: `State income tax (Est.)`,
-            hint:
-              stateTax.structure === 'none'
-                ? `${stateTax.name} · No state income tax`
-                : `${stateTax.name} · ${stateTax.rateLabel} · applies to tips & overtime too`,
-            value: state,
-            swatch: 'bg-violet-500 dark:bg-violet-400',
-          },
-        ]
+      ? [{ key: 'state', label: `${stateTax.name} income tax (est.)`, hint: stateTaxHint(stateTax), value: b.state, color: 'bg-data-state' }]
       : []),
   ];
-
-  const pct = (v: number) => (isEmpty ? 0 : (v / total) * 100);
-  const summary = isEmpty
-    ? 'Income breakdown: enter your MAGI to see it.'
-    : `Income breakdown: ${segments
-        .map((s) => `${s.label} ${formatUSD(s.value)} (${pct(s.value).toFixed(1)}%)`)
-        .join(', ')}.`;
+  const bar = [{ key: 'net', value: b.takeHome, color: 'bg-data-net' }, ...rows];
+  const summary = `Where your income goes: ${[...rows, { label: 'Take-home', value: b.takeHome }]
+    .map((r) => `${r.label} ${formatUSD(r.value)} (${pct(r.value).toFixed(1)}%)`)
+    .join(', ')}.`;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
+    <section aria-labelledby="income-breakdown-heading">
       <div className="flex items-baseline justify-between gap-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100">Where your income goes</h4>
-        {!isEmpty && <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">of {formatUSD(total)}</span>}
+        <h3 id="income-breakdown-heading" className="font-semibold text-ink">
+          Where your income goes
+        </h3>
+        {!isEmpty && <span className="num text-[15px] text-ink-2">of {formatUSD(b.total)}</span>}
       </div>
 
-      <div
-        role="img"
-        aria-label={summary}
-        className="mt-3 flex h-4 w-full divide-x divide-white/70 dark:divide-slate-900 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
-      >
-        {segments.map((s) => (
-          <div
-            key={s.key}
-            className={`${s.swatch} h-full transition-[width] duration-500 ease-out motion-reduce:transition-none ${
-              s.value > 0 ? 'min-w-1' : ''
-            }`}
-            style={{ width: `${pct(s.value)}%` }}
-          />
-        ))}
-      </div>
+      <BreakdownBar className="mt-3" segments={bar} label={isEmpty ? undefined : summary} />
 
       {isEmpty ? (
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Enter your MAGI to see how your income breaks down.</p>
+        <p className="mt-3 text-[15px] text-ink-2">Enter your MAGI to see how your income breaks down.</p>
       ) : (
-        <dl className="mt-4 space-y-3 text-sm">
-          {segments.map((s) => (
-            <LegendRow key={s.key} segment={s} percent={pct(s.value)} highlight={s.key === 'deduction'} />
-          ))}
-        </dl>
+        <>
+          <dl className="num mt-3">
+            {rows.map((r) => (
+              <Row key={r.key} color={r.color} label={r.label} hint={r.hint} value={r.value} percent={pct(r.value)} />
+            ))}
+            <Row color="bg-data-net" label="Take-home" value={b.takeHome} percent={pct(b.takeHome)} total />
+          </dl>
+          {b.federalSaved > 0 && (
+            <p className="num mt-3 flex items-baseline justify-between gap-4 border-l-4 border-green bg-green-tint px-4 py-3 text-ink">
+              <span>
+                The deduction lowers your federal income tax from {formatUSD(b.federalWithoutDeduction)} to{' '}
+                {formatUSD(b.federalWithDeduction)}.
+              </span>
+              <strong className="shrink-0 font-bold">{formatUSD(b.federalSaved)} saved</strong>
+            </p>
+          )}
+        </>
       )}
 
-      <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-        Assumes all MAGI is wages. Social Security applies only to the first{' '}
-        {formatUSD(SOCIAL_SECURITY_WAGE_BASE_2026)} of 2026 wages; the 0.9% Additional Medicare Tax is not included.
+      <p className="mt-3 text-sm text-ink-2">
+        Assumes all MAGI is wages. Social Security applies only to the first {formatUSD(SOCIAL_SECURITY_WAGE_BASE_2026)} of 2026
+        wages; the 0.9% Additional Medicare Tax is not included.
         {stateTax && stateTax.structure !== 'none' && ' State tax is a single-filer estimate and excludes local income taxes.'}
       </p>
-    </div>
+    </section>
   );
 }
 
-function LegendRow({ segment, percent, highlight }: { segment: Segment; percent: number; highlight: boolean }) {
-  const value = useAnimatedNumber(segment.value);
-  const shownPercent = useAnimatedNumber(percent);
+function Row(props: { color: string; label: string; hint?: string; value: number; percent: number; total?: boolean }) {
+  const { color, label, hint, value, percent, total = false } = props;
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className={`flex items-start justify-between gap-4 py-2.5 ${total ? 'border-t-2 border-ink font-bold' : 'border-b border-line'}`}>
       <dt className="flex min-w-0 items-start gap-2.5">
-        <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-sm ${segment.swatch}`} aria-hidden="true" />
+        <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 ${color}`} />
         <span>
-          <span className={highlight ? 'font-medium text-emerald-700 dark:text-emerald-400' : 'font-medium text-slate-800 dark:text-slate-200'}>
-            {segment.label}
-          </span>
-          <span className="block text-xs text-slate-500 dark:text-slate-400">{segment.hint}</span>
+          <span className="text-ink">{label}</span>
+          {hint && <span className="block text-sm font-normal text-ink-2">{hint}</span>}
         </span>
       </dt>
-      <dd className="shrink-0 text-right tabular-nums">
-        <span className={highlight ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'font-semibold text-slate-900 dark:text-slate-100'}>
-          {formatUSD(value)}
-        </span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">{shownPercent.toFixed(1)}%</span>
+      <dd className="shrink-0 text-right">
+        <span className={total ? 'text-ink' : 'font-semibold text-ink'}>{formatUSD(value)}</span>
+        <span className="block text-sm font-normal text-ink-2">{percent.toFixed(1)}%</span>
       </dd>
     </div>
   );

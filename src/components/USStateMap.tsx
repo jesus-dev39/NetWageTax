@@ -16,22 +16,19 @@ const CALLOUTS: StateCode[] = ['VT', 'NH', 'MA', 'RI', 'CT', 'NJ', 'DE', 'MD', '
 const CHIP = { x: 992, y0: 70, step: 34, w: 60, h: 27 };
 const VIEW_WIDTH = CHIP.x + CHIP.w + 8;
 
+// Category fills are the map-* tokens (light and dark in global.css); the selected state is green.
 const FILL: Record<TaxStructure, string> = {
-  none: 'fill-emerald-200 dark:fill-emerald-900',
-  flat: 'fill-sky-200 dark:fill-sky-900',
-  graduated: 'fill-slate-200 dark:fill-slate-700',
+  none: 'fill-map-none',
+  flat: 'fill-map-flat',
+  graduated: 'fill-map-graduated',
 };
-const FILL_HOVER: Record<TaxStructure, string> = {
-  none: 'fill-emerald-300 dark:fill-emerald-800',
-  flat: 'fill-sky-300 dark:fill-sky-800',
-  graduated: 'fill-slate-300 dark:fill-slate-600',
-};
-const FILL_SELECTED = 'fill-emerald-600 dark:fill-emerald-500';
+const FILL_HOVER = 'brightness-90 dark:brightness-125';
+const FILL_SELECTED = 'fill-green';
 
 export const MAP_LEGEND: { structure: TaxStructure; label: string; swatch: string }[] = [
-  { structure: 'none', label: 'No income tax', swatch: 'bg-emerald-200 dark:bg-emerald-900' },
-  { structure: 'flat', label: 'Flat tax', swatch: 'bg-sky-200 dark:bg-sky-900' },
-  { structure: 'graduated', label: 'Progressive', swatch: 'bg-slate-200 dark:bg-slate-700' },
+  { structure: 'none', label: 'No income tax', swatch: 'bg-map-none' },
+  { structure: 'flat', label: 'Flat rate', swatch: 'bg-map-flat' },
+  { structure: 'graduated', label: 'Progressive brackets', swatch: 'bg-map-graduated' },
 ];
 
 export default function USStateMap({ selected, onSelect, highlighted = null, filter = null }: Props) {
@@ -50,7 +47,7 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
     const { structure } = STATES_BY_CODE[code];
     if (code === selected) return FILL_SELECTED;
     const dim = filter && structure !== filter && code !== hot ? ' opacity-25' : '';
-    return (code === hot ? FILL_HOVER[structure] : FILL[structure]) + dim;
+    return FILL[structure] + (code === hot ? ` ${FILL_HOVER}` : '') + dim;
   }
 
   const handlers = (code: StateCode) => ({
@@ -67,19 +64,19 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
 
   return (
     <div ref={wrapRef} className="relative select-none">
-      {/* Mouse/touch convenience only; keyboard and screen reader users pick a state with the StateSelect combobox. */}
+      {/* Mouse/touch convenience only; keyboard and screen reader users pick a state with the "Find your state" select. */}
       <svg
         viewBox={`0 0 ${VIEW_WIDTH} ${US_MAP_VIEWBOX.height}`}
         className="h-auto w-full"
         aria-hidden="true"
         focusable="false"
       >
-        <g className="stroke-white dark:stroke-slate-950" strokeWidth={0.8} strokeLinejoin="round">
+        <g className="stroke-page" strokeWidth={0.8} strokeLinejoin="round">
           {STATES.map(({ code }) => (
             <path
               key={code}
               d={US_STATE_PATHS[code].d}
-              className={`cursor-pointer transition-[fill,opacity] duration-150 ${fillFor(code)}`}
+              className={`cursor-pointer transition-[fill,opacity,filter] duration-150 ${fillFor(code)}`}
               {...handlers(code)}
             />
           ))}
@@ -96,7 +93,7 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
                 y1={cy}
                 x2={CHIP.x}
                 y2={y + CHIP.h / 2}
-                className="stroke-slate-300 dark:stroke-slate-600"
+                className="stroke-line"
                 strokeWidth={0.8}
               />
               <rect
@@ -104,19 +101,15 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
                 y={y}
                 width={CHIP.w}
                 height={CHIP.h}
-                rx={4}
-                className={`transition-[fill,opacity] duration-150 ${fillFor(code)} ${
-                  isSelected ? 'stroke-emerald-700 dark:stroke-emerald-300' : 'stroke-white dark:stroke-slate-950'
-                }`}
+                rx={2}
+                className={`transition-[fill,opacity,filter] duration-150 ${fillFor(code)} ${isSelected ? 'stroke-ink' : 'stroke-page'}`}
               />
               <text
                 x={CHIP.x + CHIP.w / 2}
                 y={y + CHIP.h / 2}
                 dominantBaseline="central"
                 textAnchor="middle"
-                className={`pointer-events-none font-mono text-[15px] font-semibold ${
-                  isSelected ? 'fill-white dark:fill-slate-950' : 'fill-slate-700 dark:fill-slate-200'
-                }`}
+                className={`pointer-events-none text-[15px] font-semibold ${isSelected ? 'fill-page' : 'fill-ink'}`}
               >
                 {code}
               </text>
@@ -128,7 +121,7 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
       {tip && hover && (
         <div
           role="presentation"
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-white dark:text-slate-900"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-control bg-ink px-2.5 py-1.5 text-sm font-semibold text-page"
           style={{ left: tipLeft, top: hover.y - 10 }}
         >
           {tip.name}: {formatStateRate(tip)}

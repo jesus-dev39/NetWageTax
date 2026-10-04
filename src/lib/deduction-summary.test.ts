@@ -40,6 +40,21 @@ describe('buildDeductionSummary', () => {
     expect(value(s, 'Estimated FICA still owed on tips & overtime')).toBe('$918');
   });
 
+  it('carries the calculator’s state tips and overtime note only for verified states', () => {
+    const result = calculateObbbaDeduction({
+      filingStatus: 'single', magi: 52_000, taxYear: 2026,
+      hasQualifyingTips: true, tipsAmount: 8_000, tipsOccupationConfirmed: true,
+      hasQualifyingOvertime: false, overtimePremiumAmount: 0, isFLSANonExempt: true,
+    });
+    const build = (code: 'GA' | 'NJ') =>
+      buildDeductionSummary({ result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, code) }, at);
+    const ga = build('GA');
+    expect(ga.stateTipsOvertimeNote).toContain('$1,750');
+    expect(ga.stateTipsOvertimeNote).toContain('Our estimate doesn’t apply that exclusion');
+    expect(ga.lines.find((l) => l.label === 'Estimated state income tax (GA)')?.detail).toContain(ga.stateTipsOvertimeNote!);
+    expect(build('NJ').stateTipsOvertimeNote).toBeUndefined();
+  });
+
   it('explains $0 savings when the standard deduction covers all income', () => {
     expect(summaryFor(15_000, 3_000, 0).savingsNote).toMatch(/Standard deduction already covers 100%/);
     expect(summaryFor(60_000, 3_000, 0).savingsNote).toBeUndefined();

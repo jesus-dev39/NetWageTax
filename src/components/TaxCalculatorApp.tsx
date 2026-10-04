@@ -1,30 +1,30 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateObbbaDeduction } from '../lib/obbba-calculator';
 import { PARAMS_BY_YEAR, type CategoryResult, type FilingStatus, type IneligibilityReason } from '../lib/obbba-params';
 import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
-import { estimateStateTax, findState, type StateCode } from '../lib/state-tax-data';
+import { estimateStateTax, findState, STATES, type StateCode } from '../lib/state-tax-data';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
 import ExportSummaryActions from './ExportSummaryActions';
+import { Checkbox, Field, RadioGroup, Reveal, type RadioOption } from './form';
 import IncomeBreakdownBar from './IncomeBreakdownBar';
+import NativeSelect from './NativeSelect';
 import NoStateTaxBadge from './NoStateTaxBadge';
-import StateSelect from './StateSelect';
-import { useAnimatedNumber } from './useAnimatedNumber';
 
 const TAX_YEAR = 2026;
-const MFS_TOOLTIP = 'Married Filing Separately is ineligible under IRC §224/§225';
+const MFS_NOTE = 'Married filing separately can’t claim either deduction under IRC §224/§225.';
 
-const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
+const FILING_STATUSES: RadioOption<FilingStatus>[] = [
   { value: 'single', label: 'Single' },
-  { value: 'hoh', label: 'Head of Household' },
-  { value: 'mfj', label: 'Married Filing Jointly' },
-  { value: 'mfs', label: 'Married Filing Separately' },
+  { value: 'hoh', label: 'Head of household' },
+  { value: 'mfj', label: 'Married filing jointly' },
+  { value: 'mfs', label: 'Married filing separately', hint: 'Can’t claim either deduction: married couples must file jointly.', disabled: true },
 ];
 
 const INELIGIBLE_COPY: Record<IneligibilityReason, string> = {
   NOT_CLAIMED: 'Not included',
-  MARRIED_FILING_SEPARATELY: MFS_TOOLTIP,
+  MARRIED_FILING_SEPARATELY: MFS_NOTE,
   SELF_EMPLOYED_SSTB: 'Self-employed individuals in a specified service trade or business do not qualify.',
   FLSA_EXEMPT_EMPLOYEE: 'Confirm you are FLSA non-exempt to include overtime.',
 };
@@ -71,7 +71,7 @@ export default function TaxCalculatorApp() {
     if (s) setStateCode(s.code);
   }, []);
 
-  // Focus after the toggled block has rendered.
+  // Focus after the revealed block has rendered.
   useEffect(() => {
     if (!pendingFocus) return;
     const target = pendingFocus === 'TP' ? tipsInputRef.current : overtimeInputRef.current;
@@ -105,8 +105,6 @@ export default function TaxCalculatorApp() {
     Math.min(result.tips.phaseoutReduction, result.tips.deductionBeforePhaseout) +
     Math.min(result.overtime.phaseoutReduction, result.overtime.deductionBeforePhaseout);
   const savings = estimateFederalTaxSavings(magiValue, result.totalCombinedDeduction, filingStatus);
-  const shownTotal = useAnimatedNumber(result.totalCombinedDeduction);
-  const shownSavings = useAnimatedNumber(savings);
   const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus);
   // State tax is estimated on full MAGI: whether a state follows the federal tips & overtime deduction varies and isn't in our data.
   const stateTax = useMemo(
@@ -182,227 +180,123 @@ export default function TaxCalculatorApp() {
     : null;
 
   return (
-    <section
-      ref={rootRef}
-      id="calculator"
-      aria-labelledby="calculator-heading"
-      className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
-    >
-      <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Step 2</p>
-        <h2 id="calculator-heading" className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Estimate your {TAX_YEAR} tips &amp; overtime deduction
-        </h2>
-        <p className="text-slate-600 dark:text-slate-400">Results update automatically as you type. Nothing you enter leaves your browser.</p>
-      </div>
+    <section ref={rootRef} id="calculator" aria-labelledby="calculator-heading" className="scroll-mt-24">
+      <h2 id="calculator-heading" className="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">
+        Estimate your {TAX_YEAR} tips and overtime deduction
+      </h2>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
+      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
         {/* ------------------------------ Inputs ------------------------------ */}
-        <form className="flex flex-col gap-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
-          <fieldset>
-            <legend className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filing status</legend>
-            <div role="radiogroup" aria-label="Filing status" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-2">
-              {FILING_STATUSES.map(({ value, label }) => {
-                const disabled = value === 'mfs';
-                const active = filingStatus === value;
-                return (
-                  <div key={value} className="group relative">
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      aria-disabled={disabled || undefined}
-                      aria-describedby={disabled ? 'mfs-tooltip' : undefined}
-                      onClick={() => !disabled && setFilingStatus(value)}
-                      className={`h-full w-full rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
-                        disabled
-                          ? 'cursor-not-allowed border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-400'
-                          : active
-                            ? 'border-ink bg-ink text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                            : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                    {disabled && (
-                      <span
-                        id="mfs-tooltip"
-                        role="tooltip"
-                        className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-60 rounded-md bg-slate-900 px-3 py-2 text-xs leading-snug text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus-within:opacity-100"
-                      >
-                        {MFS_TOOLTIP}. Married couples must file jointly to claim it.
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </fieldset>
+        <form className="flex flex-col gap-6 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
+          <RadioGroup legend="Filing status" name="obbba-filing-status" options={FILING_STATUSES} value={filingStatus} onChange={setFilingStatus} />
 
-          <div>
-            <label htmlFor="state" className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-              State
-            </label>
-            <div className="mt-2">
-              <StateSelect id="state" value={stateCode} onChange={setStateCode} placeholder="Select State" describedBy="state-help" />
-            </div>
-            <div id="state-help" className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {!stateTax ? (
-                <>
-                  Optional. Adds state income tax to the breakdown.{' '}
-                  <a href="/state-taxes/" className="text-navy-700 underline underline-offset-2 dark:text-navy-300">
-                    Browse the map
-                  </a>
-                </>
-              ) : stateTax.structure === 'none' ? (
-                <NoStateTaxBadge />
-              ) : (
-                <>
-                  {stateTax.rateLabel} · est. <span className="tabular-nums">{formatUSD(stateTax.tax)}</span>
-                </>
-              )}
-            </div>
-          </div>
-          </div>
+          <Field id="state" label="State" hint="Optional. Adds state income tax to the breakdown." className="sm:max-w-xs">
+            <NativeSelect
+              id="state"
+              value={stateCode ?? ''}
+              onChange={(e) => setStateCode((e.target.value || null) as StateCode | null)}
+              aria-describedby="state-hint state-help"
+            >
+              <option value="">Choose a state</option>
+              {STATES.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.name}
+                </option>
+              ))}
+            </NativeSelect>
+            {stateTax && (
+              <div id="state-help" className="num mt-2 text-[15px] text-ink-2">
+                {stateTax.structure === 'none' ? <NoStateTaxBadge /> : `${stateTax.rateLabel}, est. ${formatUSD(stateTax.tax)}`}
+              </div>
+            )}
+          </Field>
 
-          <div>
-            <label htmlFor="magi" className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Estimated MAGI / AGI
-            </label>
-            <p id="magi-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              Your adjusted gross income from Form 1040, line 11. If you have foreign or U.S. territory income, your
-              MAGI may be higher than your AGI.
-            </p>
-            <div className="mt-2 sm:max-w-xs">
-              <CurrencyInput id="magi" value={magi} onValueChange={setMagi} placeholder="65,000" describedBy="magi-help" />
-            </div>
-          </div>
-
-          <ToggleBlock
-            id="tips"
-            title="I received qualified tips"
-            subtitle="Voluntary cash or card tips from customers"
-            enabled={tipsEnabled}
-            onToggle={setTipsEnabled}
+          <Field
+            id="magi"
+            label="Modified adjusted gross income (MAGI)"
+            hint="Your adjusted gross income from Form 1040, line 11. If you have foreign or U.S. territory income, your MAGI may be higher than your AGI."
           >
-            <label htmlFor="tips-amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Qualified tips (W-2 Box 12, Code TP)
-            </label>
-            <p id="tips-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              No W-2 yet? Enter your total qualified tips for the year.
-            </p>
-            <div className="mt-2 sm:max-w-xs">
-              <CurrencyInput
-                ref={tipsInputRef}
-                id="tips-amount"
-                value={tipsAmount}
-                onValueChange={setTipsAmount}
-                placeholder="0"
-                describedBy="tips-help"
-              />
+            <div className="sm:max-w-xs">
+              <CurrencyInput id="magi" value={magi} onValueChange={setMagi} placeholder="65,000" describedBy="magi-hint" />
             </div>
-            <Checkbox id="tips-occupation" checked={occupationConfirmed} onChange={setOccupationConfirmed}>
-              My occupation is on the Treasury Department’s list of occupations that customarily received tips on or
-              before December 31, 2024.
+          </Field>
+
+          <div>
+            <Checkbox id="tips-enabled" checked={tipsEnabled} onChange={setTipsEnabled} controls="tips-panel">
+              <span className="font-semibold">I received qualified tips</span>
+              <span className="block text-[15px] text-ink-2">Voluntary cash or card tips from customers</span>
             </Checkbox>
-          </ToggleBlock>
+            <Reveal id="tips-panel" open={tipsEnabled}>
+              <Field id="tips-amount" label="Qualified tips (W-2 Box 12, code TP)" hint="No W-2 yet? Enter your total qualified tips for the year.">
+                <div className="sm:max-w-xs">
+                  <CurrencyInput ref={tipsInputRef} id="tips-amount" value={tipsAmount} onValueChange={setTipsAmount} placeholder="0" describedBy="tips-amount-hint" />
+                </div>
+              </Field>
+              <Checkbox id="tips-occupation" checked={occupationConfirmed} onChange={setOccupationConfirmed}>
+                My occupation is on the Treasury Department’s list of occupations that customarily received tips on or
+                before December 31, 2024.
+              </Checkbox>
+            </Reveal>
+          </div>
 
-          <ToggleBlock
-            id="overtime"
-            title="I earned qualified overtime"
-            subtitle="Overtime required by the Fair Labor Standards Act (FLSA)"
-            enabled={overtimeEnabled}
-            onToggle={setOvertimeEnabled}
-          >
-            <label htmlFor="overtime-amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Overtime premium (W-2 Box 12, Code TT)
-            </label>
-            <p id="overtime-help" className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              Enter only the premium portion (the extra “half” in time-and-a-half), not your total overtime pay.
-            </p>
-            <div className="mt-2 sm:max-w-xs">
-              <CurrencyInput
-                ref={overtimeInputRef}
+          <div>
+            <Checkbox id="overtime-enabled" checked={overtimeEnabled} onChange={setOvertimeEnabled} controls="overtime-panel">
+              <span className="font-semibold">I earned qualified overtime</span>
+              <span className="block text-[15px] text-ink-2">Overtime required by the Fair Labor Standards Act (FLSA)</span>
+            </Checkbox>
+            <Reveal id="overtime-panel" open={overtimeEnabled}>
+              <Field
                 id="overtime-amount"
-                value={overtimeAmount}
-                onValueChange={setOvertimeAmount}
-                placeholder="0"
-                describedBy="overtime-help"
-              />
-            </div>
-            <Checkbox id="overtime-flsa" checked={flsaNonExempt} onChange={setFlsaNonExempt}>
-              I am a non-exempt employee under the FLSA (I am legally entitled to overtime pay).
-            </Checkbox>
-          </ToggleBlock>
+                label="Overtime premium (W-2 Box 12, code TT)"
+                hint="Enter only the premium portion (the extra “half” in time-and-a-half), not your total overtime pay."
+              >
+                <div className="sm:max-w-xs">
+                  <CurrencyInput ref={overtimeInputRef} id="overtime-amount" value={overtimeAmount} onValueChange={setOvertimeAmount} placeholder="0" describedBy="overtime-amount-hint" />
+                </div>
+              </Field>
+              <Checkbox id="overtime-flsa" checked={flsaNonExempt} onChange={setFlsaNonExempt}>
+                I am a non-exempt employee under the FLSA (I am legally entitled to overtime pay).
+              </Checkbox>
+            </Reveal>
+          </div>
 
           <QualificationChecklist items={checklist} hasSsn={hasSsn} onSsnChange={setHasSsn} />
         </form>
 
         {/* ------------------------------ Results ----------------------------- */}
-        <aside aria-labelledby="results-heading" className="flex flex-col gap-4 lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
-          {/* 1. Hero: tax savings */}
-          <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-emerald-950 via-slate-900 to-slate-950 p-6 text-white shadow-xl ring-1 ring-emerald-500/30">
-            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/20 blur-3xl" />
-            <div className="relative">
-              <div className="flex items-start justify-between gap-3">
-                <h3 id="results-heading" className="text-sm font-medium text-emerald-100/80">
-                  Estimated Money Saved (Tax Savings)
-                </h3>
-                <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-emerald-100 ring-1 ring-white/15">
-                  {TAX_YEAR} rules
-                </span>
-              </div>
-              <p
-                className={`mt-2 text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${
-                  savings > 0 ? 'glow-emerald text-emerald-400' : 'text-slate-300'
-                }`}
-                aria-hidden="true"
-              >
-                {savings > 0 ? '+' : ''}
-                {formatUSD(shownSavings)}
-              </p>
-              <p className="mt-1 text-sm text-slate-400">Less federal income tax owed for {TAX_YEAR}</p>
-
-              <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-white/10 pt-4">
-                <p className="text-sm text-slate-300">Total Federal Deduction (Schedule 1-A)</p>
-                <p className="text-lg font-semibold tabular-nums text-white" aria-hidden="true">
-                  {formatUSD(shownTotal)}
-                </p>
-              </div>
-
-              {coveredByStandardDeduction && (
-                <p className="mt-4 flex gap-2 rounded-lg bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200 ring-1 ring-emerald-400/40">
-                  <span aria-hidden="true">✓</span>
-                  <span>{STANDARD_DEDUCTION_COVERS_NOTICE}</span>
-                </p>
-              )}
-              {isMfs && <p className="mt-3 text-sm text-amber-200">{MFS_TOOLTIP}.</p>}
-              <p className="sr-only" aria-live="polite">
-                Estimated money saved {formatUSD(savings)}. Total federal deduction{' '}
-                {formatUSD(result.totalCombinedDeduction)}.
-              </p>
-            </div>
+        <aside aria-labelledby="results-heading" className="flex flex-col gap-6 lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
+          <div className="rounded-panel border border-line bg-green-tint p-5 sm:p-6">
+            <h3 id="results-heading" className="font-semibold text-ink">
+              Federal income tax saved
+            </h3>
+            <p className="num mt-1 text-[2.5rem]/[1.05] font-bold tracking-[-0.02em] text-ink sm:text-5xl/[1.05]">{formatUSD(savings)}</p>
+            <p className="num mt-1 text-ink-2">
+              Schedule 1-A deduction: <span className="font-semibold text-ink">{formatUSD(result.totalCombinedDeduction)}</span>
+            </p>
+            {coveredByStandardDeduction && <p className="mt-3 text-[15px] text-ink">{STANDARD_DEDUCTION_COVERS_NOTICE}</p>}
+            {isMfs && <p className="mt-3 text-[15px] font-semibold text-ink">{MFS_NOTE}</p>}
+            <p className="sr-only" aria-live="polite">
+              Estimated federal income tax saved {formatUSD(savings)}. Total federal deduction {formatUSD(result.totalCombinedDeduction)}.
+            </p>
           </div>
 
-          {/* 2. Where your income goes */}
-          <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} savings={savings} stateTax={stateTax} />
+          <IncomeBreakdownBar magi={magiValue} deduction={result.totalCombinedDeduction} filingStatus={filingStatus} stateTax={stateTax} />
 
-          {/* 3. Compact line-item breakdown */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
-            <h4 className="font-medium text-slate-900 dark:text-slate-100">Deduction breakdown</h4>
-            <ul className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+          <section aria-labelledby="deduction-breakdown-heading">
+            <h3 id="deduction-breakdown-heading" className="font-semibold text-ink">
+              Deduction breakdown
+            </h3>
+            <ul className="mt-2 border-t border-line">
               <CategoryRow title="Qualified tips (TP)" category={result.tips} enabled={tipsEnabled} note={tipsNote} />
               <CategoryRow title="Qualified overtime (TT)" category={result.overtime} enabled={overtimeEnabled} />
             </ul>
-            <dl className="mt-3 space-y-1.5 border-t border-slate-200 pt-3 text-sm dark:border-slate-800">
+            <dl className="num">
               <Row label="Base deduction (after caps)" value={formatUSD(baseTotal)} />
               <Row label="MAGI phase-out reduction" value={reductionTotal > 0 ? `−${formatUSD(reductionTotal)}` : formatUSD(0)} />
               <Row label="Total deduction" value={formatUSD(result.totalCombinedDeduction)} strong />
             </dl>
-          </div>
+          </section>
 
-          {/* 4. Export */}
           <ExportSummaryActions
             result={result}
             tipsReported={tipsEnabled ? (tipsAmount ?? 0) : 0}
@@ -411,14 +305,12 @@ export default function TaxCalculatorApp() {
             stateTax={stateTax}
           />
 
-          {/* 5. FICA note */}
-          <p className="flex gap-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            <span aria-hidden="true" className="mt-px text-amber-500">●</span>
-            <span>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{result.ficaStillOwedNotice}</span>{' '}
-              Estimates only, not tax advice. Savings assume the {TAX_YEAR} standard deduction and federal brackets and
-              treat MAGI as AGI.
-            </span>
+          <p className="border-l-4 border-warning bg-warning-tint px-4 py-3 text-[15px] text-ink">
+            <span className="font-semibold">{result.ficaStillOwedNotice}</span> Estimates only, not tax advice. Savings assume
+            the {TAX_YEAR} standard deduction and federal brackets and treat MAGI as AGI.{' '}
+            <a href="/methodology/" className="text-link underline underline-offset-[3px]">
+              How we calculate
+            </a>
           </p>
         </aside>
       </div>
@@ -430,84 +322,11 @@ export default function TaxCalculatorApp() {
 // Presentational helpers
 // ---------------------------------------------------------------------------
 
-function ToggleBlock(props: {
-  id: string;
-  title: string;
-  subtitle: string;
-  enabled: boolean;
-  onToggle: (v: boolean) => void;
-  children: ReactNode;
-}) {
-  const { id, title, subtitle, enabled, onToggle, children } = props;
-  return (
-    <div
-      className={`rounded-xl border transition-colors duration-300 ${
-        enabled ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5 shadow-sm' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4 p-4">
-        <div>
-          <p id={`${id}-toggle-label`} className="font-semibold text-slate-900 dark:text-slate-100">
-            {title}
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          aria-labelledby={`${id}-toggle-label`}
-          aria-controls={`${id}-panel`}
-          onClick={() => onToggle(!enabled)}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-            enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
-          }`}
-        >
-          <span
-            className={`inline-block h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-transform duration-200 ${enabled ? 'translate-x-5.5' : 'translate-x-0.5'}`}
-          />
-        </button>
-      </div>
-      {/* Kept mounted so it can animate open; `inert` removes it from focus and the a11y tree when collapsed. */}
-      <div
-        id={`${id}-panel`}
-        inert={!enabled}
-        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
-          enabled ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="border-t border-slate-200 dark:border-slate-800 p-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Checkbox(props: { id: string; checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
-  return (
-    <div className="mt-4 flex items-start gap-3">
-      <input
-        id={props.id}
-        type="checkbox"
-        checked={props.checked}
-        onChange={(e) => props.onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 dark:border-slate-700 accent-emerald-600"
-      />
-      <label htmlFor={props.id} className="text-sm text-slate-700 dark:text-slate-300">
-        {props.children}
-      </label>
-    </div>
-  );
-}
-
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <dt className={strong ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{label}</dt>
-      <dd className={`tabular-nums ${strong ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-        {value}
-      </dd>
+    <div className={`flex items-center justify-between gap-4 py-2 ${strong ? 'border-t-2 border-ink font-bold' : 'border-t border-line'}`}>
+      <dt className={strong ? 'text-ink' : 'text-ink-2'}>{label}</dt>
+      <dd className="text-ink">{value}</dd>
     </div>
   );
 }
@@ -529,24 +348,13 @@ function categoryStatus(category: CategoryResult, enabled: boolean, note?: strin
 function CategoryRow(props: { title: string; category: CategoryResult; enabled: boolean; note?: string | null }) {
   const { title, category, enabled, note } = props;
   const status = categoryStatus(category, enabled, note);
-  const active = category.deductionFinal > 0;
   return (
-    <li className="flex items-start justify-between gap-4 py-2.5 first:pt-0">
-      <div className="flex min-w-0 items-start gap-2.5">
-        <span
-          aria-hidden="true"
-          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-        />
-        <div className="min-w-0">
-          <p className="font-medium text-slate-900 dark:text-slate-100">{title}</p>
-          {status && <p className="text-xs text-slate-500 dark:text-slate-400">{status}</p>}
-        </div>
+    <li className="flex items-start justify-between gap-4 border-b border-line py-2.5">
+      <div className="min-w-0">
+        <p className="text-ink">{title}</p>
+        {status && <p className="text-sm text-ink-2">{status}</p>}
       </div>
-      <span
-        className={`shrink-0 font-semibold tabular-nums ${active ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}
-      >
-        {formatUSD(category.deductionFinal)}
-      </span>
+      <span className={`num shrink-0 font-semibold ${category.deductionFinal > 0 ? 'text-ink' : 'text-ink-2'}`}>{formatUSD(category.deductionFinal)}</span>
     </li>
   );
 }
@@ -564,12 +372,13 @@ interface CheckItem {
   detail: string;
 }
 
-const CHECK_STYLES: Record<CheckStatus, { icon: string; badge: string; sr: string }> = {
-  pass: { icon: '✓', badge: 'bg-emerald-500 text-white', sr: 'Met' },
-  fail: { icon: '✕', badge: 'bg-rose-500 text-white', sr: 'Not met' },
-  warn: { icon: '!', badge: 'bg-amber-400 text-amber-950', sr: 'Partly met' },
-  pending: { icon: '', badge: 'border-2 border-slate-300 dark:border-slate-600', sr: 'To confirm' },
-  na: { icon: '–', badge: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500', sr: 'Not applicable' },
+// Text status tags (docs/DESIGN.md §6) instead of colored icons; the words carry the meaning.
+const CHECK_TAGS: Record<CheckStatus, { text: string; className: string }> = {
+  pass: { text: 'Met', className: 'bg-green-tint text-green' },
+  fail: { text: 'Not met', className: 'bg-page text-error ring-1 ring-inset ring-error' },
+  warn: { text: 'Partly met', className: 'bg-warning-tint text-ink ring-1 ring-inset ring-warning' },
+  pending: { text: 'To confirm', className: 'bg-surface text-ink-2' },
+  na: { text: 'Not needed', className: 'text-muted' },
 };
 
 function QualificationChecklist(props: { items: CheckItem[]; hasSsn: boolean; onSsnChange: (v: boolean) => void }) {
@@ -577,47 +386,32 @@ function QualificationChecklist(props: { items: CheckItem[]; hasSsn: boolean; on
   const met = items.filter((i) => i.status === 'pass').length;
   const applicable = items.filter((i) => i.status !== 'na').length;
   return (
-    <section
-      aria-labelledby="checklist-heading"
-      className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl"
-    >
-      <div className="flex items-baseline justify-between gap-4">
-        <h3 id="checklist-heading" className="font-semibold text-slate-900 dark:text-slate-100">
-          {TAX_YEAR} Filing Qualification Checklist
+    <section aria-labelledby="checklist-heading" className="border-t border-line pt-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 id="checklist-heading" className="text-xl/[1.3] font-bold text-ink">
+          {TAX_YEAR} filing checklist
         </h3>
-        <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
-          {met}/{applicable} met
+        <span className="num text-[15px] text-ink-2">
+          {met} of {applicable} met
         </span>
       </div>
-      <ul className="mt-4 space-y-3">
+      <ul className="mt-3">
         {items.map((item) => {
-          const style = CHECK_STYLES[item.status];
+          const tag = CHECK_TAGS[item.status];
           return (
-            <li key={item.key} className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors duration-200 ${style.badge}`}
-              >
-                {style.icon}
-              </span>
-              <div className="min-w-0 text-sm">
-                <p className="font-medium text-slate-800 dark:text-slate-200">
-                  {item.label}
-                  <span className="sr-only">: {style.sr}.</span>
-                </p>
-                <p className="text-slate-500 dark:text-slate-400">{item.detail}</p>
+            <li key={item.key} className="flex items-start justify-between gap-4 border-b border-line py-3 last:border-b-0">
+              <div className="min-w-0">
+                <p className="font-semibold text-ink">{item.label}</p>
+                <p className="text-[15px] text-ink-2">{item.detail}</p>
                 {item.key === 'ssn' && (
-                  <label className="mt-1.5 inline-flex cursor-pointer items-center gap-2 text-slate-700 dark:text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={hasSsn}
-                      onChange={(e) => onSsnChange(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 accent-emerald-600"
-                    />
-                    I have a valid SSN (we never ask for the number)
-                  </label>
+                  <div className="mt-2">
+                    <Checkbox id="has-ssn" checked={hasSsn} onChange={onSsnChange}>
+                      I have a valid SSN (we never ask for the number)
+                    </Checkbox>
+                  </div>
                 )}
               </div>
+              <span className={`shrink-0 rounded-[2px] px-2 py-0.5 text-sm font-semibold ${tag.className}`}>{tag.text}</span>
             </li>
           );
         })}

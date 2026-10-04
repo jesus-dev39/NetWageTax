@@ -1,0 +1,244 @@
+<!doctype html>
+<!--
+  Static mockup of the proposed home-page header (docs/DESIGN.md §6).
+  Not wired to the site: the figures are the real engine's output for
+  $65,000 salary, single, California, bi-weekly (paycheck calculator, September 29, 2026).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Home header mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1a1f24; --ink-2: #4b5560; --muted: #6b7580;
+    --line: #d5d9de; --field: #5f6b77; --surface: #f3f4f5; --page: #fff;
+    --green: #0d6b47; --green-hover: #0a5639; --green-tint: #e9f3ee;
+    --link: #1c5da8; --focus: #1c5da8;
+    --fed: #3c5a82; --fica: #a56a12; --state: #7a4f93;
+    --r-control: 4px; --r-panel: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 400 17px/1.55 "Public Sans", system-ui, sans-serif; color: var(--ink); background: var(--page); -webkit-font-smoothing: antialiased; }
+  .num { font-variant-numeric: tabular-nums lining-nums; }
+  a { color: var(--link); text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+
+  /* Header */
+  .site-header { border-bottom: 1px solid var(--line); }
+  .site-header .wrap { display: flex; align-items: center; height: 64px; gap: 32px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
+  .brand svg { width: 26px; height: 26px; }
+  .nav { margin-left: auto; display: flex; gap: 28px; font-size: 16px; }
+  .nav a { color: var(--ink); text-decoration: none; }
+  .nav a:hover { text-decoration: underline; }
+  .theme-btn { width: 40px; height: 40px; display: grid; place-items: center; background: none; border: 0; color: var(--ink); margin-left: -16px; }
+  .theme-btn svg { width: 20px; height: 20px; }
+  .menu-btn { display: none; font: inherit; font-weight: 600; font-size: 16px; background: none; border: 0; color: var(--ink); }
+
+  /* Status strip: replaces the "2026 OBBBA tax law active" pill */
+  .strip { background: var(--surface); border-bottom: 1px solid var(--line); font-size: 15px; color: var(--ink-2); }
+  .strip .wrap { padding-top: 10px; padding-bottom: 10px; }
+  .strip strong { color: var(--ink); font-weight: 600; }
+
+  /* Hero */
+  .hero { padding: 48px 0 64px; border-bottom: 1px solid var(--line); }
+  .hero .wrap { display: grid; grid-template-columns: 4fr 8fr; gap: 48px; align-items: start; }
+  h1 { font-size: 44px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+  .lede { margin-top: 16px; font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 30em; }
+  .facts { margin-top: 32px; border-top: 1px solid var(--line); font-size: 16px; }
+  .facts div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .facts dt { color: var(--ink-2); }
+  .facts dd { font-weight: 600; text-align: right; }
+  .note { margin-top: 16px; font-size: 15px; color: var(--ink-2); }
+
+  /* Mini calculator */
+  .calc { border: 1px solid var(--line); border-radius: var(--r-panel); display: grid; grid-template-columns: 5fr 6fr; }
+  .select { white-space: nowrap; gap: 12px; }
+  .nowrap { white-space: nowrap; }
+  .calc form { padding: 24px; display: grid; gap: 20px; align-content: start; }
+  .calc h2 { font-size: 20px; line-height: 1.3; font-weight: 700; }
+  fieldset { border: 0; padding: 0; }
+  legend, label { display: block; font-weight: 600; font-size: 16px; margin-bottom: 6px; }
+  .radios { display: flex; gap: 20px; }
+  .radio { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; }
+  .radio span.dot { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; display: grid; place-items: center; }
+  .radio span.dot.on::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+  .input { display: flex; height: 44px; border: 2px solid var(--field); border-radius: var(--r-control); background: #fff; }
+  .input .prefix { display: grid; place-items: center; padding: 0 12px; background: var(--surface); border-right: 1px solid var(--line); color: var(--ink-2); font-weight: 600; }
+  .input .val { display: flex; align-items: center; padding: 0 12px; flex: 1; font-size: 18px; }
+  .select { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 12px; border: 2px solid var(--field); border-radius: var(--r-control); background: #fff; }
+  .select::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg) translateY(-3px); }
+  .row2 { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; }
+
+  .result { background: var(--green-tint); border-left: 1px solid var(--line); padding: 24px; border-radius: 0 var(--r-panel) var(--r-panel) 0; display: flex; flex-direction: column; }
+  .result .label { font-size: 16px; font-weight: 600; }
+  .result .big { font-size: 48px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; color: var(--ink); }
+  .result .sub { color: var(--ink-2); font-size: 16px; margin-top: 4px; }
+  .bar { display: flex; height: 10px; margin-top: 20px; gap: 2px; }
+  .bar i { display: block; height: 100%; }
+  .lines { margin-top: 12px; font-size: 16px; }
+  .lines div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgb(26 31 36 / 0.12); }
+  .lines div:last-child { border-bottom: 0; font-weight: 700; }
+  .lines .sw { width: 10px; height: 10px; }
+  .lines dd { text-align: right; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: var(--r-control); font-weight: 600; font-size: 17px; text-decoration: none; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green-hover); }
+  .result .btn { margin-top: 20px; align-self: flex-start; }
+  .assume { font-size: 14px; color: var(--ink-2); margin-top: 12px; }
+
+  /* Below the hero: plain list instead of a card grid */
+  .tools { padding: 48px 0 64px; }
+  .tools h2 { font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+  .tools ul { list-style: none; padding: 0; margin-top: 16px; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 32px; }
+  .tools li { padding: 20px 0; border-bottom: 1px solid var(--line); }
+  .tools li a { font-size: 19px; font-weight: 600; }
+  .tools li p { margin-top: 4px; color: var(--ink-2); font-size: 16px; }
+
+  @media (max-width: 900px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 16px; }
+    .nav { display: none; }
+    .theme-btn { margin-left: auto; }
+    .menu-btn { display: block; }
+    .hero { padding: 24px 0 40px; }
+    .hero .wrap { grid-template-columns: 1fr; gap: 24px; }
+    h1 { font-size: 32px; line-height: 1.15; }
+    .lede { font-size: 18px; margin-top: 12px; }
+    .facts, .hero .note { display: none; }
+    .calc { grid-template-columns: 1fr; }
+    .calc form { padding: 16px; gap: 16px; }
+    .result { border-left: 0; border-top: 1px solid var(--line); border-radius: 0 0 var(--r-panel) var(--r-panel); padding: 16px; }
+    .result .big { font-size: 40px; }
+    .result .btn { align-self: stretch; }
+    .tools ul { grid-template-columns: 1fr; }
+    .mobile-facts { display: block !important; }
+  }
+  .mobile-facts { display: none; margin-top: 16px; font-size: 15px; color: var(--ink-2); }
+  .states { padding: 0 0 64px; }
+  .states h2 { font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+  .states .intro { margin-top: 8px; color: var(--ink-2); }
+  .states .cols { margin-top: 24px; display: grid; grid-template-columns: 9fr 16fr 26fr; gap: 32px; border-top: 1px solid var(--line); padding-top: 20px; }
+  .states h3 { font-size: 17px; font-weight: 700; }
+  .states .count { font-weight: 400; color: var(--ink-2); }
+  .states ul { list-style: none; padding: 0; margin-top: 8px; font-size: 16px; line-height: 2; }
+  .states .cols > div:nth-child(2) ul { columns: 2; column-gap: 24px; }
+  .states .cols > div:nth-child(3) ul { columns: 3; column-gap: 24px; }
+  @media (max-width: 900px) {
+    .states .cols { grid-template-columns: 1fr; gap: 24px; }
+    .states .cols > div ul, .states .cols > div:nth-child(n) ul { columns: 2; }
+  }
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 28V10.5L10.5 6v17.5z" fill="#0d6b47"/><path d="M4 10.5 10.5 6 28 23.5 21.5 28z" fill="#0a5639"/><path d="M21.5 28V8.5L28 3v20.5z" fill="#0d6b47"/></svg>
+        NetWageTax
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#">Paycheck</a><a href="#">Tips &amp; overtime</a><a href="#">State taxes</a><a href="#">W-2 codes</a><a href="#">About</a>
+      </nav>
+      <button class="theme-btn" type="button" aria-label="Dark theme"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" stroke-linejoin="round"/></svg></button>
+      <button class="menu-btn" type="button">Menu</button>
+    </div>
+  </header>
+
+  <div class="strip">
+    <div class="wrap"><strong>Tax year 2026.</strong> Federal, FICA, and state rules last checked September 27, 2026. <a href="#">How we calculate</a></div>
+  </div>
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Figure out your <span class="nowrap">take-home</span> pay</h1>
+        <p class="lede">Enter your pay to see what is left after federal income tax, Social Security, Medicare, and state tax.</p>
+        <dl class="facts">
+          <div><dt>Federal brackets</dt><dd>2026, 10% to 37%</dd></div>
+          <div><dt>Standard deduction (single)</dt><dd class="num">$16,100</dd></div>
+          <div><dt>Social Security wage base</dt><dd class="num">$184,500</dd></div>
+          <div><dt>States covered</dt><dd>50 and DC</dd></div>
+        </dl>
+        <p class="note">Your figures stay on this device. Nothing is sent or stored.</p>
+      </div>
+
+      <div class="calc">
+        <form aria-labelledby="mini-h">
+          <h2 id="mini-h">Paycheck estimate</h2>
+          <fieldset>
+            <legend>How are you paid?</legend>
+            <div class="radios">
+              <label class="radio"><span class="dot on"></span>Salary</label>
+              <label class="radio"><span class="dot"></span>Hourly</label>
+            </div>
+          </fieldset>
+          <div>
+            <label>Annual salary</label>
+            <div class="input"><span class="prefix">$</span><span class="val num">65,000</span></div>
+          </div>
+          <div class="row2">
+            <div><label>Paid</label><div class="select">Every 2 weeks</div></div>
+            <div><label>Filing as</label><div class="select">Single</div></div>
+          </div>
+          <div><label>State</label><div class="select">California</div></div>
+        </form>
+
+        <div class="result" aria-live="polite">
+          <p class="label">Take-home per paycheck</p>
+          <p class="big num">$2,017.33</p>
+          <p class="sub num">$52,451 a year, 26 paychecks</p>
+          <div class="bar" aria-hidden="true">
+            <i style="width:80.7%;background:var(--green)"></i><i style="width:8.6%;background:var(--fed)"></i><i style="width:7.6%;background:var(--fica)"></i><i style="width:3.0%;background:var(--state)"></i>
+          </div>
+          <dl class="lines num">
+            <div><span class="sw" style="background:var(--fed)"></span><dt>Federal income tax</dt><dd>−$216.15</dd></div>
+            <div><span class="sw" style="background:var(--fica)"></span><dt>Social Security &amp; Medicare</dt><dd>−$191.25</dd></div>
+            <div><span class="sw" style="background:var(--state)"></span><dt>California income tax</dt><dd>−$75.27</dd></div>
+            <div><span class="sw" style="background:var(--green)"></span><dt>Take-home</dt><dd>$2,017.33</dd></div>
+          </dl>
+          <a class="btn btn-primary" href="#">See the full breakdown</a>
+          <p class="assume">Assumes the standard deduction and no 401(k) or health insurance deductions.</p>
+        </div>
+      </div>
+      <p class="mobile-facts">2026 federal brackets, FICA, and all 50 states and DC. Your figures stay on this device.</p>
+    </div>
+  </section>
+
+  <section class="tools">
+    <div class="wrap">
+      <h2>Other tools</h2>
+      <ul>
+        <li><a href="#">Tips and overtime deduction</a><p>Estimate your Schedule 1-A deduction for 2026 and what it saves in federal tax.</p></li>
+        <li><a href="#">Income tax by state</a><p>Rates, brackets, and a worked example for every state and DC.</p></li>
+        <li><a href="#">W-2 Box 12 codes</a><p>What each code means, including the new TA, TP, and TT.</p></li>
+      </ul>
+    </div>
+  </section>
+<section class="states">
+    <div class="wrap">
+      <h2>2026 income tax by state</h2>
+      <p class="intro">Many states don't follow the federal tips and overtime deduction. <a href="#">Open the state tax map</a></p>
+      <div class="cols">
+        <div>
+          <h3>No income tax <span class="count num">(9)</span></h3>
+          <ul><li><a href="#">Alaska</a></li><li><a href="#">Florida</a></li><li><a href="#">Nevada</a></li><li><a href="#">New Hampshire</a></li><li><a href="#">South Dakota</a></li><li><a href="#">Tennessee</a></li><li><a href="#">Texas</a></li><li><a href="#">Washington</a></li><li><a href="#">Wyoming</a></li></ul>
+        </div>
+        <div>
+          <h3>Flat rate <span class="count num">(16)</span></h3>
+          <ul><li><a href="#">Arizona</a></li><li><a href="#">Colorado</a></li><li><a href="#">Georgia</a></li><li><a href="#">Idaho</a></li><li><a href="#">Illinois</a></li><li><a href="#">Indiana</a></li><li><a href="#">Iowa</a></li><li><a href="#">Kentucky</a></li><li><a href="#">Louisiana</a></li><li><a href="#">Massachusetts</a></li><li><a href="#">Michigan</a></li><li><a href="#">Mississippi</a></li><li><a href="#">North Carolina</a></li><li><a href="#">Ohio</a></li><li><a href="#">Pennsylvania</a></li><li><a href="#">Utah</a></li></ul>
+        </div>
+        <div>
+          <h3>Progressive brackets <span class="count num">(26)</span></h3>
+          <ul><li><a href="#">Alabama</a></li><li><a href="#">Arkansas</a></li><li><a href="#">California</a></li><li><a href="#">Connecticut</a></li><li><a href="#">Delaware</a></li><li><a href="#">District of Columbia</a></li><li><a href="#">Hawaii</a></li><li><a href="#">Kansas</a></li><li><a href="#">Maine</a></li><li><a href="#">Maryland</a></li><li><a href="#">Minnesota</a></li><li><a href="#">Missouri</a></li><li><a href="#">Montana</a></li><li><a href="#">Nebraska</a></li><li><a href="#">New Jersey</a></li><li><a href="#">New Mexico</a></li><li><a href="#">New York</a></li><li><a href="#">North Dakota</a></li><li><a href="#">Oklahoma</a></li><li><a href="#">Oregon</a></li><li><a href="#">Rhode Island</a></li><li><a href="#">South Carolina</a></li><li><a href="#">Vermont</a></li><li><a href="#">Virginia</a></li><li><a href="#">West Virginia</a></li><li><a href="#">Wisconsin</a></li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

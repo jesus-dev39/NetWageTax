@@ -51,9 +51,9 @@ describe('lookup and labels', () => {
   });
 
   it('formats rate labels', () => {
-    expect(formatStateRate(STATES_BY_CODE.FL)).toBe('0% State Tax');
-    expect(formatStateRate(STATES_BY_CODE.NC)).toBe('3.99% Flat Tax');
-    expect(formatStateRate(STATES_BY_CODE.CA)).toBe('1%–13.3% Progressive');
+    expect(formatStateRate(STATES_BY_CODE.FL)).toBe('No state income tax');
+    expect(formatStateRate(STATES_BY_CODE.NC)).toBe('3.99% flat tax');
+    expect(formatStateRate(STATES_BY_CODE.CA)).toBe('1%–13.3% progressive');
   });
 });
 
@@ -96,8 +96,8 @@ describe('state page data', () => {
 describe('bracket schedules', () => {
   const withBrackets = STATES.filter((s) => s.brackets);
 
-  it('includes the verified CA and NY schedules', () => {
-    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY']);
+  it('includes the verified CA, NY, SC, VT, and WV schedules', () => {
+    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY', 'SC', 'VT', 'WV']);
   });
 
   it('has a year and an official https source for every schedule', () => {
@@ -123,5 +123,104 @@ describe('bracket schedules', () => {
   it('does not change the $65,000 estimate', () => {
     expect(calculateStateIncomeTax(65_000, 'CA')).toBeCloseTo((65_000 - 5_700) * 0.033);
     expect(calculateStateIncomeTax(65_000, 'NY')).toBeCloseTo((65_000 - 8_000) * 0.051);
+  });
+});
+
+describe('Georgia (HB 463, 2026)', () => {
+  const ga = STATES_BY_CODE.GA;
+
+  it('uses the 4.99% rate and the 2026 $12,000 single standard deduction', () => {
+    expect(ga.estimateRate).toBe(0.0499);
+    expect(ga.exemptAmount).toBe(12_000);
+    expect(calculateStateIncomeTax(65_000, 'GA')).toBeCloseTo((65_000 - 12_000) * 0.0499);
+    expect(formatStateRate(ga)).toBe('4.99% flat tax');
+  });
+
+  it('does not follow the federal tips and overtime deduction and cites its source', () => {
+    expect(ga.followsFederalTipsOvertime).toBe(false);
+    expect(ga.tipsOvertimeNote).toContain('$1,750 of overtime and $1,750 of cash tips');
+    expect(ga.rateSource?.url).toMatch(/^https:\/\/gov\.georgia\.gov\//);
+  });
+});
+
+describe('Flat-tax states reviewed October 2026', () => {
+  it('uses the verified 2026 exempt amounts', () => {
+    expect(STATES_BY_CODE.IL.exemptAmount).toBe(2_925);
+    expect(STATES_BY_CODE.KY.exemptAmount).toBe(3_360);
+    expect(STATES_BY_CODE.LA.exemptAmount).toBe(12_875);
+    expect(STATES_BY_CODE.MI.exemptAmount).toBe(5_900);
+  });
+
+  it('adds the $2,150 Ohio personal exemption to the $26,050 0% band', () => {
+    expect(STATES_BY_CODE.OH.exemptAmount).toBe(26_050 + 2_150);
+    expect(calculateStateIncomeTax(65_000, 'OH')).toBeCloseTo((65_000 - 28_200) * 0.0275);
+  });
+
+  it('uses the 4.45% Utah rate from SB 60 (2026) and cites the code', () => {
+    expect(STATES_BY_CODE.UT.estimateRate).toBe(0.0445);
+    expect(formatStateRate(STATES_BY_CODE.UT)).toBe('4.45% flat tax');
+    expect(STATES_BY_CODE.UT.rateSource?.url).toMatch(/^https:\/\/le\.utah\.gov\//);
+  });
+
+  it('notes Michigan’s own 2026–2028 tips and overtime deductions', () => {
+    expect(STATES_BY_CODE.MI.followsFederalTipsOvertime).toBe(true);
+    expect(STATES_BY_CODE.MI.tipsOvertimeNote).toContain('2026 through 2028');
+  });
+});
+
+describe('local income tax labels', () => {
+  it('says None without a local tax note and gives every state with one a label', () => {
+    for (const s of STATES) {
+      if (!s.localTaxNote) expect(s.localTaxLabel).toBe('None');
+      else expect(s.localTaxLabel).not.toBe('None');
+    }
+    expect(STATES.filter((s) => s.localTaxNote)).toHaveLength(15);
+  });
+
+  it('uses "Some cities" where only cities tax wages', () => {
+    expect(STATES_BY_CODE.MI.localTaxLabel).toBe('Some cities');
+    expect(STATES_BY_CODE.KY.localTaxLabel).toBe('Some cities and counties');
+  });
+});
+
+describe('progressive states reviewed October 2026', () => {
+  const taxFromBrackets = (income: number, brackets: { over: number; rate: number }[]) =>
+    brackets.reduce((t, b, i) => {
+      const top = brackets[i + 1]?.over ?? Infinity;
+      return income > b.over ? t + (Math.min(income, top) - b.over) * b.rate : t;
+    }, 0);
+
+  it('matches the SC and WV 2026 schedules and the VT 2025 schedule at $65,000 within $5', () => {
+    for (const code of ['SC', 'WV', 'VT'] as const) {
+      const s = STATES_BY_CODE[code];
+      const exact = taxFromBrackets(65_000 - s.exemptAmount, s.brackets!);
+      expect(Math.abs(calculateStateIncomeTax(65_000, code) - exact)).toBeLessThan(5);
+    }
+  });
+
+  it('uses the 2026 exempt amounts and the Arkansas 3.7% top rate', () => {
+    expect(STATES_BY_CODE.AR.exemptAmount).toBe(2_470);
+    expect(STATES_BY_CODE.AR.bracketRange![1]).toBe(0.037);
+    expect(STATES_BY_CODE.NE.exemptAmount).toBe(8_850);
+    expect(STATES_BY_CODE.OR.exemptAmount).toBe(2_910);
+    expect(STATES_BY_CODE.RI.exemptAmount).toBe(16_450);
+    expect(STATES_BY_CODE.VT.exemptAmount).toBe(7_650 + 5_400);
+    expect(STATES_BY_CODE.VA.exemptAmount).toBe(9_680);
+    expect(STATES_BY_CODE.ME.exemptAmount).toBe(15_700 + 5_300);
+    expect(STATES_BY_CODE.HI.exemptAmount).toBe(8_000 + 1_144);
+    expect(STATES_BY_CODE.WI.exemptAmount).toBe(13_960 - Math.round(0.12 * (65_000 - 20_120)) + 700);
+  });
+
+  it('calibrates Oregon with the federal tax subtraction and the $256 credit', () => {
+    const federalTax = 12_400 * 0.1 + (65_000 - 16_100 - 12_400) * 0.12;
+    const taxable = 65_000 - 2_910 - federalTax;
+    const exact = 4_550 * 0.0475 + 6_850 * 0.0675 + (taxable - 11_400) * 0.0875 - 256;
+    expect(Math.abs(calculateStateIncomeTax(65_000, 'OR') - exact)).toBeLessThan(5);
+  });
+
+  it('marks Arizona as following the federal tips and overtime deduction (HB 4168)', () => {
+    expect(STATES_BY_CODE.AZ.followsFederalTipsOvertime).toBe(true);
+    expect(STATES_BY_CODE.AZ.tipsOvertimeNote).toContain('HB 4168');
+    expect(STATES_BY_CODE.AZ.exemptAmount).toBe(16_100);
   });
 });

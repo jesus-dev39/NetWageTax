@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import { CONTACT_EMAIL, CONTACT_RESPONSE_TIME } from '../lib/site';
 
 const reasons = [
@@ -22,18 +23,16 @@ const reasons = [
   title="Contact Us"
   description={`Contact NetWageTax at ${CONTACT_EMAIL} to report a data error, suggest a calculator, or make a privacy request. We usually reply ${CONTACT_RESPONSE_TIME}.`}
 >
-  <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Contact NetWageTax</h1>
-      <p class="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-        The best way to reach us is by email at{' '}
-        <a href={`mailto:${CONTACT_EMAIL}`} class="font-medium text-navy-700 underline underline-offset-2 dark:text-navy-300">{CONTACT_EMAIL}</a>.
-        We usually reply {CONTACT_RESPONSE_TIME}.
-      </p>
-    </div>
-  </div>
+  <PageHeader title="Contact NetWageTax">
+    <p class="mt-4 text-lg/[1.5] text-ink-2 md:text-xl/[1.5]">
+      The best way to reach us is by email at{' '}
+      <a href={`mailto:${CONTACT_EMAIL}`} class="text-link underline underline-offset-[3px] hover:decoration-2">{CONTACT_EMAIL}</a>.
+      We usually reply {CONTACT_RESPONSE_TIME}.
+    </p>
+  </PageHeader>
 
-  <article class="prose-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
+  <div class="container-page py-10">
+  <article class="prose-page max-w-3xl">
     <h2 id="what-to-write-about">What you can write to us about</h2>
     <ul>
       {
@@ -56,4 +55,5 @@ const reasons = [
       our <a href="/disclaimer/">Financial &amp; Tax Disclaimer</a>.
     </p>
   </article>
+  </div>
 </BaseLayout>

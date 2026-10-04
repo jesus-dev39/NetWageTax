@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AdSlot from '../../components/AdSlot';
+import FaqList from '../../components/FaqList.astro';
+import PageHeader from '../../components/PageHeader.astro';
 import PaycheckCalculatorApp from '../../components/PaycheckCalculatorApp';
 
 const title = '2026 Hourly & Salary Paycheck Calculator: Take-Home Pay After Taxes';
@@ -24,10 +26,10 @@ const faqs = [
     ],
   },
   {
-    question: 'What is the difference between bi-weekly and semi-monthly pay?',
+    question: 'What is the difference between biweekly and semimonthly pay?',
     answer: [
-      'Bi-weekly pay comes every other week, for 26 paychecks a year. Semi-monthly pay comes twice a month, usually on the 15th and last day, for 24 paychecks a year.',
-      'Your annual pay is the same either way, but each bi-weekly paycheck is smaller, and two months of the year include a third paycheck.',
+      'Biweekly pay comes every other week, for 26 paychecks a year. Semimonthly pay comes twice a month, usually on the 15th and last day, for 24 paychecks a year.',
+      'Your annual pay is the same either way, but each biweekly paycheck is smaller, and two months of the year include a third paycheck.',
     ],
   },
   {
@@ -61,8 +63,7 @@ const jsonLd = {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://netwagetax.com/#calculators' },
-        { '@type': 'ListItem', position: 3, name: 'Paycheck Calculator', item: 'https://netwagetax.com/tools/paycheck-calculator/' },
+        { '@type': 'ListItem', position: 2, name: 'Paycheck calculator', item: 'https://netwagetax.com/tools/paycheck-calculator/' },
       ],
     },
   ],
@@ -72,35 +73,15 @@ const jsonLd = {
 <BaseLayout title={title} description={description} ogType="article">
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-  <div class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-      <nav aria-label="Breadcrumb" class="text-sm text-slate-500 dark:text-slate-400">
-        <ol class="flex items-center gap-2">
-          <li><a href="/" class="hover:text-navy-700 dark:hover:text-navy-300">Home</a></li>
-          <li aria-hidden="true">/</li>
-          <li><a href="/#calculators" class="hover:text-navy-700 dark:hover:text-navy-300">Tools</a></li>
-          <li aria-hidden="true">/</li>
-          <li aria-current="page" class="text-slate-700 dark:text-slate-300">Paycheck Calculator</li>
-        </ol>
-      </nav>
-      <h1 class="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
-        2026 Hourly &amp; Salary Paycheck Calculator
-      </h1>
-      <p class="mt-4 max-w-3xl text-lg text-slate-600 dark:text-slate-400">
-        See what actually lands in your bank account each payday, after federal income tax, Social Security, Medicare,
-        and state tax, for hourly or salaried pay.
-      </p>
-      <ul class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
-        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> 2026 federal brackets &amp; FICA wage base</li>
-        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> Overtime at 1.5× included</li>
-        <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span> All 50 states + DC</li>
-      </ul>
-    </div>
-  </div>
+  <PageHeader
+    title="2026 paycheck calculator for hourly and salaried pay"
+    lead="See what lands in your bank account each payday after federal income tax, Social Security, Medicare, and state tax."
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Paycheck calculator' }]}
+  />
 
-  <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
+  <div class="container-page flex flex-col gap-10 py-10">
     <!--
-      Ad placement: below the page title. Add slotId="…" from the AdSense dashboard to go live.
+      Ad placement: below the page title, above the form. Add slotId="…" from the AdSense dashboard to go live.
       md+ only: on phones the reserved 100px pushed the first input below a 700px screen. While hidden,
       client:visible never hydrates it, so no ad request is made.
     -->
@@ -110,31 +91,21 @@ const jsonLd = {
     <PaycheckCalculatorApp client:load />
   </div>
 
-  <section aria-labelledby="faq-heading" class="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <h2 id="faq-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Frequently asked questions</h2>
-      <div class="mt-6 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-        {
-          faqs.map(({ question, answer }, i) => (
-            <details class="group py-5" open={i === 0}>
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-slate-900 dark:text-slate-100 [&::-webkit-details-marker]:hidden">
-                <h3 class="text-lg">{question}</h3>
-                <span class="shrink-0 text-xl text-slate-400 transition group-open:rotate-45" aria-hidden="true">+</span>
-              </summary>
-              <div class="mt-3 space-y-3 leading-relaxed text-slate-600 dark:text-slate-400">
-                {answer.map((p) => <p>{p}</p>)}
-              </div>
-            </details>
-          ))
-        }
+  <section aria-labelledby="faq-heading" class="border-t border-line">
+    <div class="container-page py-12">
+      <div class="max-w-3xl">
+        <h2 id="faq-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Frequently asked questions</h2>
+        <div class="mt-5">
+          <FaqList faqs={faqs} />
+        </div>
+        <!-- Ad placement: after the FAQ list, before the disclaimer; well away from the export/download buttons. -->
+        <AdSlot client:visible format="leaderboard" placement="paycheck-bottom" className="mt-10" />
+        <p class="mt-8 text-[15px] text-ink-2">
+          This calculator provides educational estimates, not tax or payroll advice. For your exact withholding, see IRS
+          Publication 15-T and your employer’s payroll department. Have tips or overtime?{' '}
+          <a href="/tools/obbba-tax-calculator/" class="text-link underline underline-offset-[3px]">Estimate your 2026 tips and overtime deduction</a>.
+        </p>
       </div>
-      <!-- Ad placement: after the FAQ list, before the disclaimer; well away from the export/download buttons. -->
-      <AdSlot client:visible format="leaderboard" placement="paycheck-bottom" className="mt-10" />
-      <p class="mt-8 text-sm text-slate-500 dark:text-slate-400">
-        This calculator provides educational estimates, not tax or payroll advice. For your exact withholding, see IRS
-        Publication 15-T and your employer’s payroll department. Have tips or overtime?{' '}
-        <a href="/tools/obbba-tax-calculator/" class="font-medium text-emerald-700 underline underline-offset-2 dark:text-emerald-400">Estimate your 2026 tips &amp; overtime deduction</a>.
-      </p>
     </div>
   </section>
 </BaseLayout>

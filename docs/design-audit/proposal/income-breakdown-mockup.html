@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+  Approved and implemented (IncomeBreakdownBar): "Where your income goes" for the tips and overtime calculator.
+  Figures are the engine's output for a single filer, $52,000 MAGI, $8,000 qualified tips, Georgia at 4.99%
+  (HB 463, 2026).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Income breakdown proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&display=block" rel="stylesheet" />
+<style>
+  :root { --ink:#1a1f24; --ink-2:#4b5560; --line:#d5d9de; --surface:#f3f4f5; --page:#fff; --green:#0d6b47; --green-tint:#e9f3ee; --link:#1c5da8;
+          --net:#0d6b47; --fed:#3c5a82; --fica:#a56a12; --state:#7a4f93; }
+  .dark { --ink:#eceef0; --ink-2:#a9b1ba; --line:#343a41; --surface:#1a1e22; --page:#111417; --green:#4cc38a; --green-tint:#15271f; --link:#7eb3ef;
+          --net:#4cc38a; --fed:#8fa9cc; --fica:#e0a64a; --state:#b996d0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 400 16px/1.55 "Public Sans", system-ui, sans-serif; color: var(--ink); background: var(--page); padding: 24px 16px; }
+  .num { font-variant-numeric: tabular-nums lining-nums; }
+  .wrap { max-width: 440px; margin: 0 auto; }
+  h3 { font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; gap: 12px; }
+  h3 span { font-weight: 400; color: var(--ink-2); font-size: 15px; }
+  .bar { display: flex; gap: 2px; height: 10px; margin-top: 12px; }
+  .bar i { display: block; height: 100%; }
+  dl { margin-top: 12px; }
+  .row { display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: start; }
+  .row .sw { width: 10px; height: 10px; margin-top: 7px; }
+  .row dt { color: var(--ink); }
+  .row dt small { display: block; font-size: 14px; color: var(--ink-2); }
+  .row dd { text-align: right; font-weight: 600; }
+  .row dd small { display: block; font-size: 14px; font-weight: 400; color: var(--ink-2); }
+  .row.total { border-top: 2px solid var(--ink); border-bottom: 0; font-weight: 700; }
+  .row.total dt { font-weight: 700; }
+  .saved { margin-top: 12px; background: var(--green-tint); border-left: 4px solid var(--green); padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; }
+  .saved strong { font-weight: 700; }
+  .note { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+  <section class="wrap">
+    <h3>Where your income goes <span class="num">of $52,000</span></h3>
+    <div class="bar" aria-hidden="true">
+      <i style="width:82.5%;background:var(--net)"></i><i style="width:6.0%;background:var(--fed)"></i><i style="width:7.6%;background:var(--fica)"></i><i style="width:3.8%;background:var(--state)"></i>
+    </div>
+    <dl class="num">
+      <div class="row"><span class="sw" style="background:var(--fed)"></span><dt>Federal income tax<small>After your $8,000 tips and overtime deduction</small></dt><dd>$3,100<small>6.0%</small></dd></div>
+      <div class="row"><span class="sw" style="background:var(--fica)"></span><dt>Social Security &amp; Medicare<small>Still owed on tips and overtime</small></dt><dd>$3,978<small>7.6%</small></dd></div>
+      <div class="row"><span class="sw" style="background:var(--state)"></span><dt>Georgia income tax (est.)<small>Georgia, 4.99% flat tax. Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028. Our estimate doesn’t apply that exclusion: it taxes your full income.</small></dt><dd>$1,996<small>3.8%</small></dd></div>
+      <div class="row total"><span class="sw" style="background:var(--net)"></span><dt>Take-home</dt><dd>$42,926<small>82.5%</small></dd></div>
+    </dl>
+    <p class="saved num"><span>The deduction lowers your federal income tax from $4,060 to $3,100.</span><strong>$960 saved</strong></p>
+    <p class="note">Assumes all MAGI is wages. Social Security applies only to the first $184,500 of 2026 wages; the 0.9% Additional Medicare Tax is not included. State tax is a single-filer estimate and excludes local income taxes.</p>
+  </section>
+</body>
+</html>

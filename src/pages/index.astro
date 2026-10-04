@@ -1,108 +1,40 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HomePaycheckEstimate from '../components/HomePaycheckEstimate';
 import { formatUSD } from '../components/CurrencyInput';
-import { estimateEmployeeFica } from '../lib/fica';
-import { computeFederalIncomeTax, STANDARD_DEDUCTION_2026 } from '../lib/marginal-rate';
-import { calculateObbbaDeduction } from '../lib/obbba-calculator';
-import { estimateStateTax, statePagePath, STATES, STRUCTURE_LABELS, type TaxStructure } from '../lib/state-tax-data';
+import { SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
+import { STANDARD_DEDUCTION_2026, TAX_BRACKETS_2026 } from '../lib/marginal-rate';
+import { SITE_TAX_YEAR } from '../lib/site';
+import { statePagePath, STATES, type TaxStructure } from '../lib/state-tax-data';
 
-// Hero preview: a real example computed at build time with the same engine the calculator uses.
-const EXAMPLE = { magi: 52_000, tips: 8_000, state: 'GA' as const };
-const exResult = calculateObbbaDeduction({
-  filingStatus: 'single',
-  magi: EXAMPLE.magi,
-  taxYear: 2026,
-  hasQualifyingTips: true,
-  tipsAmount: EXAMPLE.tips,
-  tipsOccupationConfirmed: true,
-  hasQualifyingOvertime: false,
-});
-const exTaxable = Math.max(0, EXAMPLE.magi - STANDARD_DEDUCTION_2026.single);
-const exFedBefore = computeFederalIncomeTax(exTaxable, 'single');
-const exFedAfter = computeFederalIncomeTax(Math.max(0, exTaxable - exResult.totalCombinedDeduction), 'single');
-const exSavings = exFedBefore - exFedAfter;
-const exFica = estimateEmployeeFica(EXAMPLE.magi).total;
-const exState = estimateStateTax(EXAMPLE.magi, EXAMPLE.state).tax;
-const exTakeHome = EXAMPLE.magi - exFedAfter - exFica - exState;
-const exSegments = [
-  { label: 'Net pay', value: exTakeHome, swatch: 'bg-emerald-400' },
-  { label: 'Federal', value: exFedAfter, swatch: 'bg-slate-500' },
-  { label: 'FICA', value: exFica, swatch: 'bg-amber-400' },
-  { label: 'State', value: exState, swatch: 'bg-violet-400' },
-].map((s) => ({ ...s, pct: (s.value / EXAMPLE.magi) * 100 }));
-
-const trustRow = ['Built on IRC §224/§225 rules', 'Paycheck & tips calculators', 'All 50 States + DC', 'Instant PDF & Word export'];
-
-const metrics = [
-  { value: '50', label: 'US states + DC covered' },
-  { value: '100%', label: 'Client-side calculations: your inputs never leave the browser' },
-  { value: '2026', label: 'IRS & OBBBA statutory rules' },
-  { value: '$0', label: 'Free, no registration required' },
+// The parameters the estimate uses, read from the same constants as the engine.
+const rates = TAX_BRACKETS_2026.single.map((b) => b.rate * 100);
+const facts = [
+  { label: 'Federal brackets', value: `${SITE_TAX_YEAR}, ${Math.min(...rates)}% to ${Math.max(...rates)}%` },
+  { label: 'Standard deduction (single)', value: formatUSD(STANDARD_DEDUCTION_2026.single) },
+  { label: 'Social Security wage base', value: formatUSD(SOCIAL_SECURITY_WAGE_BASE_2026) },
+  { label: 'States covered', value: `${STATES.length - 1} and DC` },
 ];
 
-const calculators = [
-  {
-    href: '/tools/paycheck-calculator/',
-    tag: 'Flagship',
-    title: 'Hourly & Salary Paycheck Calculator',
-    body: 'Turn an hourly rate or salary into take-home pay per paycheck.',
-    features: ['Federal income tax, Social Security & Medicare', 'State income tax for all 50 states + DC', 'Overtime at 1.5×, any pay frequency'],
-    cta: 'Calculate take-home pay',
-    badge: 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30',
-    icon: 'M3.5 7.5h17v10h-17z M3.5 10.5h17 M7 14.5h3 M16.5 5v2.5 M7.5 5v2.5',
-  },
+const tools = [
   {
     href: '/tools/obbba-tax-calculator/',
-    tag: 'New for 2026',
-    title: '2026 OBBBA Tips & Overtime Calculator',
-    body: 'Estimate your Schedule 1-A deduction and the cash it saves you in federal tax.',
-    features: ['Up to $25,000 tips and $12,500 overtime ($25,000 joint)', 'MAGI phase-out applied step by step', 'One-page PDF & Word worksheet'],
-    cta: 'Estimate my deduction',
-    badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30',
-    icon: 'M6 3.5h12a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5A1.5 1.5 0 0 1 6 3.5Z M8 7.5h8 M8 11.5h.01 M12 11.5h.01 M16 11.5h.01 M8 15.5h.01 M12 15.5h.01 M16 15.5h.01',
-  },
-];
-
-const resources = [
-  {
-    href: '/state-taxes/',
-    eyebrow: 'All 50 states + DC',
-    title: '50-State Income Tax Directory & Map',
-    body: 'Which states tax wages, which use a flat rate, and which use progressive brackets, with local tax notes.',
-    badge: 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/30',
-    accent: 'text-sky-700 dark:text-sky-400',
-    icon: 'M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2-6-2Z M9 4.5v13 M15 6.5v13',
+    title: 'Tips and overtime deduction',
+    body: `Estimate your ${SITE_TAX_YEAR} Schedule 1-A deduction and what it saves in federal tax.`,
   },
   {
     href: '/guides/w2-box-12-guide/',
-    eyebrow: 'Reference guide',
-    title: 'Form W-2 Box 12 Code Reference Guide',
-    body: 'Every Box 12 code explained, from the new TA, TP, and TT to D, DD, and W, and which ones change your return.',
-    badge: 'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/30',
-    accent: 'text-violet-700 dark:text-violet-400',
-    icon: 'M7 3.5h7l4.5 4.5v11A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5Z M14 3.5V8h4.5 M8.5 12.5h7 M8.5 16h4.5',
+    title: 'W-2 Box 12 codes',
+    body: 'What each code means, including the new TA, TP, and TT.',
   },
 ];
 
-const trust = [
-  {
-    title: 'Private by design',
-    body: 'Every calculation runs in your browser. We never ask for your name, email, or Social Security number, and nothing you type is sent to a server.',
-    icon: 'M10 2.5 16 5v4.5c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V5l6-2.5Z M7.5 10l1.75 1.75L12.75 8',
-  },
-  {
-    title: 'Built on current 2026 IRS rules',
-    body: 'Caps, thresholds, and phase-outs come from the statute and IRS guidance, and every result shows the math. We update the tools when the rules change.',
-    icon: 'M4 3.5h8.5L16 7v9.5H4z M12.5 3.5V7H16 M7 10.5h6 M7 13.5h4',
-  },
-  {
-    title: 'Zero sign-up',
-    body: 'No account, no email wall, no upsell. Open a tool, get your estimate, and export a summary if you want one.',
-    icon: 'M10 17.5a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15Z M6.75 10.25 9 12.5l4.25-4.5',
-  },
+// All 51 state pages as plain links: important internal links for search.
+const stateGroups: { structure: TaxStructure; title: string; columns: string }[] = [
+  { structure: 'none', title: 'No income tax', columns: 'columns-2 lg:columns-1' },
+  { structure: 'flat', title: 'Flat rate', columns: 'columns-2' },
+  { structure: 'graduated', title: 'Progressive brackets', columns: 'columns-2 lg:columns-3' },
 ];
-
-const structures: TaxStructure[] = ['none', 'flat', 'graduated'];
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -125,327 +57,83 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title="NetWageTax: Smart Workplace & Paycheck Calculators for American Workers"
-  description="Free, private calculators for American workers. Estimate your 2026 tips and overtime deduction, compare state income taxes, and decode your W-2 Box 12 codes. Everything runs in your browser."
+  title={`NetWageTax: Free ${SITE_TAX_YEAR} Paycheck Calculator and Workplace Tax Tools`}
+  description={`Free ${SITE_TAX_YEAR} paycheck calculator: see your take-home pay after federal income tax, Social Security, Medicare, and state tax. Plus tips and overtime deduction estimates, state income tax pages, and W-2 Box 12 codes.`}
 >
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-  <!-- Hero -->
-  <section class="relative overflow-hidden border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-    <div aria-hidden="true" class="pointer-events-none absolute inset-0">
-      <div class="absolute -top-40 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-emerald-400/15 blur-3xl dark:bg-emerald-500/15"></div>
-      <div class="absolute -bottom-48 left-[-10%] h-[26rem] w-[26rem] rounded-full bg-teal-300/15 blur-3xl dark:bg-cyan-500/10"></div>
-    </div>
-
-    <div class="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-12 lg:gap-10">
-      <div class="lg:col-span-7">
-        <p class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
-          <span class="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse-glow" aria-hidden="true"></span>
-          2026 OBBBA tax law active
-        </p>
-        <h1 class="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem] dark:text-white">
-          Smart Workplace &amp; Paycheck Calculators for{' '}
-          <span class="bg-linear-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent dark:from-emerald-400 dark:to-cyan-400">American Workers</span>
+  <!-- Header: the paycheck estimate is the page's main content (docs/DESIGN.md §8). -->
+  <section id="calculators" aria-labelledby="home-heading" class="scroll-mt-20 border-b border-line">
+    <div class="container-page grid gap-6 pb-10 pt-6 sm:pb-14 sm:pt-10 lg:grid-cols-[4fr_8fr] lg:gap-12 lg:pb-16 lg:pt-12">
+      <div>
+        <h1 id="home-heading" class="text-[2rem]/[1.15] font-bold tracking-[-0.02em] text-ink md:text-[2.75rem]/[1.1]">
+          Figure out your <span class="whitespace-nowrap">take-home</span> pay
         </h1>
-        <p class="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-          See exactly what the new tips and overtime deductions put back in your pocket. Every calculation runs{' '}
-          <strong class="font-semibold text-slate-900 dark:text-slate-200">100% in your browser</strong>: no account, and the
-          numbers you type are never sent to us.
+        <p class="mt-3 text-lg/[1.5] text-ink-2 md:mt-4 md:text-xl/[1.5]">
+          Enter your pay to see what is left after federal income tax, Social Security, Medicare, and state tax.
         </p>
-
-        <ul class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <dl class="mt-8 hidden border-t border-line lg:block">
           {
-            trustRow.map((t) => (
-              <li class="flex items-center gap-1.5">
-                <span class="text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span>
-                {t}
-              </li>
+            facts.map(({ label, value }) => (
+              <div class="flex justify-between gap-4 border-b border-line py-2.5">
+                <dt class="text-ink-2">{label}</dt>
+                <dd class="num text-right font-semibold text-ink">{value}</dd>
+              </div>
             ))
           }
-        </ul>
-
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a
-            href="#calculators"
-            class="btn-primary inline-flex items-center gap-2 rounded-xl px-6 py-3.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
-          >
-            Explore Calculators <span aria-hidden="true">↓</span>
-          </a>
-          <a
-            href="/state-taxes/"
-            class="inline-flex items-center rounded-xl border border-slate-300 bg-white/70 px-6 py-3.5 font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
-          >
-            Browse 50-State Taxes <span aria-hidden="true" class="ml-2">→</span>
-          </a>
-        </div>
+        </dl>
+        <p class="mt-4 hidden text-[15px] text-ink-2 lg:block">Your figures stay on this device. Nothing is sent or stored.</p>
       </div>
 
-      <!-- Workspace preview (decorative example; the numbers are computed with the real engine) -->
-      <div class="lg:col-span-5">
-        <figure
-          class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-6 text-white shadow-2xl shadow-emerald-950/30 backdrop-blur motion-safe:animate-float-slow"
-        >
-          <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
-          <div class="relative">
-            <figcaption class="flex items-center justify-between gap-3 text-xs">
-              <span class="font-medium text-slate-300">Estimation preview · Single filer (GA)</span>
-              <span class="rounded-full bg-white/10 px-2 py-0.5 font-medium text-slate-300 ring-1 ring-white/10">Example</span>
-            </figcaption>
-
-            <p class="mt-5 text-xs font-medium uppercase tracking-wider text-slate-400">Take-home pay / month</p>
-            <p class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span class="text-4xl font-extrabold tracking-tight tabular-nums">{formatUSD(exTakeHome / 12)}</span>
-              <span class="glow-emerald rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-emerald-300 ring-1 ring-emerald-400/40">
-                +{formatUSD(exSavings)}/yr OBBBA savings
-              </span>
-            </p>
-            <p class="mt-1 text-xs text-slate-400">
-              {formatUSD(EXAMPLE.magi)} wages incl. {formatUSD(EXAMPLE.tips)} qualified tips
-            </p>
-
-            <div class="mt-5 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
-              {exSegments.map((s) => <div class={`${s.swatch} h-full`} style={`width:${s.pct}%`} />)}
-            </div>
-            <ul class="mt-2.5 grid grid-cols-4 gap-2 text-[11px] text-slate-400">
-              {
-                exSegments.map((s) => (
-                  <li>
-                    <span class={`mr-1 inline-block h-2 w-2 rounded-sm ${s.swatch}`} aria-hidden="true" />
-                    {s.label}
-                    <span class="block pl-3 font-semibold tabular-nums text-slate-200">{s.pct.toFixed(0)}%</span>
-                  </li>
-                ))
-              }
-            </ul>
-
-            <div class="mt-5 rounded-xl bg-slate-950/60 p-3 ring-1 ring-white/5">
-              <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-400">
-                <span>Take-home over the year</span>
-                <span class="flex items-center gap-3">
-                  <span class="flex items-center gap-1"><span class="h-0.5 w-3 rounded bg-emerald-400" aria-hidden="true"></span>With deduction</span>
-                  <span class="flex items-center gap-1"><span class="h-0.5 w-3 rounded border-t border-dashed border-slate-500" aria-hidden="true"></span>Without</span>
-                </span>
-              </div>
-              <svg viewBox="0 0 300 90" class="mt-2 h-20 w-full" aria-hidden="true" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="hero-area" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stop-color="#10b981" stop-opacity="0.35" />
-                    <stop offset="1" stop-color="#10b981" stop-opacity="0" />
-                  </linearGradient>
-                  <linearGradient id="hero-line" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stop-color="#10b981" />
-                    <stop offset="1" stop-color="#06b6d4" />
-                  </linearGradient>
-                </defs>
-                <path d="M0 78 C60 74 110 66 160 56 S250 34 300 28" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 4" />
-                <path d="M0 76 C60 68 110 52 160 40 S250 16 300 8 V90 H0 Z" fill="url(#hero-area)" class="motion-safe:animate-fade-in" />
-                <path
-                  d="M0 76 C60 68 110 52 160 40 S250 16 300 8"
-                  fill="none"
-                  stroke="url(#hero-line)"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  pathLength="1"
-                  stroke-dasharray="1"
-                  class="motion-safe:animate-draw"
-                />
-              </svg>
-            </div>
-
-            <p class="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 ring-1 ring-white/10">
-              <svg viewBox="0 0 20 20" class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-                <path d="M6 2.5h5.5L15 6v11.5H6z M11.5 2.5V6H15 M8.5 11l1.75 1.75L13 9.5" stroke-linejoin="round" stroke-linecap="round" />
-              </svg>
-              1-Click PDF worksheet ready
-            </p>
-          </div>
-        </figure>
+      <div>
+        <HomePaycheckEstimate client:load />
+        <p class="mt-4 text-[15px] text-ink-2 lg:hidden">
+          {SITE_TAX_YEAR} federal brackets, FICA, and all {STATES.length - 1} states and DC. Your figures stay on this device.
+        </p>
       </div>
     </div>
   </section>
 
-  <!-- Key metrics -->
-  <section aria-label="NetWageTax at a glance" class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-    <dl class="mx-auto grid max-w-6xl grid-cols-2 px-4 sm:px-6 md:grid-cols-4">
-      {
-        metrics.map(({ value, label }, i) => (
-          <div
-            class:list={[
-              'px-4 py-7 text-center md:px-6',
-              i % 2 === 1 && 'border-l border-slate-200 dark:border-slate-800',
-              i >= 2 && 'border-t border-slate-200 md:border-t-0 dark:border-slate-800',
-              i === 2 && 'md:border-l',
-            ]}
-          >
-            <dt class="sr-only">{label}</dt>
-            <dd>
-              <span class="block text-3xl font-extrabold tracking-tight text-slate-900 tabular-nums sm:text-4xl dark:text-white">{value}</span>
-              <span class="mx-auto mt-1 block max-w-[14rem] text-sm text-slate-600 dark:text-slate-400" aria-hidden="true">{label}</span>
-            </dd>
-          </div>
-        ))
-      }
-    </dl>
-  </section>
-
-  <!-- Calculators: engines only -->
-  <section id="calculators" aria-labelledby="calculators-heading" class="scroll-mt-20">
-    <div class="mx-auto max-w-6xl px-4 pt-16 pb-12 sm:px-6">
-      <h2 id="calculators-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Calculators</h2>
-      <p class="mt-2 text-slate-600 dark:text-slate-400">Free, private, and updated for the 2026 tax year.</p>
-
-      <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+  <section aria-labelledby="tools-heading">
+    <div class="container-page py-10 sm:py-14">
+      <h2 id="tools-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Other tools</h2>
+      <ul class="mt-4 grid border-t border-line md:grid-cols-2 md:gap-x-8">
         {
-          calculators.map((c, i) => (
-            <a
-              href={c.href}
-              class:list={[
-                'group relative flex flex-col overflow-hidden rounded-2xl border bg-white p-7 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-lg motion-safe:hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:bg-slate-900/90 dark:shadow-xl dark:hover:border-slate-700',
-                i === 0 ? 'border-emerald-300 dark:border-emerald-500/40' : 'border-slate-200 dark:border-slate-800',
-              ]}
-            >
-              {i === 0 && (
-                <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/15" />
-              )}
-              <div class="relative flex items-start justify-between gap-4">
-                <span class={`flex h-12 w-12 items-center justify-center rounded-xl ring-1 ${c.badge}`}>
-                  <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d={c.icon} />
-                  </svg>
-                </span>
-                <span
-                  class:list={[
-                    'rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1',
-                    i === 0
-                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30'
-                      : 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
-                  ]}
-                >
-                  {c.tag}
-                </span>
-              </div>
-              <h3 class="relative mt-5 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{c.title}</h3>
-              <p class="relative mt-2 text-slate-600 dark:text-slate-400">{c.body}</p>
-              <ul class="relative mt-5 space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                {c.features.map((f) => (
-                  <li class="flex items-start gap-2">
-                    <span class="mt-0.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div class="relative mt-auto pt-7">
-                <span
-                  class:list={[
-                    'inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold',
-                    i === 0
-                      ? 'btn-primary'
-                      : 'border border-slate-300 text-slate-800 transition group-hover:border-slate-400 dark:border-slate-700 dark:text-slate-200 dark:group-hover:border-slate-500',
-                  ]}
-                >
-                  {c.cta}
-                  <span aria-hidden="true" class="transition group-hover:translate-x-0.5">→</span>
-                </span>
-              </div>
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Guides & state resources -->
-  <section id="resources" aria-labelledby="resources-heading" class="scroll-mt-20">
-    <div class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-      <h2 id="resources-heading" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-        Tax Guides &amp; State Resources
-      </h2>
-      <p class="mt-2 text-slate-600 dark:text-slate-400">Reference material to understand your W-2 and your state’s rules.</p>
-
-      <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {
-          resources.map((r) => (
-            <a
-              href={r.href}
-              class="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md motion-safe:hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-slate-700"
-            >
-              <span class={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${r.badge}`}>
-                <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d={r.icon} />
-                </svg>
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class={`text-xs font-semibold uppercase tracking-wide ${r.accent}`}>{r.eyebrow}</span>
-                <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">{r.title}</span>
-                <span class="mt-1 block text-sm leading-relaxed text-slate-600 dark:text-slate-400">{r.body}</span>
-              </span>
-              <span aria-hidden="true" class={`mt-1 shrink-0 text-lg transition group-hover:translate-x-0.5 ${r.accent}`}>→</span>
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Why NetWageTax -->
-  <section aria-labelledby="why-heading" class="border-y border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h2 id="why-heading" class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Why NetWageTax</h2>
-      <p class="mt-2 max-w-2xl text-slate-600 dark:text-slate-400">
-        An independent project, not affiliated with the IRS, any employer, or any tax preparation company.
-      </p>
-      <dl class="mt-10 grid gap-8 sm:grid-cols-3">
-        {
-          trust.map(({ title, body, icon }) => (
-            <div>
-              <dt class="flex items-center gap-3 font-semibold text-slate-900 dark:text-slate-100">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
-                  <svg viewBox="0 0 20 20" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d={icon} />
-                  </svg>
-                </span>
+          tools.map(({ href, title, body }) => (
+            <li class="border-b border-line py-5">
+              <a href={href} class="text-[19px] font-semibold text-link underline underline-offset-[3px] hover:decoration-2">
                 {title}
-              </dt>
-              <dd class="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{body}</dd>
-            </div>
+              </a>
+              <p class="mt-1 text-ink-2">{body}</p>
+            </li>
           ))
         }
-      </dl>
+      </ul>
     </div>
   </section>
 
-  <!-- State directory -->
   <section aria-labelledby="states-heading">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 id="states-heading" class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            Browse 2026 income tax by state
-          </h2>
-          <p class="mt-2 text-slate-600 dark:text-slate-400">
-            State treatment varies: many states don't automatically follow the federal tips and overtime deduction.
-          </p>
-        </div>
-        <a href="/state-taxes/" class="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400">
-          Open the interactive map →
-        </a>
-      </div>
-      <div class="mt-8 grid gap-8 md:grid-cols-3">
+    <div class="container-page pb-12 sm:pb-16">
+      <h2 id="states-heading" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">
+        {SITE_TAX_YEAR} income tax by state
+      </h2>
+      <p class="mt-2 text-ink-2">
+        Each state decides whether to follow the federal tips and overtime deduction.{' '}
+        <a href="/state-taxes/" class="text-link underline underline-offset-[3px] hover:decoration-2">Open the state tax map</a>
+      </p>
+      <div class="mt-6 grid gap-8 border-t border-line pt-5 lg:grid-cols-[8fr_15fr_28fr]">
         {
-          structures.map((structure) => {
+          stateGroups.map(({ structure, title, columns }) => {
             const group = STATES.filter((s) => s.structure === structure);
             return (
               <div>
-                <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {STRUCTURE_LABELS[structure]} ({group.length})
+                <h3 class="font-bold text-ink">
+                  {title} <span class="num font-normal text-ink-2">({group.length})</span>
                 </h3>
-                <ul class="mt-3 flex flex-wrap gap-2">
+                <ul class={`mt-2 gap-x-6 leading-8 ${columns}`}>
                   {group.map((s) => (
-                    <li>
-                      <a
-                        href={statePagePath(s)}
-                        class="inline-block rounded-md border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-500/40 dark:hover:text-emerald-400"
-                      >
+                    <li class="break-inside-avoid">
+                      <a href={statePagePath(s)} class="whitespace-nowrap text-link underline underline-offset-[3px] hover:decoration-2">
                         {s.name}
                       </a>
                     </li>

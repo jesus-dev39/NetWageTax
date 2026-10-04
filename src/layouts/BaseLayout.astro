@@ -1,8 +1,9 @@
 ---
-import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/public-sans';
 import '../styles/global.css';
 import Logo from '../components/Logo';
-import { ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION } from '../lib/site';
+import { ADSENSE_CLIENT, formatLongDate, GOOGLE_SITE_VERIFICATION, SITE_TAX_YEAR } from '../lib/site';
+import { STATE_TAX_LAST_UPDATED } from '../lib/state-tax-data';
 
 interface Props {
   title: string;
@@ -18,44 +19,57 @@ const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 // Canonical/OG URLs require `site` in astro.config.mjs.
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 
-// Desktop (md+) bar. `section` marks the link active on nested pages.
-// `hideBelow` drops About between md and lg (it stays in the footer) so the bar fits on one line.
+// Header bar (md+) and the mobile drawer. `section` marks the link active on nested pages.
 const navLinks = [
-  { href: '/#calculators', label: 'Calculators', section: '/tools', hideBelow: '' },
-  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator', section: '/tools/paycheck-calculator', hideBelow: '' },
-  { href: '/state-taxes/', label: 'State Taxes', section: '/state-taxes', hideBelow: '' },
-  { href: '/guides/w2-box-12-guide/', label: 'W-2 Guide', section: '/guides', hideBelow: '' },
-  { href: '/about/', label: 'About', section: '/about', hideBelow: 'hidden lg:list-item' },
-  { href: '/contact/', label: 'Contact', section: '/contact', hideBelow: 'hidden lg:list-item' },
+  { href: '/tools/paycheck-calculator/', label: 'Paycheck', section: '/tools/paycheck-calculator' },
+  { href: '/tools/obbba-tax-calculator/', label: 'Tips & overtime', section: '/tools/obbba-tax-calculator' },
+  { href: '/state-taxes/', label: 'State taxes', section: '/state-taxes' },
+  { href: '/guides/w2-box-12-guide/', label: 'W-2 codes', section: '/guides' },
+  { href: '/about/', label: 'About', section: '/about' },
 ];
 
-// Mobile drawer (below md).
+// The drawer adds the two links that live only in the footer on desktop.
 const mobileLinks = [
-  { href: '/#calculators', label: 'All Calculators', hint: 'Paycheck, tips & overtime', section: '/tools' },
-  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator', hint: 'Hourly & salary take-home pay', section: '/tools/paycheck-calculator' },
-  { href: '/state-taxes/', label: '50-State Tax Directory & Map', hint: 'Income tax rates for every state', section: '/state-taxes' },
-  { href: '/guides/w2-box-12-guide/', label: 'W-2 Box 12 Reference Guide', hint: 'Codes TA, TP, TT, D, DD, W and more', section: '/guides' },
-  { href: '/about/', label: 'About NetWageTax', hint: 'Who we are and how we work', section: '/about' },
-  { href: '/contact/', label: 'Contact Us', hint: 'Report an error or suggest a calculator', section: '/contact' },
-  { href: '/disclaimer/', label: 'Tax Disclaimer', hint: 'Estimates, not tax advice', section: '/disclaimer' },
+  ...navLinks,
+  { href: '/methodology/', label: 'How we calculate', section: '/methodology' },
+  { href: '/contact/', label: 'Contact', section: '/contact' },
 ];
 
-const footerLinks = [
-  { href: '/about/', label: 'About' },
-  { href: '/contact/', label: 'Contact' },
-  { href: '/tools/obbba-tax-calculator/', label: 'Tips & Overtime Calculator' },
-  { href: '/tools/paycheck-calculator/', label: 'Paycheck Calculator' },
-  { href: '/state-taxes/', label: 'State Income Tax Map' },
-  { href: '/guides/w2-box-12-guide/', label: 'W-2 Box 12 Guide' },
-  { href: '/privacy/', label: 'Privacy Policy' },
-  { href: '/terms/', label: 'Terms of Use' },
-  { href: '/disclaimer/', label: 'Disclaimer' },
+const footerGroups = [
+  {
+    heading: 'Tools',
+    links: [
+      { href: '/tools/paycheck-calculator/', label: 'Paycheck calculator' },
+      { href: '/tools/obbba-tax-calculator/', label: 'Tips and overtime calculator' },
+      { href: '/state-taxes/', label: 'Income tax by state' },
+      { href: '/guides/w2-box-12-guide/', label: 'W-2 Box 12 codes' },
+    ],
+  },
+  {
+    heading: 'NetWageTax',
+    links: [
+      { href: '/about/', label: 'About' },
+      { href: '/methodology/', label: 'How we calculate' },
+      { href: '/contact/', label: 'Contact' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { href: '/privacy/', label: 'Privacy policy' },
+      { href: '/terms/', label: 'Terms of use' },
+      { href: '/disclaimer/', label: 'Disclaimer' },
+    ],
+  },
 ];
+
+// Status strip: when the rules behind the estimates were last reviewed.
+const rulesCheckedLabel = formatLongDate(STATE_TAX_LAST_UPDATED);
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 const matches = (section: string) => currentPath === section || currentPath.startsWith(`${section}/`);
-// Only the most specific matching section is active (e.g. /tools/paycheck-calculator, not also /tools).
-const activeSection = [...navLinks, ...mobileLinks]
+// Only the most specific matching section is active.
+const activeSection = mobileLinks
   .map((l) => l.section)
   .filter(matches)
   .sort((a, b) => b.length - a.length)[0];
@@ -112,34 +126,31 @@ const isActive = (section: string) => section === activeSection;
 
     <slot name="head" />
   </head>
-  <body class="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased">
+  <body class="flex min-h-screen flex-col bg-page font-sans text-base/[1.55] text-ink antialiased md:text-[17px]/[1.55]">
     <a
       href="#main"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-page focus:px-4 focus:py-2 focus:font-semibold focus:text-ink"
     >
       Skip to main content
     </a>
 
-    <header
-      id="site-header"
-      class="group/header sticky top-0 z-40 border-b border-slate-200 before:absolute before:inset-0 before:-z-10 before:bg-white/90 before:backdrop-blur before:content-[''] dark:border-slate-800 dark:before:bg-slate-950/90"
-    >
-      <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-        <a href="/" class="shrink-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40" aria-label="NetWageTax home">
+    <header id="site-header" class="group/header sticky top-0 z-40 border-b border-line bg-page">
+      <div class="container-page flex h-16 items-center gap-6">
+        <a href="/" class="shrink-0" aria-label="NetWageTax home">
           <Logo />
         </a>
 
-        <nav aria-label="Main" class="ml-auto hidden md:block">
-          <ul class="flex items-center gap-0.5 text-sm font-medium lg:gap-2">
+        <nav aria-label="Main" class="ml-auto hidden h-full md:block">
+          <ul class="flex h-full items-stretch gap-5 lg:gap-7">
             {
-              navLinks.map(({ href, label, section, hideBelow }) => (
-                <li class={hideBelow}>
+              navLinks.map(({ href, label, section }) => (
+                <li class="flex">
                   <a
                     href={href}
                     aria-current={isActive(section) ? 'page' : undefined}
                     class:list={[
-                      'whitespace-nowrap rounded-md px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white',
-                      isActive(section) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400',
+                      'inline-flex items-center whitespace-nowrap border-y-[3px] border-t-transparent text-ink hover:underline hover:underline-offset-4',
+                      isActive(section) ? 'border-b-green font-semibold' : 'border-b-transparent',
                     ]}
                   >
                     {label}
@@ -150,20 +161,20 @@ const isActive = (section: string) => section === activeSection;
           </ul>
         </nav>
 
-        <div class="ml-auto flex items-center gap-1 md:-ml-3">
+        <div class="ml-auto flex items-center gap-1 md:ml-0">
           <button
             type="button"
             id="theme-toggle"
             aria-label="Dark theme"
             aria-pressed="false"
-            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink transition-colors hover:bg-surface"
           >
             <!-- Moon (shown in light mode) -->
-            <svg class="h-5 w-5 dark:hidden" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <svg class="h-5 w-5 dark:hidden" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
               <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" stroke-linejoin="round" />
             </svg>
             <!-- Sun (shown in dark mode) -->
-            <svg class="hidden h-5 w-5 dark:block" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <svg class="hidden h-5 w-5 dark:block" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
               <circle cx="10" cy="10" r="3.5" />
               <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M4 16l1.4-1.4M14.6 5.4 16 4" stroke-linecap="round" />
             </svg>
@@ -172,59 +183,37 @@ const isActive = (section: string) => section === activeSection;
           <button
             type="button"
             id="menu-toggle"
-            aria-label="Open menu"
             aria-expanded="false"
             aria-controls="mobile-menu"
-            class="-mr-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 md:hidden dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            class="-mr-2 inline-flex h-11 min-w-16 items-center justify-center rounded-control px-2 font-semibold text-ink transition-colors hover:bg-surface md:hidden"
           >
-            <!-- Hamburger (closed) -->
-            <svg class="h-6 w-6 group-data-[menu-open]/header:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-            <!-- X (open) -->
-            <svg class="hidden h-6 w-6 group-data-[menu-open]/header:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
+            <span class="group-data-[menu-open]/header:hidden">Menu</span>
+            <span class="hidden group-data-[menu-open]/header:inline">Close</span>
           </button>
         </div>
       </div>
 
-      <!-- Mobile drawer: overlays the page below the header; inert (unfocusable, hidden from AT) while closed.
-           The header's own blur lives on ::before so it doesn't block this drawer's backdrop-blur. -->
+      <!-- Mobile drawer: overlays the page below the header; inert (unfocusable, hidden from AT) while closed. -->
       <div
         id="mobile-menu"
         inert
-        class="absolute inset-x-0 top-full grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out group-data-[menu-open]/header:grid-rows-[1fr] group-data-[menu-open]/header:opacity-100 motion-reduce:transition-none md:hidden"
+        class="absolute inset-x-0 top-full grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-150 ease-out group-data-[menu-open]/header:grid-rows-[1fr] group-data-[menu-open]/header:opacity-100 motion-reduce:transition-none md:hidden"
       >
         <div class="overflow-hidden">
-          <nav
-            aria-label="Mobile"
-            class="border-b border-slate-200 bg-white/95 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/95"
-          >
-            <ul class="mx-auto max-w-6xl px-2 py-2 sm:px-4">
+          <nav aria-label="Mobile" class="border-b border-line bg-page shadow-[0_8px_24px_rgb(26_31_36/0.12)]">
+            <ul class="container-page pb-2">
               {
-                mobileLinks.map(({ href, label, hint, section }) => (
-                  <li>
+                mobileLinks.map(({ href, label, section }) => (
+                  <li class="border-t border-line first:border-t-0">
                     <a
                       href={href}
                       aria-current={isActive(section) ? 'page' : undefined}
                       class:list={[
-                        'flex items-center justify-between gap-4 rounded-lg px-3 py-3 transition hover:bg-slate-100 dark:hover:bg-slate-800',
-                        isActive(section) ? 'bg-emerald-50 dark:bg-emerald-500/10' : '',
+                        'block border-l-4 py-3 pl-3 text-[17px] text-ink',
+                        isActive(section) ? 'border-green font-semibold' : 'border-transparent',
                       ]}
                     >
-                      <span>
-                        <span
-                          class:list={[
-                            'block font-medium',
-                            isActive(section) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100',
-                          ]}
-                        >
-                          {label}
-                        </span>
-                        <span class="block text-sm text-slate-500 dark:text-slate-400">{hint}</span>
-                      </span>
-                      <span class="text-slate-400" aria-hidden="true">→</span>
+                      {label}
                     </a>
                   </li>
                 ))
@@ -235,39 +224,51 @@ const isActive = (section: string) => section === activeSection;
       </div>
     </header>
 
+    <!-- Status strip (docs/DESIGN.md §6): the tax year and when the rules were last reviewed. -->
+    <div class="border-b border-line bg-surface text-sm text-ink-2 sm:text-[15px]">
+      <p class="container-page py-2.5">
+        <strong class="font-semibold text-ink">Tax year {SITE_TAX_YEAR}.</strong> Federal, FICA, and state rules last
+        checked <time datetime={STATE_TAX_LAST_UPDATED}>{rulesCheckedLabel}</time>.{' '}
+        <a href="/methodology/" class="text-link underline underline-offset-[3px] hover:decoration-2">How we calculate</a>
+      </p>
+    </div>
+
     <main id="main" class="flex-1">
       <slot />
     </main>
 
-    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-      <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div class="max-w-md">
+    <footer class="border-t border-line bg-surface">
+      <div class="container-page py-12">
+        <div class="grid gap-10 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] md:gap-8">
+          <div>
             <Logo />
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Free, independent calculators that help American workers understand their paychecks and taxes.
+            <p class="mt-3 max-w-xs text-[15px] text-ink-2">
+              Free calculators that help American workers understand their paychecks and taxes.
             </p>
           </div>
-          <nav aria-label="Footer">
-            <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              {
-                footerLinks.map(({ href, label }) => (
-                  <li>
-                    <a href={href} class="text-slate-600 dark:text-slate-400 transition hover:text-navy-700 dark:hover:text-navy-300">
-                      {label}
-                    </a>
-                  </li>
-                ))
-              }
-            </ul>
-          </nav>
+          {
+            footerGroups.map(({ heading, links }) => (
+              <nav aria-label={heading === 'NetWageTax' ? 'About NetWageTax' : heading}>
+                <h2 class="text-[15px] font-bold text-ink">{heading}</h2>
+                <ul class="mt-3 space-y-2 text-[15px]">
+                  {links.map(({ href, label }) => (
+                    <li>
+                      <a href={href} class="text-link underline underline-offset-[3px] hover:decoration-2">
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))
+          }
         </div>
-        <div class="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6 text-sm text-slate-500 dark:text-slate-400">
-          <p>
+        <div class="mt-10 border-t border-line pt-6 text-sm text-ink-2">
+          <p class="max-w-3xl">
             NetWageTax is an independent calculation tool and is not affiliated with the IRS or any government agency.
             Results are estimates for educational purposes and do not constitute tax, legal, or financial advice.
           </p>
-          <p class="mt-3">&copy; 2026 NetWageTax. All rights reserved.</p>
+          <p class="mt-3">&copy; 2026 NetWageTax</p>
         </div>
       </div>
     </footer>
@@ -311,7 +312,6 @@ const isActive = (section: string) => section === activeSection;
         if (!header || !menuToggle || !menu) return;
         header.toggleAttribute('data-menu-open', open);
         menuToggle.setAttribute('aria-expanded', String(open));
-        menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
         menu.inert = !open;
         if (!open && restoreFocus) menuToggle.focus();
       }

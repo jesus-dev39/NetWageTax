@@ -1,7 +1,9 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
 import { formatUSD } from '../../components/CurrencyInput';
+import { formatLongDate } from '../../lib/site';
 import {
   formatStateRate,
   relatedStates,
@@ -41,11 +43,7 @@ const taxable = Math.max(0, EXAMPLE_WAGE - s.exemptAmount);
 const neighbors = neighborRows(s);
 const related = relatedStates(s.code);
 const tipsStatus = tipsOvertimeStatus(s);
-const updatedLabel = new Date(`${STATE_TAX_LAST_UPDATED}T12:00:00`).toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
+const updatedLabel = formatLongDate(STATE_TAX_LAST_UPDATED);
 
 // Both calculators preselect the state from ?state=<postal code>.
 const obbbaHref = `/tools/obbba-tax-calculator/?state=${s.code}#calculator`;
@@ -58,16 +56,17 @@ const jsonLd = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
-    { '@type': 'ListItem', position: 2, name: 'State Taxes', item: abs('/state-taxes/') },
+    { '@type': 'ListItem', position: 2, name: 'State taxes', item: abs('/state-taxes/') },
     { '@type': 'ListItem', position: 3, name: s.name, item: abs(statePagePath(s)) },
   ],
 };
 
 const facts = [
   { label: 'Tax type', value: STRUCTURE_NAME[s.structure] },
-  { label: 'Rate', value: formatStateRate(s) },
-  { label: `Est. tax on ${formatUSD(EXAMPLE_WAGE)}`, value: formatUSD(tax) },
-  { label: 'Local income taxes', value: s.localTaxNote ? 'Yes, see note' : 'None in our data' },
+  // "Tax type" already says there's no tax; don't repeat it as the rate.
+  { label: 'Rate', value: s.structure === 'none' ? '0%' : formatStateRate(s) },
+  { label: `Estimated tax on ${formatUSD(EXAMPLE_WAGE)} (single filer)`, value: formatUSD(tax) },
+  { label: 'Local income taxes', value: s.localTaxLabel },
 ];
 
 // Tax year the pages describe; older bracket schedules get an inflation-indexing note.
@@ -77,6 +76,10 @@ const bracketsSourceLabel = s.bracketsSource
   : '';
 
 const diffLabel = (d: number) => (Math.round(d) === 0 ? 'Same' : `${d > 0 ? '+' : '−'}${formatUSD(Math.abs(d))}`);
+// Design tables (docs/DESIGN.md §6): surface header, 1px rows.
+const th = 'bg-surface px-3 py-2 text-left font-semibold text-ink';
+const td = 'border-t border-line px-3 py-2';
+
 const revenueLink = s.sourceUrl
   ? `<a href="${s.sourceUrl}" rel="noopener" target="_blank">the official ${s.name} tax agency website</a>`
   : `the ${s.name} tax agency`;
@@ -85,95 +88,92 @@ const revenueLink = s.sourceUrl
 <BaseLayout title={title} description={description} ogType="article">
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-  <div class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
-      <nav aria-label="Breadcrumb" class="text-sm text-slate-500 dark:text-slate-400">
-        <ol class="flex flex-wrap items-center gap-2">
-          <li><a href="/" class="hover:text-navy-700 dark:hover:text-navy-300">Home</a></li>
-          <li aria-hidden="true">/</li>
-          <li><a href="/state-taxes/" class="hover:text-navy-700 dark:hover:text-navy-300">State Taxes</a></li>
-          <li aria-hidden="true">/</li>
-          <li aria-current="page" class="text-slate-700 dark:text-slate-300">{s.name}</li>
-        </ol>
-      </nav>
-      <h1 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
-        {s.name} State Income Tax 2026
-      </h1>
-      <p class="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">{leadParagraph(s)}</p>
-      <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
-        Last updated <time datetime={STATE_TAX_LAST_UPDATED}>{updatedLabel}</time> · Data: {STATE_TAX_DATA_AS_OF}
-      </p>
+  <PageHeader
+    title={`${s.name} state income tax 2026`}
+    lead={leadParagraph(s)}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'State taxes', href: '/state-taxes/' }, { label: s.name }]}
+  >
+    <p class="mt-3 text-[15px] text-ink-2">
+      Last reviewed <time datetime={STATE_TAX_LAST_UPDATED}>{updatedLabel}</time>. Data: {STATE_TAX_DATA_AS_OF}.
+    </p>
 
-      <dl class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {
-          facts.map((f) => (
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{f.label}</dt>
-              <dd class="mt-1 font-semibold tabular-nums text-slate-900 dark:text-slate-100">{f.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
+    <dl class="num mt-6 border-t border-line">
+      {
+        facts.map((f) => (
+          <div class="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:justify-between sm:gap-6">
+            <dt class="text-ink-2">{f.label}</dt>
+            <dd class="font-semibold text-ink sm:text-right">{f.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
 
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href={obbbaHref} class="inline-flex items-center gap-2 rounded-lg btn-primary px-5 py-2.5 text-sm font-semibold">
-          Calculate with {s.name} tax <span aria-hidden="true">→</span>
-        </a>
-        <a
-          href={paycheckHref}
-          class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500/60"
-        >
-          {s.name} paycheck calculator
-        </a>
-      </div>
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <a href={paycheckHref} class="btn-primary inline-flex h-11 items-center justify-center rounded-control px-5 font-semibold">
+        Calculate your {s.name} paycheck
+      </a>
+      <a
+        href={obbbaHref}
+        class="inline-flex h-11 items-center justify-center rounded-control border-2 border-ink bg-page px-5 font-semibold text-ink transition-colors hover:bg-surface"
+      >
+        Tips and overtime calculator
+      </a>
     </div>
-  </div>
+  </PageHeader>
 
-  <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-    <article class="prose-page">
+  <div class="container-page py-10">
+    <article class="prose-page max-w-3xl">
       <h2 id="how-it-works">How {s.name} taxes wages</h2>
       <p>{s.note}</p>
       {rankingSentences(s).map((t) => <p>{t}</p>)}
+      {
+        s.rateSource && (
+          <p class="text-[15px] text-ink-2">
+            Rate source:{' '}
+            <a href={s.rateSource.url} rel="noopener" target="_blank">
+              {s.rateSource.label}
+            </a>
+          </p>
+        )
+      }
 
       {
         s.structure === 'graduated' &&
           (s.brackets ? (
             <>
               <h3 id="brackets">{s.name} tax brackets for single filers</h3>
-              <p class="text-sm">
+              <p class="text-[15px] text-ink-2">
                 {s.bracketsYear} brackets for single filers. Source:{' '}
                 <a href={s.bracketsSource} rel="noopener" target="_blank">{bracketsSourceLabel}</a>
               </p>
               {s.bracketsYear! < PAGE_TAX_YEAR && (
-                <p class="text-sm">
+                <p class="text-[15px] text-ink-2">
                   {s.name} adjusts its bracket thresholds for inflation each year. The {PAGE_TAX_YEAR} thresholds haven’t
                   been published yet, so we show the latest official schedule. Rates are unchanged.
                 </p>
               )}
               <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
+                <table class="w-full text-[15px]">
                   <thead>
-                    <tr class="border-b border-slate-200 dark:border-slate-700">
-                      <th class="py-2 pr-4 font-semibold">Taxable income</th>
-                      <th class="py-2 font-semibold">Rate</th>
+                    <tr>
+                      <th scope="col" class={th}>Taxable income</th>
+                      <th scope="col" class={`${th} text-right`}>Rate</th>
                     </tr>
                   </thead>
                   <tbody>
                     {s.brackets.map((b, i) => {
                       const next = s.brackets![i + 1];
                       return (
-                        <tr class="border-b border-slate-100 dark:border-slate-800">
-                          <td class="py-2 pr-4 tabular-nums">
-                            {next ? `${formatUSD(b.over)} – ${formatUSD(next.over)}` : `Over ${formatUSD(b.over)}`}
-                          </td>
-                          <td class="py-2 tabular-nums">{pct(b.rate)}</td>
+                        <tr>
+                          <td class={td}>{next ? `${formatUSD(b.over)} – ${formatUSD(next.over)}` : `Over ${formatUSD(b.over)}`}</td>
+                          <td class={`${td} text-right`}>{pct(b.rate)}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-              {s.bracketsNote && <p class="text-sm">{s.bracketsNote}</p>}
+              {s.bracketsNote && <p class="text-[15px] text-ink-2">{s.bracketsNote}</p>}
             </>
           ) : (
             <p>
@@ -194,31 +194,32 @@ const revenueLink = s.sourceUrl
         ) : (
           <>
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm">
+              <table class="w-full text-[15px]">
+                <caption class="sr-only">State income tax on a {formatUSD(EXAMPLE_WAGE)} salary</caption>
                 <tbody>
-                  <tr class="border-b border-slate-100 dark:border-slate-800">
-                    <th scope="row" class="py-2 pr-4 font-normal">Wages</th>
-                    <td class="py-2 text-right tabular-nums">{formatUSD(EXAMPLE_WAGE)}</td>
-                  </tr>
-                  <tr class="border-b border-slate-100 dark:border-slate-800">
-                    <th scope="row" class="py-2 pr-4 font-normal">
-                      Income not taxed (approx. deduction, exemptions{s.structure === 'graduated' ? ', 0% bracket' : ''})
-                    </th>
-                    <td class="py-2 text-right tabular-nums">−{formatUSD(s.exemptAmount)}</td>
-                  </tr>
-                  <tr class="border-b border-slate-100 dark:border-slate-800">
-                    <th scope="row" class="py-2 pr-4 font-normal">Income taxed</th>
-                    <td class="py-2 text-right tabular-nums">{formatUSD(taxable)}</td>
-                  </tr>
-                  <tr class="border-b border-slate-100 dark:border-slate-800">
-                    <th scope="row" class="py-2 pr-4 font-normal">
-                      {s.structure === 'flat' ? 'Flat rate' : 'Average rate used for the estimate'}
-                    </th>
-                    <td class="py-2 text-right tabular-nums">× {pct(s.estimateRate)}</td>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>Wages</th>
+                    <td class={`${td} text-right`}>{formatUSD(EXAMPLE_WAGE)}</td>
                   </tr>
                   <tr>
-                    <th scope="row" class="py-2 pr-4 font-semibold">Estimated {s.name} income tax</th>
-                    <td class="py-2 text-right font-semibold tabular-nums">{formatUSD(tax)}</td>
+                    <th scope="row" class={`${td} text-left font-normal`}>
+                      Income not taxed (approx. deduction, exemptions{s.structure === 'graduated' ? ', 0% bracket' : ''})
+                    </th>
+                    <td class={`${td} text-right`}>−{formatUSD(s.exemptAmount)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>Income taxed</th>
+                    <td class={`${td} text-right`}>{formatUSD(taxable)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>
+                      {s.structure === 'flat' ? 'Flat rate' : 'Average rate used for the estimate'}
+                    </th>
+                    <td class={`${td} text-right`}>× {pct(s.estimateRate)}</td>
+                  </tr>
+                  <tr class="font-bold">
+                    <th scope="row" class="border-t-2 border-ink px-3 py-2 text-left">Estimated {s.name} income tax</th>
+                    <td class="border-t-2 border-ink px-3 py-2 text-right">{formatUSD(tax)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -228,12 +229,12 @@ const revenueLink = s.sourceUrl
               wages.
             </p>
             {s.structure === 'graduated' && (
-              <aside class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                <strong class="text-amber-900 dark:text-amber-100">Simplified estimate, not an exact bracket calculation.</strong>{' '}
-                Instead of running {s.name}’s {pct(s.bracketRange![0])}–{pct(s.bracketRange![1])} brackets, we apply
-                one average rate ({pct(s.estimateRate)}) calibrated for a single filer with about{' '}
-                {formatUSD(EXAMPLE_WAGE)} of wages. Results are close for typical salaries and less accurate for much
-                higher or lower incomes, other filing statuses, or returns with state credits.
+              <aside class="border-l-4 border-warning bg-warning-tint px-4 py-3 text-[15px]">
+                <strong>Simplified estimate, not an exact bracket calculation.</strong> Instead of running {s.name}’s{' '}
+                {pct(s.bracketRange![0])}–{pct(s.bracketRange![1])} brackets, we apply one average rate ({pct(s.estimateRate)})
+                calibrated for a single filer with about {formatUSD(EXAMPLE_WAGE)} of wages. Results are close for typical
+                salaries and less accurate for much higher or lower incomes, other filing statuses, or returns with state
+                credits.
               </aside>
             )}
           </>
@@ -250,21 +251,44 @@ const revenueLink = s.sourceUrl
         )
       }
       {
-        tipsStatus === 'does-not-follow' && (
-          <p>
-            <strong>{s.name} does not follow the federal tips and overtime deduction.</strong> Qualified tips and
-            overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name}, and our estimate
-            taxes your full wages.
-          </p>
-        )
+        tipsStatus === 'does-not-follow' &&
+          (s.tipsOvertimeNote ? (
+            <>
+              <p>
+                <strong>{s.tipsOvertimeNote}</strong>
+              </p>
+              <p>
+                Our estimate doesn’t apply {s.name}’s exclusion: it applies the state tax to your full wages, so it can
+                overstate your {s.name} tax if you have qualifying tips or overtime.
+              </p>
+            </>
+          ) : (
+            <p>
+              <strong>{s.name} does not follow the federal tips and overtime deduction.</strong> Qualified tips and
+              overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name}, and our estimate
+              taxes your full wages.
+            </p>
+          ))
       }
       {
-        tipsStatus === 'follows' && (
-          <p>
-            <strong>{s.name} follows the federal tips and overtime deduction</strong>, so the qualified tips and overtime
-            you deduct on Schedule 1-A also reduce your {s.name} taxable income.
-          </p>
-        )
+        tipsStatus === 'follows' &&
+          (s.tipsOvertimeNote ? (
+            <>
+              <p>
+                <strong>{s.tipsOvertimeNote}</strong>
+              </p>
+              <p>
+                Our estimate doesn’t apply {s.name}’s deductions: it applies the state tax to your full wages, so it can
+                overstate your {s.name} tax if you have qualifying tips or overtime.
+              </p>
+            </>
+          ) : (
+            <p>
+              <strong>{s.name} follows the federal tips and overtime deduction</strong>, so the qualified tips and overtime
+              you deduct on Schedule 1-A also reduce your {s.name} taxable income. Our estimate doesn’t subtract them yet:
+              it applies the state tax to your full wages.
+            </p>
+          ))
       }
       {
         tipsStatus === 'unknown' && (
@@ -272,6 +296,14 @@ const revenueLink = s.sourceUrl
             We haven’t verified whether {s.name} lets you subtract the federal tips and overtime deduction (Schedule
             1-A). Check with <Fragment set:html={revenueLink} /> whether it follows the federal deduction. Our estimate
             applies the state tax to your full wages.
+          </p>
+        )
+      }
+      {
+        tipsStatus !== 'no-wage-tax' && (
+          <p>
+            To see your federal deduction and {s.name} tax together, open the{' '}
+            <a href={obbbaHref}>tips and overtime calculator with {s.name} selected</a>.
           </p>
         )
       }
@@ -291,24 +323,24 @@ const revenueLink = s.sourceUrl
       {
         neighbors.length > 0 && (
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="w-full text-[15px]">
               <thead>
-                <tr class="border-b border-slate-200 dark:border-slate-700">
-                  <th class="py-2 pr-4 font-semibold">State</th>
-                  <th class="py-2 pr-4 font-semibold">Rate</th>
-                  <th class="py-2 pr-4 text-right font-semibold">Est. tax on {formatUSD(EXAMPLE_WAGE)}</th>
-                  <th class="py-2 text-right font-semibold">vs. {s.name}</th>
+                <tr>
+                  <th scope="col" class={th}>State</th>
+                  <th scope="col" class={`${th} hidden sm:table-cell`}>Rate</th>
+                  <th scope="col" class={`${th} text-right`}>Est. tax on {formatUSD(EXAMPLE_WAGE)}</th>
+                  <th scope="col" class={`${th} text-right`}>vs. {s.name}</th>
                 </tr>
               </thead>
               <tbody>
                 {neighbors.map((n) => (
-                  <tr class="border-b border-slate-100 dark:border-slate-800">
-                    <td class="py-2 pr-4">
+                  <tr>
+                    <td class={td}>
                       <a href={statePagePath(n.state)}>{n.state.name}</a>
                     </td>
-                    <td class="py-2 pr-4">{formatStateRate(n.state)}</td>
-                    <td class="py-2 pr-4 text-right tabular-nums">{formatUSD(n.tax)}</td>
-                    <td class="py-2 text-right tabular-nums">{diffLabel(n.diff)}</td>
+                    <td class={`${td} hidden sm:table-cell`}>{formatStateRate(n.state)}</td>
+                    <td class={`${td} text-right`}>{formatUSD(n.tax)}</td>
+                    <td class={`${td} text-right`}>{diffLabel(n.diff)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -327,54 +359,27 @@ const revenueLink = s.sourceUrl
           <p>For forms, exact brackets, and filing deadlines, check the {s.name} tax agency.</p>
         )
       }
-    </article>
 
-    <aside
-      aria-label="Calculator"
-      class="my-10 rounded-2xl border border-emerald-300 bg-emerald-50 p-6 dark:border-emerald-500/40 dark:bg-emerald-500/10"
-    >
-      <p class="text-sm font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Work tips or overtime in {s.name}?</p>
-      <p class="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-        See your federal deduction and {s.name} tax together.
-      </p>
-      <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">
-        The calculator opens with {s.name} already selected and adds its estimated income tax to your breakdown.
-      </p>
-      <a href={obbbaHref} class="mt-4 inline-flex items-center gap-2 rounded-lg btn-primary px-5 py-2.5 text-sm font-semibold">
-        Open the Tips &amp; Overtime Calculator <span aria-hidden="true">→</span>
-      </a>
-    </aside>
-
-    <section aria-labelledby="related-heading">
-      <h2 id="related-heading" class="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Related states</h2>
-      <ul class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <h2 id="related">Related states</h2>
+      <ul class="!list-none !pl-0">
         {
           related.map((r) => (
-            <li>
-              <a
-                href={statePagePath(r)}
-                class="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition hover:border-emerald-400 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500/60"
-              >
-                <span class="min-w-0">
-                  <span class="block truncate font-medium text-slate-900 dark:text-slate-100">{r.name}</span>
-                  <span class="block text-xs text-slate-500 dark:text-slate-400">{formatStateRate(r)}</span>
-                </span>
-                <span aria-hidden="true" class="shrink-0 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">→</span>
-              </a>
+            <li class="!mt-0 flex flex-wrap justify-between gap-x-4 border-b border-line py-2.5 first:border-t">
+              <a href={statePagePath(r)}>{r.name}</a>
+              <span class="num text-ink-2">{formatStateRate(r)}</span>
             </li>
           ))
         }
       </ul>
-      <p class="mt-6">
-        <a href="/state-taxes/" class="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400">
-          ← All 50 states + DC on the map
-        </a>
+      <p>
+        <a href="/state-taxes/">All states and DC on the map</a>
       </p>
-    </section>
+    </article>
 
-    <p class="mt-10 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and state credits. They
-      are not tax advice. See our <a href="/disclaimer/" class="underline underline-offset-2">disclaimer</a>.
+    <p class="mt-10 max-w-3xl text-sm text-ink-2">
+      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and state credits. They are
+      not tax advice. See our <a href="/disclaimer/" class="text-link underline underline-offset-[3px]">disclaimer</a> and{' '}
+      <a href="/methodology/" class="text-link underline underline-offset-[3px]">how we calculate</a>.
     </p>
   </div>
 </BaseLayout>
