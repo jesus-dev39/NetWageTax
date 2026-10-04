@@ -1,7 +1,7 @@
 import { SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
 import { buildIncomeBreakdown } from '../lib/income-breakdown';
 import type { FilingStatus } from '../lib/obbba-params';
-import { tipsOvertimeStatus } from '../lib/state-page-content';
+import { stateTipsOvertimeNote, tipsOvertimeStatus } from '../lib/state-page-content';
 import { STATES_BY_CODE, type StateTaxEstimate } from '../lib/state-tax-data';
 import BreakdownBar from './BreakdownBar';
 import { formatUSD } from './CurrencyInput';
@@ -22,20 +22,8 @@ interface Props {
 export function stateTaxHint(stateTax: StateTaxEstimate): string {
   const info = STATES_BY_CODE[stateTax.code];
   const lead = `${stateTax.name}, ${stateTax.rateLabel}.`;
-  switch (tipsOvertimeStatus(info)) {
-    case 'no-wage-tax':
-      return `${stateTax.name}: no state income tax.`;
-    case 'does-not-follow':
-      return info.tipsOvertimeNote
-        ? `${lead} ${info.tipsOvertimeNote} Our estimate doesn’t apply that exclusion: it taxes your full income.`
-        : `${lead} ${stateTax.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
-    case 'follows':
-      return info.tipsOvertimeNote
-        ? `${lead} ${info.tipsOvertimeNote} Our estimate doesn’t apply those deductions: it taxes your full income.`
-        : `${lead} ${stateTax.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
-    default:
-      return `${lead} Our estimate taxes tips and overtime at the state level.`;
-  }
+  if (tipsOvertimeStatus(info) === 'no-wage-tax') return `${stateTax.name}: no state income tax.`;
+  return `${lead} ${stateTipsOvertimeNote(info) ?? 'Our estimate taxes tips and overtime at the state level.'}`;
 }
 
 export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stateTax = null }: Props) {

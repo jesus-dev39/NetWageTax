@@ -25,8 +25,8 @@ export const OVERTIME_MULTIPLIER = 1.5;
 
 export const PAY_FREQUENCIES: { value: PayFrequency; label: string; periods: number; short: string }[] = [
   { value: 'weekly', label: 'Weekly', periods: 52, short: 'weekly' },
-  { value: 'biweekly', label: 'Bi-Weekly', periods: 26, short: 'bi-weekly' },
-  { value: 'semimonthly', label: 'Semi-Monthly', periods: 24, short: 'semi-monthly' },
+  { value: 'biweekly', label: 'Biweekly', periods: 26, short: 'biweekly' },
+  { value: 'semimonthly', label: 'Semimonthly', periods: 24, short: 'semimonthly' },
   { value: 'monthly', label: 'Monthly', periods: 12, short: 'monthly' },
 ];
 

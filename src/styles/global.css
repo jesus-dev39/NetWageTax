@@ -215,6 +215,14 @@ html.dark {
   }
 
   .print-voucher {
+    /*
+     * Chrome rounds the printable width to whole pixels, so right-aligned text (reference, date)
+     * could end a pixel past the 10mm margin and be clipped. 4mm of inner padding keeps every
+     * line clear of the edge on A4 and Letter.
+     */
+    box-sizing: border-box;
+    width: 100%;
+    padding-inline: 4mm;
     break-inside: avoid;
     page-break-inside: avoid;
     break-after: avoid;

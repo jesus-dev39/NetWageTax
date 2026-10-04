@@ -56,6 +56,7 @@ export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
       s.stateTax ? usd(s.stateTax.tax) : 'No state selected',
     ],
   );
+  if (s.stateTipsOvertimeNote) rows.push([wide(s.stateTipsOvertimeNote, COLS)]);
   if (s.savingsNote) rows.push([wide(s.savingsNote, COLS)]);
 
   rows.push([], [wide(SUMMARY_DISCLAIMER, COLS)], [wide(SUMMARY_LEGAL_NOTICE, COLS)]);

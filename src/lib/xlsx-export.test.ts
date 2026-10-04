@@ -39,6 +39,18 @@ describe('tips & overtime .xlsx', () => {
     expect(ws['!merges']?.some((m) => m.s.r === 0 && m.e.c === 5)).toBe(true);
   });
 
+  it('adds the state tips and overtime note under the state row only for verified states', () => {
+    const ga = buildDeductionSummary(
+      { result, tipsReported: 30_000, overtimeReported: 5_000, savings: 6_600, stateTax: estimateStateTax(160_000, 'GA') },
+      at,
+    );
+    const gaRows = rowsOf(sheetOf(deductionWorkbookBytes(ga)));
+    const i = gaRows.findIndex((r) => r[0] === 'Estimated state income tax (GA)');
+    expect(gaRows[i + 1][0]).toBe(ga.stateTipsOvertimeNote);
+    expect(String(gaRows[i + 1][0])).toContain('$1,750');
+    expect(summary.stateTipsOvertimeNote).toBeUndefined();
+  });
+
   it('stores the breakdown as formatted numbers with SUM totals', () => {
     expect(find(rows, 'Category')?.slice(0, 6)).toEqual(['Category', 'Reported', 'Statutory cap', 'After cap', 'Phase-out', 'Net allowed']);
     const tips = rows.find((r) => String(r[0]).startsWith('Qualified tips (TP)'))!;
@@ -71,7 +83,7 @@ describe('paycheck .xlsx', () => {
     expect(rows[1]).toContain(summary.referenceId);
     expect(rows[2][0]).toMatch(/Not a pay stub/);
     expect(find(rows, 'Gross wages (annual)')?.[1]).toBe(61_750);
-    expect(find(rows, 'Pay frequency')?.[1]).toBe('Bi-Weekly (26 paychecks/year)');
+    expect(find(rows, 'Pay frequency')?.[1]).toBe('Biweekly (26 paychecks/year)');
     expect(find(rows, 'State')?.[1]).toBe('Georgia');
   });
 
@@ -88,7 +100,7 @@ describe('paycheck .xlsx', () => {
   });
 
   it('ends with the take-home totals', () => {
-    expect(find(rows, 'Per bi-weekly paycheck')?.[1]).toBeCloseTo(1_896.68, 2);
+    expect(find(rows, 'Per biweekly paycheck')?.[1]).toBeCloseTo(1_896.68, 2);
     expect(find(rows, 'Per year')?.[1]).toBeCloseTo(49_313.6, 2);
   });
 });

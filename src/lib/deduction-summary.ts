@@ -7,7 +7,8 @@
 import { formatUSD } from '../components/CurrencyInput';
 import { estimateEmployeeFica } from './fica';
 import { isCoveredByStandardDeduction } from './marginal-rate';
-import type { StateTaxEstimate } from './state-tax-data';
+import { stateTipsOvertimeNote } from './state-page-content';
+import { STATES_BY_CODE, type StateTaxEstimate } from './state-tax-data';
 import {
   PARAMS_BY_YEAR,
   type CategoryResult,
@@ -34,7 +35,7 @@ export const SUMMARY_LEGAL_NOTICE =
 export const STANDARD_DEDUCTION_COVERS_NOTICE =
   'Standard deduction already covers 100% of your federal tax liability ($0 tax owed).';
 
-export const SAVINGS_LINE_LABEL = 'Estimated Cash Savings from Federal Tax Reduction';
+export const SAVINGS_LINE_LABEL = 'Estimated federal tax savings';
 
 export const DOCX_FILENAME = 'NetWageTax_2026_Deduction_Summary.docx';
 
@@ -80,6 +81,8 @@ export interface DeductionSummary {
   /** Estimated employee FICA on the reported tips and overtime. */
   fica: number;
   stateTax?: StateTaxEstimate | null;
+  /** The calculator's note on the state's own treatment of tips and overtime (verified states only). */
+  stateTipsOvertimeNote?: string;
   taxYear: number;
   filingStatus: string;
   totalDeduction: number;
@@ -148,6 +151,8 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
   const minute = Math.floor(generatedAt.getTime() / 60_000);
   const referenceId = `NWT-${result.taxYear}-${referenceFor([minute, result.filingStatus, result.magi, tipsReported, overtimeReported, stateTax?.code ?? ''])}`;
 
+  const stateNote = stateTax ? stateTipsOvertimeNote(STATES_BY_CODE[stateTax.code]) : undefined;
+
   return {
     referenceId,
     magi: result.magi,
@@ -157,6 +162,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
     ],
     fica,
     stateTax,
+    stateTipsOvertimeNote: stateNote,
     generatedAt: formatGeneratedAt(generatedAt),
     taxYear: result.taxYear,
     filingStatus: FILING_STATUS_LABELS[result.filingStatus],
@@ -198,7 +204,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
               detail:
                 stateTax.structure === 'none'
                   ? 'No state income tax'
-                  : `${stateTax.rateLabel} · single-filer estimate, excludes local taxes`,
+                  : `${stateTax.rateLabel} · single-filer estimate, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
             },
           ]
         : []),

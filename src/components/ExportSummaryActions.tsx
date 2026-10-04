@@ -176,6 +176,7 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
                     ? 'No state income tax on wages'
                     : `${summary.stateTax.rateLabel} · single-filer estimate, excludes local taxes`
                 }
+                note={summary.stateTipsOvertimeNote}
                 value={formatUSD(summary.stateTax.tax)}
               />
             )}
@@ -198,12 +199,13 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
   );
 }
 
-function ImpactRow(props: { label: string; detail: string; value: string }) {
+function ImpactRow(props: { label: string; detail: string; note?: string; value: string }) {
   return (
     <tr className="border-b border-line">
       <th scope="row" className="px-3 py-2 font-semibold">
         {props.label}
         <span className="block text-[11px] font-normal text-ink-2">{props.detail}</span>
+        {props.note && <span className="mt-0.5 block text-[11px] font-normal text-ink-2">{props.note}</span>}
       </th>
       <td className="px-3 py-2 text-right font-semibold">{props.value}</td>
     </tr>
