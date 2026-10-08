@@ -1,5 +1,6 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { formatStateRate, STATES, STATES_BY_CODE, type StateCode, type TaxStructure } from '../lib/state-tax-data';
+import { TREATMENT_LABEL, TREATMENT_ORDER, type TipsOvertimeTreatment } from '../lib/state-tips-overtime';
 import { US_MAP_VIEWBOX, US_STATE_PATHS } from '../lib/us-state-paths';
 
 interface Props {
@@ -7,8 +8,10 @@ interface Props {
   onSelect: (code: StateCode) => void;
   /** Externally highlighted state (e.g. hovering a directory card). */
   highlighted?: StateCode | null;
-  /** Dims every state whose structure differs. */
-  filter?: TaxStructure | null;
+  /** What the fill shows: the tax structure (default) or the tips and overtime treatment. */
+  colorBy?: 'structure' | 'tips';
+  /** Dims every state in another category (a structure, or a treatment when colorBy is 'tips'). */
+  filter?: TaxStructure | TipsOvertimeTreatment | null;
 }
 
 /** Small eastern states get labelled chips to the right of the map so they are easy to hit. */
@@ -22,6 +25,14 @@ const FILL: Record<TaxStructure, string> = {
   flat: 'fill-map-flat',
   graduated: 'fill-map-graduated',
 };
+const TIPS_FILL: Record<TipsOvertimeTreatment, string> = {
+  'no-wage-tax': 'fill-map-tips-no-wage-tax',
+  follows: 'fill-map-tips-follows',
+  'tips-only': 'fill-map-tips-tips-only',
+  own: 'fill-map-tips-own',
+  'does-not-follow': 'fill-map-tips-does-not-follow',
+  unconfirmed: 'fill-map-tips-unconfirmed',
+};
 const FILL_HOVER = 'brightness-90 dark:brightness-125';
 const FILL_SELECTED = 'fill-green';
 
@@ -31,7 +42,20 @@ export const MAP_LEGEND: { structure: TaxStructure; label: string; swatch: strin
   { structure: 'graduated', label: 'Progressive brackets', swatch: 'bg-map-graduated' },
 ];
 
-export default function USStateMap({ selected, onSelect, highlighted = null, filter = null }: Props) {
+const TIPS_SWATCH: Record<TipsOvertimeTreatment, string> = {
+  'no-wage-tax': 'bg-map-tips-no-wage-tax',
+  follows: 'bg-map-tips-follows',
+  'tips-only': 'bg-map-tips-tips-only',
+  own: 'bg-map-tips-own',
+  'does-not-follow': 'bg-map-tips-does-not-follow',
+  unconfirmed: 'bg-map-tips-unconfirmed',
+};
+
+export const TIPS_MAP_LEGEND: { treatment: TipsOvertimeTreatment; label: string; swatch: string }[] = TREATMENT_ORDER.map(
+  (treatment) => ({ treatment, label: TREATMENT_LABEL[treatment], swatch: TIPS_SWATCH[treatment] }),
+);
+
+export default function USStateMap({ selected, onSelect, highlighted = null, colorBy = 'structure', filter = null }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ code: StateCode; x: number; y: number } | null>(null);
 
@@ -44,10 +68,12 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
   const hot = hover?.code ?? highlighted;
 
   function fillFor(code: StateCode) {
-    const { structure } = STATES_BY_CODE[code];
+    const { structure, tipsOvertime } = STATES_BY_CODE[code];
     if (code === selected) return FILL_SELECTED;
-    const dim = filter && structure !== filter && code !== hot ? ' opacity-25' : '';
-    return FILL[structure] + (code === hot ? ` ${FILL_HOVER}` : '') + dim;
+    const category = colorBy === 'tips' ? tipsOvertime.treatment : structure;
+    const dim = filter && category !== filter && code !== hot ? ' opacity-25' : '';
+    const fill = colorBy === 'tips' ? TIPS_FILL[tipsOvertime.treatment] : FILL[structure];
+    return fill + (code === hot ? ` ${FILL_HOVER}` : '') + dim;
   }
 
   const handlers = (code: StateCode) => ({
@@ -64,7 +90,7 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
 
   return (
     <div ref={wrapRef} className="relative select-none">
-      {/* Mouse/touch convenience only; keyboard and screen reader users pick a state with the "Find your state" select. */}
+      {/* Mouse/touch convenience only; keyboard and screen reader users pick a state with the page's select or table. */}
       <svg
         viewBox={`0 0 ${VIEW_WIDTH} ${US_MAP_VIEWBOX.height}`}
         className="h-auto w-full"
@@ -124,7 +150,7 @@ export default function USStateMap({ selected, onSelect, highlighted = null, fil
           className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-control bg-ink px-2.5 py-1.5 text-sm font-semibold text-page"
           style={{ left: tipLeft, top: hover.y - 10 }}
         >
-          {tip.name}: {formatStateRate(tip)}
+          {tip.name}: {colorBy === 'tips' ? TREATMENT_LABEL[tip.tipsOvertime.treatment] : formatStateRate(tip)}
         </div>
       )}
     </div>

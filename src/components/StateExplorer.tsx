@@ -11,6 +11,7 @@ import {
   type StateTaxInfo,
   type TaxStructure,
 } from '../lib/state-tax-data';
+import { TIPS_OVERTIME_GUIDE_PATH } from '../lib/state-tips-overtime';
 import { formatUSD } from './CurrencyInput';
 import { Field, RADIO_CLASS } from './form';
 import NativeSelect from './NativeSelect';
@@ -127,8 +128,11 @@ export default function StateExplorer() {
         <p className="mt-8 max-w-3xl text-sm text-ink-2">
           Data: {STATE_TAX_DATA_AS_OF}. Estimates cover state income tax on wages for a single filer and exclude local
           income taxes and state credits. Progressive-state estimates use the typical effective rate for about $65,000 of
-          wages. Each state decides whether to follow the federal tips and overtime deduction; check your state’s revenue
-          department for exact figures.{' '}
+          wages. Each state decides whether to follow the federal tips and overtime deduction:{' '}
+          <a href={TIPS_OVERTIME_GUIDE_PATH} className={link}>
+            see which states tax tips and overtime
+          </a>
+          . Check your state’s revenue department for exact figures.{' '}
           <a href="/methodology/" className={link}>
             How we calculate
           </a>

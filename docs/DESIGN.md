@@ -79,6 +79,21 @@ Used only in breakdown bars and their legends, always next to a text label.
 | `data-fica` | `#a56a12` | `#e0a64a` | Social Security + Medicare |
 | `data-state` | `#7a4f93` | `#b996d0` | State income tax |
 
+### Tips and overtime map colors
+
+Used only on the map of `/guides/which-states-tax-tips-and-overtime/`, its legend, and the category
+swatches in its table, always next to the category written out. Ink chip labels on each fill
+meet 4.5:1 (light 7.8–12.6, dark 5.4–9.0).
+
+| Token | Light | Dark | Category |
+|---|---|---|---|
+| `map-tips-no-wage-tax` | `#b8cbe3` | `#34496a` | No tax on wages |
+| `map-tips-follows` | `#8cc9a5` | `#2e6b4f` | Follows |
+| `map-tips-tips-only` | `#9fd3d0` | `#2f5f63` | Follows for tips only |
+| `map-tips-own` | `#e8cf87` | `#6e5a26` | Own state break |
+| `map-tips-does-not-follow` | `#e0a497` | `#7a3f36` | Does not follow |
+| `map-tips-unconfirmed` | `#dde1e5` | `#3a4048` | Not yet confirmed |
+
 ### Retired
 
 The emerald/teal/cyan gradients, the `navy` scale (only used for links and hovers), the sky,

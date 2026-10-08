@@ -1,0 +1,285 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import FaqList from '../../components/FaqList.astro';
+import AdSlot from '../../components/AdSlot';
+import TipsOvertimeExplorer from '../../components/TipsOvertimeExplorer';
+import { CONTACT_EMAIL, formatLongDate } from '../../lib/site';
+import { STATES, STATES_BY_CODE } from '../../lib/state-tax-data';
+import {
+  TIPS_OVERTIME_GUIDE_PATH,
+  TIPS_OVERTIME_LAST_CHECKED,
+  TREATMENT_LABEL,
+  TREATMENT_ORDER,
+  type TipsOvertimeTreatment,
+} from '../../lib/state-tips-overtime';
+
+// Search intent: "which states tax tips", "state tax on tips and overtime 2026", "does my state tax overtime".
+const title = 'Which States Tax Tips and Overtime in 2026? All 50 States and DC';
+const description =
+  'See how every state treats the federal no tax on tips and overtime deduction in 2026: which states follow it, which tax tips and overtime anyway, and which have their own break, with official sources.';
+const PUBLISHED = '2026-10-08';
+const checkedLabel = formatLongDate(TIPS_OVERTIME_LAST_CHECKED);
+
+const inGroup = (t: TipsOvertimeTreatment) => STATES.filter((s) => s.tipsOvertime.treatment === t);
+const names = (t: TipsOvertimeTreatment) => inGroup(t).map((s) => s.name);
+function listJoin(items: string[]): string {
+  if (items.length <= 1) return items.join('');
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+const summary = TREATMENT_ORDER.map((t) => ({ t, label: TREATMENT_LABEL[t], states: inGroup(t) })).filter((g) => g.states.length > 0);
+const taxing = STATES.filter((s) => s.structure !== 'none').length;
+const ga = STATES_BY_CODE.GA.tipsOvertime;
+const al = STATES_BY_CODE.AL.tipsOvertime;
+
+const toc = [
+  { id: 'map', label: 'Map and table: all 50 states and DC' },
+  { id: 'how-it-works', label: 'Why states treat the deduction differently' },
+  { id: 'faq', label: 'Frequently asked questions' },
+  { id: 'sources', label: 'Sources and review' },
+];
+
+// Answers are plain text so they can be reused verbatim in FAQPage structured data.
+const faqs = [
+  {
+    question: 'Which states don’t tax tips?',
+    answer: [
+      `Tips aren’t taxed in the ${names('no-wage-tax').length} states with no tax on wages: ${listJoin(names('no-wage-tax'))}.`,
+      `Among the states that do tax wages, ${listJoin([...names('follows'), ...names('tips-only')].sort())} let you subtract the tips you deduct on your federal return. Georgia has its own exclusion of up to $${ga.own!.tipsCap!.toLocaleString('en-US')} of tips. Every other state taxes tips, or hasn’t confirmed its 2026 rules yet.`,
+    ],
+  },
+  {
+    question: 'Does my state follow the federal no tax on tips and overtime?',
+    answer: [
+      `For 2026, ${listJoin(names('follows'))} follow both federal deductions. ${listJoin(names('tips-only'))} follow it for tips only. ${listJoin(names('own'))} don’t follow it but have their own, smaller break. ${inGroup('does-not-follow').length} states don’t follow it and tax tips and overtime in full.`,
+      'Find your state in the table above for the details, the official source, and the date we checked it, or open your state’s page for its rates and an example.',
+    ],
+  },
+  {
+    question: 'Why do Colorado, Hawaii, and New York exempt tips but not overtime?',
+    answer: [
+      'Each made a separate choice. Colorado starts from federal taxable income, so both deductions would carry over, but a 2025 law (HB25-1296) adds the overtime deduction back from 2026. Hawaii’s Act 35 (2026) adopted the federal tips provision (§224) but not the overtime one (§225). New York’s FY 2027 budget created a state exemption for up to $25,000 of tips only.',
+    ],
+  },
+  {
+    question: 'Why does it matter whether a state starts from federal AGI or taxable income?',
+    answer: [
+      'The federal tips and overtime deductions come after adjusted gross income (AGI): they lower federal taxable income, not AGI. Most states start their own calculation from federal AGI, so the deductions don’t reach the state return unless the state passes its own subtraction.',
+      'States that start from federal taxable income, such as Iowa, Montana, and North Dakota, pick the deductions up automatically unless they add them back, as Colorado does for overtime. That’s why we mark several states as not following the deduction even without an official statement: they start from federal AGI and enacted no state deduction in 2026.',
+    ],
+  },
+  {
+    question: 'I work in one state and live in another: which rules apply?',
+    answer: [
+      'It depends on both states. Usually your home state taxes all your income and the state where you work taxes what you earn there, and each applies its own rules to the income it taxes. Many states give a credit for tax paid to the other state, and some neighboring states have agreements so you pay only one of them.',
+      'The rules for nonresidents can also differ from those for residents. Check with the tax agency of each state before you file.',
+    ],
+  },
+  {
+    question: 'Do I still pay Social Security and Medicare on tips and overtime?',
+    answer: [
+      'Yes. The deductions lower only income tax. Social Security (6.2%, up to the yearly wage base) and Medicare (1.45%) still apply to all your tips and overtime, and your employer keeps withholding them.',
+    ],
+  },
+  {
+    question: 'How do I claim the state deduction?',
+    answer: [
+      'In states that follow the federal deduction, you claim it on your state return, either automatically because the return starts from a federal figure that already includes it, or on a subtraction line. In Georgia and Alabama, you claim the state’s own break on the state return. Use your state’s 2026 forms and instructions, which come out around January 2027, or ask a tax professional.',
+    ],
+  },
+  {
+    question: 'How often is this page checked?',
+    answer: [
+      `Every row shows the date we last checked it against the official source. We review all 50 states and DC each January, when legislatures meet and the new state forms come out, and update a state sooner when its law changes. Rules last checked ${checkedLabel}.`,
+    ],
+  },
+];
+
+const sources = [
+  { label: 'IRS: One, Big, Beautiful Bill provisions', href: 'https://www.irs.gov/newsroom/one-big-beautiful-bill-provisions' },
+  { label: 'Congress.gov: H.R. 1, 119th Congress (Public Law 119-21)', href: 'https://www.congress.gov/bill/119th-congress/house-bill/1' },
+];
+
+const url = `https://netwagetax.com${TIPS_OVERTIME_GUIDE_PATH}`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: title,
+      description,
+      datePublished: PUBLISHED,
+      dateModified: TIPS_OVERTIME_LAST_CHECKED,
+      author: { '@type': 'Organization', name: 'NetWageTax Editorial Team', url: 'https://netwagetax.com/about/' },
+      publisher: { '@id': 'https://netwagetax.com/#organization' },
+      mainEntityOfPage: url,
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer.join(' ') },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
+        { '@type': 'ListItem', position: 2, name: 'State taxes', item: 'https://netwagetax.com/state-taxes/' },
+        { '@type': 'ListItem', position: 3, name: 'Which states tax tips and overtime', item: url },
+      ],
+    },
+  ],
+};
+
+const linkClass = 'text-link underline underline-offset-[3px] hover:decoration-2';
+const h2Class = 'scroll-mt-20 text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]';
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <PageHeader
+    title="Which states tax tips and overtime in 2026"
+    lead={`The federal deduction for tips and overtime lowers only your federal income tax. Each state decides whether to follow it, and most of the ${taxing} that tax wages (including DC) don’t. Here’s where every state stands for 2026, with the official source for each.`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'State taxes', href: '/state-taxes/' }, { label: 'Tips and overtime by state' }]}
+  >
+    <dl class="num mt-6 border-t border-line text-[15px] sm:text-base">
+      {
+        summary.map(({ t, label, states }) => (
+          <div class="flex items-baseline justify-between gap-4 border-b border-line py-2">
+            <dt class="text-ink-2">{label}</dt>
+            <dd class="text-right font-semibold text-ink">
+              {states.length}
+              <span class="sr-only">: {listJoin(states.map((s) => s.name))}</span>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    <p class="mt-4 text-[15px] text-ink-2">
+      By the <a href="/about/" class={linkClass}>NetWageTax Editorial Team</a>. Rules last checked{' '}
+      <time datetime={TIPS_OVERTIME_LAST_CHECKED}>{checkedLabel}</time>. Sources: state tax agencies and legislatures.
+    </p>
+  </PageHeader>
+
+  <div class="container-page py-10">
+    <!-- Ad placement: below the header, md+ only (on phones it would push the map below the first screen). -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="guide-tips-states-top" className="mb-10" />
+    </div>
+
+    <nav aria-labelledby="toc-heading" class="max-w-3xl">
+      <h2 id="toc-heading" class="text-xl/[1.3] font-bold text-ink">On this page</h2>
+      <ol class="mt-3 list-decimal space-y-1.5 pl-6">
+        {
+          toc.map(({ id, label }) => (
+            <li>
+              <a href={`#${id}`} class={linkClass}>
+                {label}
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <section aria-labelledby="map" class="mt-12 border-t border-line pt-10">
+      <h2 id="map" class={h2Class}>Tips and overtime by state, 2026</h2>
+      <p class="mt-2 max-w-3xl text-ink-2">
+        Point at a state to see its category, or select it to jump to its row. The table lists every state with the
+        details and the official source.
+      </p>
+      <div class="mt-6">
+        <TipsOvertimeExplorer client:load />
+      </div>
+    </section>
+
+    <div class="max-w-3xl">
+      <article class="prose-page mt-12 border-t border-line pt-10">
+        <h2 id="how-it-works">Why states treat the deduction differently</h2>
+        <p>
+          The One Big Beautiful Bill Act (Public Law 119-21) created two federal deductions for 2025 through 2028: up to
+          $25,000 of qualified tips and up to $12,500 of qualified overtime premium pay ($25,000 on a joint return), both
+          claimed on Schedule 1-A. They lower your federal taxable income, not your adjusted gross income (AGI).
+        </p>
+        <p>
+          States don’t have to copy federal deductions. What reaches your state return depends on where the state’s
+          calculation starts and on the laws it passed in 2026:
+        </p>
+        <ul>
+          <li>
+            <strong>Follows:</strong> the state starts from federal taxable income, or passed a subtraction that matches
+            the federal amounts.
+          </li>
+          <li>
+            <strong>Follows for tips only:</strong> the state adopted the tips deduction but taxes overtime.
+          </li>
+          <li>
+            <strong>Own state break:</strong> the state taxes tips and overtime but has its own, smaller exclusion. Georgia
+            excludes up to ${ga.own!.overtimeCap!.toLocaleString('en-US')} of overtime and ${ga.own!.tipsCap!.toLocaleString('en-US')} of
+            tips; Alabama, up to ${al.own!.overtimeCap!.toLocaleString('en-US')} of overtime premium.
+          </li>
+          <li>
+            <strong>Does not follow:</strong> the state taxes tips and overtime in full. Some say so in official guidance;
+            for the rest, the table notes that the state starts from federal AGI and enacted no deduction in 2026.
+          </li>
+        </ul>
+        <p>
+          Our <a href="/state-taxes/">state pages</a> describe the same rules for each state, and the{' '}
+          <a href="/tools/obbba-tax-calculator/">tips and overtime calculator</a> shows them next to your state tax
+          estimate. The calculator doesn’t subtract state deductions yet: its state figure taxes your full income.
+        </p>
+      </article>
+
+      <aside aria-labelledby="calc-heading" class="my-10 border-y border-line py-6">
+        <h2 id="calc-heading" class="text-xl/[1.3] font-bold text-ink">How much does the federal deduction save you?</h2>
+        <p class="mt-2 text-ink-2">
+          Enter your tips, overtime, and income. The calculator applies the caps and the phase-out and shows your federal
+          tax savings next to your state tax. Not sure which amounts to use? See the{' '}
+          <a href="/guides/w2-box-12-guide/#code-tp" class={linkClass}>W-2 Box 12 codes TP and TT</a>.
+        </p>
+        <a
+          href="/tools/obbba-tax-calculator/"
+          class="btn-primary mt-4 inline-flex h-11 items-center rounded-control px-5 font-semibold"
+        >
+          Estimate your tips and overtime deduction
+        </a>
+      </aside>
+
+      <section aria-labelledby="faq">
+        <h2 id="faq" class={h2Class}>Frequently asked questions</h2>
+        <div class="mt-5">
+          <FaqList faqs={faqs} />
+        </div>
+      </section>
+
+      <!-- Ad placement: after the FAQ, before the sources; away from the calculator button above. -->
+      <AdSlot client:visible format="leaderboard" placement="guide-tips-states-bottom" className="mt-10" />
+
+      <article class="prose-page mt-12">
+        <h2 id="sources">Sources and review</h2>
+        <p>
+          This guide is written and reviewed by the NetWageTax editorial team from primary sources: each state’s tax
+          agency or legislature, linked in the table, plus the federal law and IRS guidance below. Where a state has no
+          official statement, we say so and explain why we classify it. It is educational information, not tax advice.
+        </p>
+        <ul>
+          {
+            sources.map(({ label, href }) => (
+              <li>
+                <a href={href} rel="noopener" target="_blank">{label}</a>
+              </li>
+            ))
+          }
+        </ul>
+        <p>
+          Spotted something out of date? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we’ll review it.
+        </p>
+      </article>
+    </div>
+  </div>
+</BaseLayout>

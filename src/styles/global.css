@@ -50,6 +50,15 @@
   --color-map-flat: #b8cbe3;
   --color-map-graduated: #b5845a;
 
+  /* Tips and overtime map (/guides/which-states-tax-tips-and-overtime/): one hue per treatment, ink chip
+     labels at 4.5:1 or more in both themes; the legend, tooltip, and table carry the category as text. */
+  --color-map-tips-no-wage-tax: #b8cbe3;
+  --color-map-tips-follows: #8cc9a5;
+  --color-map-tips-tips-only: #9fd3d0;
+  --color-map-tips-own: #e8cf87;
+  --color-map-tips-does-not-follow: #e0a497;
+  --color-map-tips-unconfirmed: #dde1e5;
+
   --radius-control: 4px;
   --radius-panel: 6px;
 }
@@ -78,6 +87,13 @@
   --color-map-none: #2c5c46;
   --color-map-flat: #34496a;
   --color-map-graduated: #816146;
+
+  --color-map-tips-no-wage-tax: #34496a;
+  --color-map-tips-follows: #2e6b4f;
+  --color-map-tips-tips-only: #2f5f63;
+  --color-map-tips-own: #6e5a26;
+  --color-map-tips-does-not-follow: #7a3f36;
+  --color-map-tips-unconfirmed: #3a4048;
 }
 
 /*

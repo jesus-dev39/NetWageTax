@@ -5,6 +5,7 @@ import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import { estimateStateTax, findState, STATES, type StateCode } from '../lib/state-tax-data';
+import { TIPS_OVERTIME_GUIDE_PATH } from '../lib/state-tips-overtime';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
 import ExportSummaryActions from './ExportSummaryActions';
 import { QualificationChecklist, ResultPanel, Row, minusUSD, type CheckItem } from './calculator-parts';
@@ -196,7 +197,19 @@ export default function TaxCalculatorApp() {
         <form className="flex flex-col gap-6 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
           <RadioGroup legend="Filing status" name="obbba-filing-status" options={FILING_STATUSES} value={filingStatus} onChange={setFilingStatus} />
 
-          <Field id="state" label="State" hint="Optional. Adds state income tax to the breakdown." className="sm:max-w-xs">
+          <Field
+            id="state"
+            label="State"
+            hint={
+              <>
+                Optional. Adds state income tax to the breakdown.{' '}
+                <a href={TIPS_OVERTIME_GUIDE_PATH} className="text-link underline underline-offset-[3px] hover:decoration-2">
+                  Which states tax tips and overtime
+                </a>
+              </>
+            }
+            className="sm:max-w-xs"
+          >
             <NativeSelect
               id="state"
               value={stateCode ?? ''}

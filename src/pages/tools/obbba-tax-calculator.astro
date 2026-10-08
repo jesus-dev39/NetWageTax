@@ -6,6 +6,7 @@ import AdSlot from '../../components/AdSlot';
 import FaqList from '../../components/FaqList.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import RelatedDeductions from '../../components/RelatedDeductions.astro';
+import { TIPS_OVERTIME_GUIDE_PATH } from '../../lib/state-tips-overtime';
 
 const title = '2026 No Tax on Tips & Overtime Calculator (OBBBA)';
 const description =
@@ -34,8 +35,9 @@ const faqs = [
     question: 'Does this deduction eliminate payroll (FICA) taxes?',
     answer: [
       'No. The OBBBA tips and overtime deductions only reduce your federal income tax. Social Security and Medicare taxes (FICA) still apply to 100% of your reported tips and overtime, and your employer will continue to withhold them from your paycheck.',
-      'State income tax treatment varies. Some states follow the federal deduction and others do not, so check your state’s rules separately.',
+      'State income tax treatment varies. A few states follow the federal deduction, some follow it for tips only or have their own smaller break, and most tax tips and overtime in full, so check your state’s rules separately.',
     ],
+    link: { href: TIPS_OVERTIME_GUIDE_PATH, label: 'See which states tax tips and overtime in 2026' },
   },
   {
     question: 'What is the MAGI income phase-out limit for 2026?',
