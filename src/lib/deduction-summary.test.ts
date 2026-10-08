@@ -40,19 +40,20 @@ describe('buildDeductionSummary', () => {
     expect(value(s, 'Estimated FICA still owed on tips & overtime')).toBe('$918');
   });
 
-  it('carries the calculator’s state tips and overtime note only for verified states', () => {
+  it('carries the calculator’s state tips and overtime note for states that tax wages', () => {
     const result = calculateObbbaDeduction({
       filingStatus: 'single', magi: 52_000, taxYear: 2026,
       hasQualifyingTips: true, tipsAmount: 8_000, tipsOccupationConfirmed: true,
       hasQualifyingOvertime: false, overtimePremiumAmount: 0, isFLSANonExempt: true,
     });
-    const build = (code: 'GA' | 'NJ') =>
+    const build = (code: 'GA' | 'NJ' | 'TX') =>
       buildDeductionSummary({ result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, code) }, at);
     const ga = build('GA');
     expect(ga.stateTipsOvertimeNote).toContain('$1,750');
-    expect(ga.stateTipsOvertimeNote).toContain('Our estimate doesn’t apply that exclusion');
+    expect(ga.stateTipsOvertimeNote).toContain('Our estimate doesn’t apply it');
     expect(ga.lines.find((l) => l.label === 'Estimated state income tax (GA)')?.detail).toContain(ga.stateTipsOvertimeNote!);
-    expect(build('NJ').stateTipsOvertimeNote).toBeUndefined();
+    expect(build('NJ').stateTipsOvertimeNote).toBe('New Jersey doesn’t follow the federal deduction, so it taxes tips and overtime.');
+    expect(build('TX').stateTipsOvertimeNote).toBeUndefined();
   });
 
   it('explains $0 savings when the standard deduction covers all income', () => {

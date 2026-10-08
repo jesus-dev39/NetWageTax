@@ -12,6 +12,7 @@ import {
   STATES_BY_CODE,
   type StateTaxInfo,
 } from './state-tax-data';
+import type { TipsOvertimeTreatment } from './state-tips-overtime';
 
 export const EXAMPLE_WAGE = GRADUATED_REFERENCE_WAGE;
 
@@ -136,29 +137,29 @@ export function neighborSummary(s: StateTaxInfo): string {
   return parts.join(' ');
 }
 
-/** Tri-state tips & overtime notice. `unknown` must not claim anything. */
-export function tipsOvertimeStatus(s: StateTaxInfo): 'no-wage-tax' | 'follows' | 'does-not-follow' | 'unknown' {
-  if (s.structure === 'none') return 'no-wage-tax';
-  if (s.followsFederalTipsOvertime === true) return 'follows';
-  if (s.followsFederalTipsOvertime === false) return 'does-not-follow';
-  return 'unknown';
+/** How the state treats the federal tips and overtime deduction (state-tips-overtime.ts). */
+export function tipsOvertimeStatus(s: StateTaxInfo): TipsOvertimeTreatment {
+  return s.tipsOvertime.treatment;
 }
 
 /**
  * What the state does with tips and overtime, and what our estimate does about it, for the
- * state tax row of the tips & overtime calculator and its exports. Only for verified states
- * (followsFederalTipsOvertime set); undefined otherwise, so nothing is claimed.
+ * state tax row of the tips & overtime calculator and its exports. Undefined for states with no
+ * tax on wages (the row already says so).
  */
 export function stateTipsOvertimeNote(s: StateTaxInfo): string | undefined {
+  const full = 'Our estimate doesn’t subtract it yet: it taxes your full income.';
   switch (tipsOvertimeStatus(s)) {
-    case 'does-not-follow':
-      return s.tipsOvertimeNote
-        ? `${s.tipsOvertimeNote} Our estimate doesn’t apply that exclusion: it taxes your full income.`
-        : `${s.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
     case 'follows':
-      return s.tipsOvertimeNote
-        ? `${s.tipsOvertimeNote} Our estimate doesn’t apply those deductions: it taxes your full income.`
-        : `${s.name} follows the federal deduction, but our estimate still taxes tips and overtime at the state level.`;
+      return `${s.name} follows the federal deduction. ${full}`;
+    case 'tips-only':
+      return `${s.name} follows the federal deduction for tips only. ${full}`;
+    case 'own':
+      return `${s.name} doesn’t follow the federal deduction but has its own. ${s.tipsOvertime.detail} Our estimate doesn’t apply it: it taxes your full income.`;
+    case 'does-not-follow':
+      return `${s.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
+    case 'unconfirmed':
+      return `${s.tipsOvertime.detail} Our estimate taxes your full income.`;
     default:
       return undefined;
   }

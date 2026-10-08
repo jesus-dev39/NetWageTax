@@ -26,6 +26,7 @@ import {
   STRUCTURE_NAME,
   tipsOvertimeStatus,
 } from '../../lib/state-page-content';
+import { INFERRED_NOTE, TIPS_OVERTIME_GUIDE_PATH, type TipsOvertimeTreatment } from '../../lib/state-tips-overtime';
 
 // One static page per state: /state-taxes/california/, /state-taxes/new-york/, ...
 export const getStaticPaths = (() => STATES.map((s) => ({ params: { state: s.slug }, props: { s } }))) satisfies GetStaticPaths;
@@ -43,6 +44,15 @@ const taxable = Math.max(0, EXAMPLE_WAGE - s.exemptAmount);
 const neighbors = neighborRows(s);
 const related = relatedStates(s.code);
 const tipsStatus = tipsOvertimeStatus(s);
+const tips = s.tipsOvertime;
+const TIPS_HEADLINE: Record<Exclude<TipsOvertimeTreatment, 'no-wage-tax'>, string> = {
+  follows: `${s.name} follows the federal tips and overtime deduction.`,
+  'tips-only': `${s.name} follows the federal deduction for tips, but not for overtime.`,
+  own: `${s.name} doesn’t follow the federal deduction, but it has its own break.`,
+  'does-not-follow': `${s.name} does not follow the federal tips and overtime deduction.`,
+  unconfirmed: `We haven’t confirmed how ${s.name} treats the federal tips and overtime deduction for 2026.`,
+};
+const tipsHeadline = tipsStatus === 'no-wage-tax' ? '' : TIPS_HEADLINE[tipsStatus];
 const updatedLabel = formatLongDate(STATE_TAX_LAST_UPDATED);
 
 // Both calculators preselect the state from ?state=<postal code>.
@@ -243,62 +253,54 @@ const revenueLink = s.sourceUrl
 
       <h2 id="tips-overtime">Does {s.name} tax tips and overtime?</h2>
       {
-        tipsStatus === 'no-wage-tax' && (
+        tipsStatus === 'no-wage-tax' ? (
           <p>
             {s.name} doesn’t tax wages, so tips and overtime aren’t subject to state income tax either. The federal
             deduction for qualified tips and overtime (Schedule 1-A) still lowers your federal income tax.
           </p>
+        ) : (
+          <>
+            <p>
+              <strong>{tipsHeadline}</strong> {tips.detail}
+            </p>
+            {tipsStatus === 'does-not-follow' && (
+              <p>
+                Qualified tips and overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name},
+                and our estimate taxes your full wages.
+              </p>
+            )}
+            {(tipsStatus === 'follows' || tipsStatus === 'tips-only' || tipsStatus === 'own') && (
+              <p>
+                Our estimate doesn’t subtract {tipsStatus === 'own' ? `${s.name}’s own break` : 'the deduction'} yet: it
+                applies the state tax to your full wages, so it can overstate your {s.name} tax if you have qualifying
+                {tipsStatus === 'tips-only' ? 'tips' : 'tips or overtime'}.
+              </p>
+            )}
+            {tipsStatus === 'unconfirmed' && (
+              <p>
+                Check with <Fragment set:html={revenueLink} /> before you file. Our estimate applies the state tax to your
+                full wages.
+              </p>
+            )}
+          </>
         )
       }
-      {
-        tipsStatus === 'does-not-follow' &&
-          (s.tipsOvertimeNote ? (
+      <p class="text-[15px] text-ink-2">
+        {tips.inferred && <>{INFERRED_NOTE} </>}
+        {tips.sources.length > 0 && 'Source: '}
+        {
+          tips.sources.map((src, i) => (
             <>
-              <p>
-                <strong>{s.tipsOvertimeNote}</strong>
-              </p>
-              <p>
-                Our estimate doesn’t apply {s.name}’s exclusion: it applies the state tax to your full wages, so it can
-                overstate your {s.name} tax if you have qualifying tips or overtime.
-              </p>
+              {i > 0 && '; '}
+              <a href={src.url} rel="noopener" target="_blank">{src.label}</a>
+              {src.date && `, ${src.date}`}
             </>
-          ) : (
-            <p>
-              <strong>{s.name} does not follow the federal tips and overtime deduction.</strong> Qualified tips and
-              overtime you deduct on your federal return (Schedule 1-A) are still taxed by {s.name}, and our estimate
-              taxes your full wages.
-            </p>
           ))
-      }
-      {
-        tipsStatus === 'follows' &&
-          (s.tipsOvertimeNote ? (
-            <>
-              <p>
-                <strong>{s.tipsOvertimeNote}</strong>
-              </p>
-              <p>
-                Our estimate doesn’t apply {s.name}’s deductions: it applies the state tax to your full wages, so it can
-                overstate your {s.name} tax if you have qualifying tips or overtime.
-              </p>
-            </>
-          ) : (
-            <p>
-              <strong>{s.name} follows the federal tips and overtime deduction</strong>, so the qualified tips and overtime
-              you deduct on Schedule 1-A also reduce your {s.name} taxable income. Our estimate doesn’t subtract them yet:
-              it applies the state tax to your full wages.
-            </p>
-          ))
-      }
-      {
-        tipsStatus === 'unknown' && (
-          <p>
-            We haven’t verified whether {s.name} lets you subtract the federal tips and overtime deduction (Schedule
-            1-A). Check with <Fragment set:html={revenueLink} /> whether it follows the federal deduction. Our estimate
-            applies the state tax to your full wages.
-          </p>
-        )
-      }
+        }
+        {tips.sources.length > 0 && '. '}
+        Checked <time datetime={tips.checked}>{formatLongDate(tips.checked)}</time>.{' '}
+        <a href={TIPS_OVERTIME_GUIDE_PATH}>See how every state treats tips and overtime</a>
+      </p>
       {
         tipsStatus !== 'no-wage-tax' && (
           <p>

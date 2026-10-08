@@ -15,15 +15,12 @@ interface Props {
   stateTax?: StateTaxEstimate | null;
 }
 
-/**
- * What the state row says about tips and overtime. Only claim what a state does when it's
- * verified (followsFederalTipsOvertime / tipsOvertimeNote); otherwise describe what our estimate does.
- */
+/** What the state row says about tips and overtime (state-tips-overtime.ts), then what our estimate does. */
 export function stateTaxHint(stateTax: StateTaxEstimate): string {
   const info = STATES_BY_CODE[stateTax.code];
   const lead = `${stateTax.name}, ${stateTax.rateLabel}.`;
   if (tipsOvertimeStatus(info) === 'no-wage-tax') return `${stateTax.name}: no state income tax.`;
-  return `${lead} ${stateTipsOvertimeNote(info) ?? 'Our estimate taxes tips and overtime at the state level.'}`;
+  return `${lead} ${stateTipsOvertimeNote(info)}`;
 }
 
 export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stateTax = null }: Props) {

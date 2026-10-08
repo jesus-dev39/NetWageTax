@@ -136,9 +136,9 @@ describe('Georgia (HB 463, 2026)', () => {
     expect(formatStateRate(ga)).toBe('4.99% flat tax');
   });
 
-  it('does not follow the federal tips and overtime deduction and cites its source', () => {
-    expect(ga.followsFederalTipsOvertime).toBe(false);
-    expect(ga.tipsOvertimeNote).toContain('$1,750 of overtime and $1,750 of cash tips');
+  it('has its own tips and overtime exclusion instead of the federal deduction, and cites its source', () => {
+    expect(ga.tipsOvertime.treatment).toBe('own');
+    expect(ga.tipsOvertime.detail).toContain('up to $1,750 of qualified overtime');
     expect(ga.rateSource?.url).toMatch(/^https:\/\/gov\.georgia\.gov\//);
   });
 });
@@ -163,8 +163,8 @@ describe('Flat-tax states reviewed October 2026', () => {
   });
 
   it('notes Michigan’s own 2026–2028 tips and overtime deductions', () => {
-    expect(STATES_BY_CODE.MI.followsFederalTipsOvertime).toBe(true);
-    expect(STATES_BY_CODE.MI.tipsOvertimeNote).toContain('2026 through 2028');
+    expect(STATES_BY_CODE.MI.tipsOvertime.treatment).toBe('follows');
+    expect(STATES_BY_CODE.MI.tipsOvertime.detail).toContain('2026 through 2028');
   });
 });
 
@@ -219,8 +219,8 @@ describe('progressive states reviewed October 2026', () => {
   });
 
   it('marks Arizona as following the federal tips and overtime deduction (HB 4168)', () => {
-    expect(STATES_BY_CODE.AZ.followsFederalTipsOvertime).toBe(true);
-    expect(STATES_BY_CODE.AZ.tipsOvertimeNote).toContain('HB 4168');
+    expect(STATES_BY_CODE.AZ.tipsOvertime.treatment).toBe('follows');
+    expect(STATES_BY_CODE.AZ.tipsOvertime.detail).toContain('HB 4168');
     expect(STATES_BY_CODE.AZ.exemptAmount).toBe(16_100);
   });
 });
