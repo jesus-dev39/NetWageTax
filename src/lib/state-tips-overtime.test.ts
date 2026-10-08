@@ -63,7 +63,7 @@ describe('state tips and overtime rules', () => {
   it('keeps the own-break caps verified against HB 463 and Act 2026-604', () => {
     expect(STATES_BY_CODE.GA.tipsOvertime.own).toEqual({ tipsCap: 1_750, overtimeCap: 1_750 });
     expect(STATES_BY_CODE.GA.tipsOvertime.detail).toContain('full-time hourly employees');
-    expect(STATES_BY_CODE.AL.tipsOvertime.own).toEqual({ overtimeCap: 1_000 });
+    expect(STATES_BY_CODE.AL.tipsOvertime.own).toEqual({ overtimeCap: 1_000, perTaxpayer: true });
     expect(STATES_BY_CODE.AL.tipsOvertime.detail).toContain('Tips stay taxable');
     for (const s of STATES) if (s.tipsOvertime.treatment !== 'own') expect(s.tipsOvertime.own, s.code).toBeUndefined();
   });

@@ -174,7 +174,7 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
                 detail={
                   summary.stateTax.structure === 'none'
                     ? 'No state income tax on wages'
-                    : `${summary.stateTax.rateLabel} · single-filer estimate, excludes local taxes`
+                    : `${summary.stateTax.rateLabel} · simplified single-filer estimate, excludes local taxes`
                 }
                 note={summary.stateTipsOvertimeNote}
                 value={formatUSD(summary.stateTax.tax)}

@@ -50,10 +50,27 @@ describe('buildDeductionSummary', () => {
       buildDeductionSummary({ result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, code) }, at);
     const ga = build('GA');
     expect(ga.stateTipsOvertimeNote).toContain('$1,750');
-    expect(ga.stateTipsOvertimeNote).toContain('Our estimate doesn’t apply it');
+    expect(ga.stateTipsOvertimeNote).toContain('Georgia has its own exclusion');
     expect(ga.lines.find((l) => l.label === 'Estimated state income tax (GA)')?.detail).toContain(ga.stateTipsOvertimeNote!);
     expect(build('NJ').stateTipsOvertimeNote).toBe('New Jersey doesn’t follow the federal deduction, so it taxes tips and overtime.');
     expect(build('TX').stateTipsOvertimeNote).toBeUndefined();
+  });
+
+  it('says how much the state estimate subtracted, in the note and the state line', () => {
+    const result = calculateObbbaDeduction({
+      filingStatus: 'single', magi: 52_000, taxYear: 2026,
+      hasQualifyingTips: true, tipsAmount: 8_000, tipsOccupationConfirmed: true,
+      hasQualifyingOvertime: false, overtimePremiumAmount: 0, isFLSANonExempt: true,
+    });
+    const s = buildDeductionSummary(
+      { result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, 'GA', 1_750) },
+      at,
+    );
+    expect(s.stateTipsOvertimeNote).toMatch(/^Includes your \$1,750 state deduction\. Georgia has its own exclusion/);
+    const line = s.lines.find((l) => l.label === 'Estimated state income tax (GA)')!;
+    expect(line.value).toBe('$1,909');
+    expect(line.detail).toContain('simplified single-filer estimate');
+    expect(line.detail).toContain('Includes your $1,750 state deduction.');
   });
 
   it('explains $0 savings when the standard deduction covers all income', () => {

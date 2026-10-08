@@ -32,9 +32,11 @@ describe('state page copy', () => {
       if (s.structure === 'none') expect(note).toBeUndefined();
       else expect(note).toContain(s.tipsOvertime.treatment === 'unconfirmed' ? 'D.C.' : s.name);
     }
-    expect(stateTipsOvertimeNote(STATES_BY_CODE.NY)).toBe(
-      'New York follows the federal deduction for tips only. Our estimate doesn’t subtract it yet: it taxes your full income.',
+    expect(stateTipsOvertimeNote(STATES_BY_CODE.NY)).toBe('New York follows the federal deduction for tips only, so it taxes overtime.');
+    expect(stateTipsOvertimeNote(STATES_BY_CODE.NY, 8_000)).toBe(
+      'Includes your $8,000 state deduction. New York follows the federal deduction for tips only, so it taxes overtime.',
     );
-    expect(stateTipsOvertimeNote(STATES_BY_CODE.AL)).toContain('up to $1,000 per taxpayer');
+    expect(stateTipsOvertimeNote(STATES_BY_CODE.AL)).toContain('doesn’t say how the cap works on a joint return');
+    expect(stateTipsOvertimeNote(STATES_BY_CODE.GA)).toContain('full-time employees paid by the hour');
   });
 });

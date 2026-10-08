@@ -18,9 +18,8 @@ interface Props {
 /** What the state row says about tips and overtime (state-tips-overtime.ts), then what our estimate does. */
 export function stateTaxHint(stateTax: StateTaxEstimate): string {
   const info = STATES_BY_CODE[stateTax.code];
-  const lead = `${stateTax.name}, ${stateTax.rateLabel}.`;
   if (tipsOvertimeStatus(info) === 'no-wage-tax') return `${stateTax.name}: no state income tax.`;
-  return `${lead} ${stateTipsOvertimeNote(info)}`;
+  return `${stateTax.name}, ${stateTax.rateLabel}, simplified estimate. ${stateTipsOvertimeNote(info, stateTax.stateDeduction)}`;
 }
 
 export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stateTax = null }: Props) {
