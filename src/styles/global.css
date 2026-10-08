@@ -88,12 +88,12 @@
   --color-map-flat: #34496a;
   --color-map-graduated: #816146;
 
-  --color-map-tips-no-wage-tax: #34496a;
-  --color-map-tips-follows: #2e6b4f;
-  --color-map-tips-tips-only: #2f5f63;
-  --color-map-tips-own: #6e5a26;
-  --color-map-tips-does-not-follow: #7a3f36;
-  --color-map-tips-unconfirmed: #3a4048;
+  --color-map-tips-no-wage-tax: #2b5797;
+  --color-map-tips-follows: #2f6e3a;
+  --color-map-tips-tips-only: #06686f;
+  --color-map-tips-own: #7d6512;
+  --color-map-tips-does-not-follow: #8e2f45;
+  --color-map-tips-unconfirmed: #5e5f63;
 }
 
 /*

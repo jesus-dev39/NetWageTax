@@ -95,6 +95,18 @@ publish the next year's numbers, and all states every January.
       instructions are out, check whether DC allows the federal tips and overtime deductions, then set
       `TIPS_OVERTIME_RULES.DC` to the right category with that source.
 
+- [ ] **Oregon: SB 1507 referendum (after the November 2026 election).** A referendum challenges SB 1507's
+      disconnections (car loan interest, QSBS, bonus depreciation). Once the result is certified, check
+      whether Oregon allows the car loan interest deduction for 2026 and update the car loan calculator FAQ
+      ("Can I deduct car loan interest on my state return too?") and, if anything changed, the Oregon row in
+      `src/lib/state-tips-overtime.ts`.
+
+- [ ] **Alabama: is the $1,000 overtime cap per person on a joint return? (before the tips calculator
+      change).** Act 2026-604 (HB 527) allows qualified overtime "not to exceed one thousand dollars
+      ($1,000) per taxpayer", and the ALDOR page doesn't say whether a joint return can claim $1,000 for
+      each spouse, or whether the federal income phase-out applies. Confirm with ALDOR guidance or the 2026
+      Form 40 instructions before the calculator applies `TIPS_OVERTIME_RULES.AL.own.overtimeCap`.
+
 ## After the redesign ships
 
 - [ ] **Bracket engine (approved October 4, 2026).** Replace `exemptAmount × estimateRate` with a
@@ -104,3 +116,6 @@ publish the next year's numbers, and all states every January.
       $94,700, with a note for higher incomes; New York and Connecticut recapture stays a note, not part
       of the calculation; California's 1% Behavioral Health Services Tax is its own row in the
       calculation.
+      - Utah (credits piece): the taxpayer tax credit (6% of the federal standard deduction, reduced as
+        income rises) isn't applied today. Include it with its income phase-out when the engine runs on
+        brackets and credits.
