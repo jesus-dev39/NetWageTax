@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { STATES, STATES_BY_CODE } from './state-tax-data';
-import { leadParagraph, metaDescription, pageTitle, rankingSentences, stateTipsOvertimeNote, tipsOvertimeStatus } from './state-page-content';
+import { leadParagraph, metaDescription, pageTitle, rankingSentences, stateCalculatorLinks, stateTipsOvertimeNote, tipsOvertimeStatus } from './state-page-content';
 
 describe('state page copy', () => {
   it('gives every state a unique title, description and lead', () => {
@@ -38,5 +38,30 @@ describe('state page copy', () => {
     );
     expect(stateTipsOvertimeNote(STATES_BY_CODE.AL)).toContain('doesn’t say how the cap works on a joint return');
     expect(stateTipsOvertimeNote(STATES_BY_CODE.GA)).toContain('full-time employees paid by the hour');
+  });
+});
+
+describe('calculators for each state', () => {
+  it('links the four calculators, the first two with the state selected', () => {
+    for (const s of STATES) {
+      const links = stateCalculatorLinks(s);
+      expect(links.map((l) => l.title)).toEqual(['Paycheck calculator', 'Tips and overtime calculator', 'Senior deduction calculator', 'Car loan interest calculator']);
+      expect(links[0].href).toBe(`/tools/paycheck-calculator/?state=${s.code}#calculator`);
+      expect(links[1].href).toBe(`/tools/obbba-tax-calculator/?state=${s.code}#calculator`);
+      expect(links[2].body).toMatch(/^A federal deduction of up to \$6,000/);
+      expect(links[3].body).toMatch(/^A federal deduction/);
+    }
+  });
+
+  it('says the tips savings are federal only in states with no tax on wages', () => {
+    for (const s of STATES.filter((x) => x.structure === 'none')) {
+      expect(stateCalculatorLinks(s)[1].body).toContain('The savings are federal only');
+    }
+    expect(stateCalculatorLinks(STATES_BY_CODE.CA)[1].body).not.toContain('federal only');
+  });
+
+  it('notes that Oregon doesn’t allow the car loan interest deduction, and only Oregon', () => {
+    expect(stateCalculatorLinks(STATES_BY_CODE.OR)[3].body).toContain('Oregon doesn’t allow it on the state return');
+    expect(STATES.filter((s) => stateCalculatorLinks(s)[3].body.includes('state return')).map((s) => s.code)).toEqual(['OR']);
   });
 });

@@ -164,17 +164,17 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
       <ul className="mt-4 flex flex-col gap-2" aria-label={`More about ${info.name}`}>
         <li>
           <a href={statePagePath(info)} className={`${link} font-semibold`}>
-            {info.name} tax guide
+            Full {info.name} tax guide
           </a>
         </li>
         <li>
           <a href={paycheckHref(info)} className={link}>
-            Paycheck calculator with {info.name} tax
+            Paycheck calculator for {info.name}
           </a>
         </li>
         <li>
           <a href={obbbaHref(info)} className={link}>
-            Tips and overtime calculator with {info.name} tax
+            Tips and overtime calculator for {info.name}
           </a>
         </li>
       </ul>

@@ -13,6 +13,8 @@ import {
   type StateTaxInfo,
 } from './state-tax-data';
 import type { TipsOvertimeTreatment } from './state-tips-overtime';
+import { SENIOR_PARAMS_BY_YEAR } from './obbba-params';
+import { SITE_TAX_YEAR } from './site';
 
 export const EXAMPLE_WAGE = GRADUATED_REFERENCE_WAGE;
 
@@ -170,6 +172,49 @@ export function stateTipsOvertimeNote(s: StateTaxInfo, stateDeduction = 0): stri
       break;
   }
   return lead ? `${lead} ${body}` : body;
+}
+
+export interface CalculatorLink {
+  href: string;
+  title: string;
+  body: string;
+}
+
+/** Car loan interest deduction: states known not to allow it on the state return. */
+const CAR_LOAN_STATE_NOTE: Partial<Record<StateTaxInfo['code'], string>> = {
+  OR: 'Oregon doesn’t allow it on the state return (SB 1507, 2026).',
+};
+
+/** "Calculators for [State]" on each state page: the two state-aware calculators, then the two federal-only ones. */
+export function stateCalculatorLinks(s: StateTaxInfo): CalculatorLink[] {
+  const noWageTax = s.structure === 'none';
+  const car = CAR_LOAN_STATE_NOTE[s.code];
+  return [
+    {
+      href: `/tools/paycheck-calculator/?state=${s.code}#calculator`,
+      title: 'Paycheck calculator',
+      body: noWageTax
+        ? `Take-home pay after federal income tax, Social Security, and Medicare, with ${s.name} selected: no state income tax to withhold.`
+        : `Take-home pay after federal income tax, Social Security, Medicare, and ${s.name} income tax, with ${s.name} selected.`,
+    },
+    {
+      href: `/tools/obbba-tax-calculator/?state=${s.code}#calculator`,
+      title: 'Tips and overtime calculator',
+      body: noWageTax
+        ? `Your federal deduction for qualified tips and overtime, with ${s.name} selected. The savings are federal only, since ${s.name} doesn’t tax wages.`
+        : `Your federal deduction for qualified tips and overtime, with ${s.name} selected and its state rules applied to the ${s.name} estimate.`,
+    },
+    {
+      href: '/tools/senior-deduction-calculator/',
+      title: 'Senior deduction calculator',
+      body: `A federal deduction of up to ${formatUSD(SENIOR_PARAMS_BY_YEAR[SITE_TAX_YEAR].amountPerPerson)} for each person 65 or older, after the income phase-out.`,
+    },
+    {
+      href: '/tools/car-loan-interest-deduction-calculator/',
+      title: 'Car loan interest calculator',
+      body: `A federal deduction for interest on a loan for a new, U.S.-assembled vehicle.${car ? ` ${car}` : ''}`,
+    },
+  ];
 }
 
 function listJoin(items: string[]): string {
