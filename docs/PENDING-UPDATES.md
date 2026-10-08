@@ -101,11 +101,13 @@ publish the next year's numbers, and all states every January.
       ("Can I deduct car loan interest on my state return too?") and, if anything changed, the Oregon row in
       `src/lib/state-tips-overtime.ts`.
 
-- [ ] **Alabama: is the $1,000 overtime cap per person on a joint return? (before the tips calculator
-      change).** Act 2026-604 (HB 527) allows qualified overtime "not to exceed one thousand dollars
-      ($1,000) per taxpayer", and the ALDOR page doesn't say whether a joint return can claim $1,000 for
-      each spouse, or whether the federal income phase-out applies. Confirm with ALDOR guidance or the 2026
-      Form 40 instructions before the calculator applies `TIPS_OVERTIME_RULES.AL.own.overtimeCap`.
+- [ ] **Alabama: is the $1,000 overtime cap per person on a joint return? (2026 Form 40 instructions).**
+      Act 2026-604 (HB 527) allows qualified overtime "not to exceed one thousand dollars ($1,000) per
+      taxpayer", and the ALDOR page doesn't say how that works on a joint return or whether the federal
+      income phase-out applies. The tips calculator assumes up to $1,000 for each spouse with overtime
+      (the "Both spouses earned qualified overtime" box) and no phase-out, and says the law is unclear.
+      Confirm with ALDOR guidance or the 2026 Form 40 instructions, then update
+      `TIPS_OVERTIME_RULES.AL` (`own.perTaxpayer`, `calculatorNote`) and the tests.
 
 ## After the redesign ships
 

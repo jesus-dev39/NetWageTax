@@ -472,15 +472,20 @@ export interface StateTaxEstimate {
   structure: TaxStructure;
   rateLabel: string;
   tax: number;
+  /** Tips and overtime subtracted before the estimate (state-tips-overtime-subtraction.ts); 0 if none. */
+  stateDeduction: number;
 }
 
-export function estimateStateTax(income: number, stateCode: StateCode): StateTaxEstimate {
+/** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
+export function estimateStateTax(income: number, stateCode: StateCode, stateDeduction = 0): StateTaxEstimate {
   const s = STATES_BY_CODE[stateCode];
+  const deduction = s.structure === 'none' ? 0 : Math.max(0, Math.min(stateDeduction, income));
   return {
     code: s.code,
     name: s.name,
     structure: s.structure,
     rateLabel: formatStateRate(s),
-    tax: calculateStateIncomeTax(income, stateCode),
+    tax: calculateStateIncomeTax(income - deduction, stateCode),
+    stateDeduction: deduction,
   };
 }

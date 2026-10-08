@@ -121,8 +121,12 @@ const summary: { label: string; value: string; note?: string }[] = [
         salaries and less accurate for much higher or lower incomes.
       </li>
       <li>
-        The state estimate uses single-filer figures whatever filing status you choose, and it taxes your full wages:
-        it doesn't subtract the federal tips and overtime deduction, even in a state that follows it.
+        The state estimate uses single-filer figures whatever filing status you choose. In the tips and overtime
+        calculator, it first subtracts what your state allows for tips and overtime: the final federal deduction in
+        states that follow it, the tips part only in states that follow it for tips only, and the state's own capped
+        amounts in Georgia and Alabama. The paycheck calculator and the state pages tax full wages. Each state's
+        treatment is listed in our guide to <a href="/guides/which-states-tax-tips-and-overtime/">which states tax tips
+        and overtime</a>.
       </li>
     </ul>
     <p>

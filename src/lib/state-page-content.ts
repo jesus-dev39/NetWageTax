@@ -143,26 +143,33 @@ export function tipsOvertimeStatus(s: StateTaxInfo): TipsOvertimeTreatment {
 }
 
 /**
- * What the state does with tips and overtime, and what our estimate does about it, for the
- * state tax row of the tips & overtime calculator and its exports. Undefined for states with no
- * tax on wages (the row already says so).
+ * What the state does with tips and overtime and what our estimate subtracts, for the state tax row
+ * of the tips & overtime calculator and its exports. `stateDeduction` is the amount the estimate
+ * took off (state-tips-overtime-subtraction.ts). Undefined for states with no tax on wages.
  */
-export function stateTipsOvertimeNote(s: StateTaxInfo): string | undefined {
-  const full = 'Our estimate doesn’t subtract it yet: it taxes your full income.';
+export function stateTipsOvertimeNote(s: StateTaxInfo, stateDeduction = 0): string | undefined {
+  const lead = stateDeduction > 0 ? `Includes your ${formatUSD(stateDeduction)} state deduction.` : '';
+  let body: string;
   switch (tipsOvertimeStatus(s)) {
-    case 'follows':
-      return `${s.name} follows the federal deduction. ${full}`;
-    case 'tips-only':
-      return `${s.name} follows the federal deduction for tips only. ${full}`;
-    case 'own':
-      return `${s.name} doesn’t follow the federal deduction but has its own. ${s.tipsOvertime.detail} Our estimate doesn’t apply it: it taxes your full income.`;
-    case 'does-not-follow':
-      return `${s.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
-    case 'unconfirmed':
-      return `${s.tipsOvertime.detail} Our estimate taxes your full income.`;
-    default:
+    case 'no-wage-tax':
       return undefined;
+    case 'follows':
+      body = `${s.name} follows the federal tips and overtime deduction.`;
+      break;
+    case 'tips-only':
+      body = `${s.name} follows the federal deduction for tips only, so it taxes overtime.`;
+      break;
+    case 'own':
+      body = s.tipsOvertime.calculatorNote ?? `${s.name} has its own break instead of the federal deduction.`;
+      break;
+    case 'does-not-follow':
+      body = `${s.name} doesn’t follow the federal deduction, so it taxes tips and overtime.`;
+      break;
+    case 'unconfirmed':
+      body = `${s.tipsOvertime.detail} Our estimate doesn’t subtract anything.`;
+      break;
   }
+  return lead ? `${lead} ${body}` : body;
 }
 
 function listJoin(items: string[]): string {

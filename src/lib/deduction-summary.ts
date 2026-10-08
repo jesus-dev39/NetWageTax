@@ -81,7 +81,7 @@ export interface DeductionSummary {
   /** Estimated employee FICA on the reported tips and overtime. */
   fica: number;
   stateTax?: StateTaxEstimate | null;
-  /** The calculator's note on the state's own treatment of tips and overtime (verified states only). */
+  /** What the state does with tips and overtime and what the estimate subtracted ("Includes your $X state deduction."). */
   stateTipsOvertimeNote?: string;
   taxYear: number;
   filingStatus: string;
@@ -151,7 +151,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
   const minute = Math.floor(generatedAt.getTime() / 60_000);
   const referenceId = `NWT-${result.taxYear}-${referenceFor([minute, result.filingStatus, result.magi, tipsReported, overtimeReported, stateTax?.code ?? ''])}`;
 
-  const stateNote = stateTax ? stateTipsOvertimeNote(STATES_BY_CODE[stateTax.code]) : undefined;
+  const stateNote = stateTax ? stateTipsOvertimeNote(STATES_BY_CODE[stateTax.code], stateTax.stateDeduction) : undefined;
 
   return {
     referenceId,
@@ -204,7 +204,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
               detail:
                 stateTax.structure === 'none'
                   ? 'No state income tax'
-                  : `${stateTax.rateLabel} · single-filer estimate, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
+                  : `${stateTax.rateLabel} · simplified single-filer estimate, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
             },
           ]
         : []),

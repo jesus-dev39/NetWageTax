@@ -5,7 +5,8 @@ import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import { estimateStateTax, findState, STATES, type StateCode } from '../lib/state-tax-data';
-import { TIPS_OVERTIME_GUIDE_PATH } from '../lib/state-tips-overtime';
+import { TIPS_OVERTIME_GUIDE_PATH, TIPS_OVERTIME_RULES } from '../lib/state-tips-overtime';
+import { stateTipsOvertimeSubtraction } from '../lib/state-tips-overtime-subtraction';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
 import ExportSummaryActions from './ExportSummaryActions';
 import { QualificationChecklist, ResultPanel, Row, minusUSD, type CheckItem } from './calculator-parts';
@@ -44,6 +45,8 @@ export default function TaxCalculatorApp() {
   const [overtimeEnabled, setOvertimeEnabled] = useState(false);
   const [overtimeAmount, setOvertimeAmount] = useState<number | null>(null);
   const [flsaNonExempt, setFlsaNonExempt] = useState(false);
+  // Per-taxpayer state caps (Alabama) on a joint return.
+  const [bothSpousesOvertime, setBothSpousesOvertime] = useState(false);
 
   const rootRef = useRef<HTMLElement>(null);
   const tipsInputRef = useRef<HTMLInputElement>(null);
@@ -108,11 +111,24 @@ export default function TaxCalculatorApp() {
     Math.min(result.overtime.phaseoutReduction, result.overtime.deductionBeforePhaseout);
   const savings = estimateFederalTaxSavings(magiValue, result.totalCombinedDeduction, filingStatus);
   const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus);
-  // State tax is estimated on full MAGI: the state's tips & overtime treatment (state-tips-overtime.ts) is described, not applied yet.
-  const stateTax = useMemo(
-    () => (stateCode ? estimateStateTax(magiValue, stateCode) : null),
-    [stateCode, magiValue],
-  );
+  // Qualified amounts as entered (before federal caps), for states with their own caps.
+  const tipsQualified = tipsEnabled && occupationConfirmed ? (tipsAmount ?? 0) : 0;
+  const overtimeQualified = overtimeEnabled && flsaNonExempt ? (overtimeAmount ?? 0) : 0;
+  const askBothSpouses =
+    stateCode !== null && filingStatus === 'mfj' && overtimeQualified > 0 && Boolean(TIPS_OVERTIME_RULES[stateCode].own?.perTaxpayer);
+  // State tax is estimated on MAGI minus what the state lets you subtract for tips and overtime.
+  const stateTax = useMemo(() => {
+    if (!stateCode) return null;
+    const subtraction = stateTipsOvertimeSubtraction(stateCode, {
+      tipsDeduction: result.tips.deductionFinal,
+      overtimeDeduction: result.overtime.deductionFinal,
+      tipsReported: tipsQualified,
+      overtimePremiumReported: overtimeQualified,
+      filingStatus,
+      bothSpousesHaveOvertime: askBothSpouses && bothSpousesOvertime,
+    });
+    return estimateStateTax(magiValue, stateCode, subtraction.total);
+  }, [stateCode, magiValue, result, tipsQualified, overtimeQualified, filingStatus, askBothSpouses, bothSpousesOvertime]);
 
   const phaseoutStart =
     filingStatus === 'mfj'
@@ -225,7 +241,20 @@ export default function TaxCalculatorApp() {
             </NativeSelect>
             {stateTax && (
               <div id="state-help" className="num mt-2 text-[15px] text-ink-2">
-                {stateTax.structure === 'none' ? <NoStateTaxBadge /> : `${stateTax.rateLabel}, est. ${formatUSD(stateTax.tax)}`}
+                {stateTax.structure === 'none' ? (
+                  <NoStateTaxBadge />
+                ) : (
+                  `${stateTax.rateLabel}, est. ${formatUSD(stateTax.tax)}${
+                    stateTax.stateDeduction > 0 ? `, after your ${formatUSD(stateTax.stateDeduction)} state deduction` : ''
+                  }`
+                )}
+              </div>
+            )}
+            {askBothSpouses && (
+              <div className="mt-3">
+                <Checkbox id="both-spouses-overtime" checked={bothSpousesOvertime} onChange={setBothSpousesOvertime}>
+                  Both spouses earned qualified overtime (up to {formatUSD(TIPS_OVERTIME_RULES[stateCode!].own!.overtimeCap!)} each)
+                </Checkbox>
               </div>
             )}
           </Field>

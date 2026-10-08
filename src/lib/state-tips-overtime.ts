@@ -30,8 +30,13 @@ export interface TipsOvertimeRule {
   sources: TipsOvertimeSource[];
   /** Date we last checked the rule (YYYY-MM-DD). */
   checked: string;
-  /** 'own' states: the state's own yearly caps (for the calculator). */
-  own?: { tipsCap?: number; overtimeCap?: number };
+  /**
+   * 'own' states: the state's own yearly caps (for the calculator). `perTaxpayer`: the overtime cap
+   * applies to each spouse with qualified overtime on a joint return.
+   */
+  own?: { tipsCap?: number; overtimeCap?: number; perTaxpayer?: boolean };
+  /** 'own' states: what the calculator applies and assumes, shown next to the state estimate. */
+  calculatorNote?: string;
 }
 
 export const TREATMENT_LABEL: Record<TipsOvertimeTreatment, string> = {
@@ -65,7 +70,9 @@ export const TIPS_OVERTIME_RULES: Record<StateCode, TipsOvertimeRule> = {
     treatment: 'own',
     detail:
       'Act 2026-604 lets you deduct the premium part of qualified overtime, up to $1,000 per taxpayer, for 2026 through 2028. Tips stay taxable.',
-    own: { overtimeCap: 1_000 },
+    own: { overtimeCap: 1_000, perTaxpayer: true },
+    calculatorNote:
+      'Alabama has its own deduction: up to $1,000 of qualified overtime premium per taxpayer with overtime, so up to $2,000 on a joint return when both spouses have it. Tips are taxed. Alabama’s law doesn’t say how the cap works on a joint return, so this may change.',
     sources: [
       { label: 'Alabama Department of Revenue: Overtime Premium Deduction, Act 2026-604', url: 'https://www.revenue.alabama.gov/individual-corporate/overtime-premium-deduction-act-2026-604/' },
       { label: 'HB 527 (2026), enrolled (PDF)', url: 'https://alison.legislature.state.al.us/files/pdf/SearchableInstruments/2026RS/HB527-enr.pdf' },
@@ -152,6 +159,8 @@ export const TIPS_OVERTIME_RULES: Record<StateCode, TipsOvertimeRule> = {
     detail:
       'HB 463 (2026) excludes up to $1,750 of qualified overtime for full-time hourly employees and up to $1,750 of tips, cash or charged, in a tipped occupation, for 2026 through 2028.',
     own: { tipsCap: 1_750, overtimeCap: 1_750 },
+    calculatorNote:
+      'Georgia has its own exclusion: up to $1,750 of tips and up to $1,750 of qualified overtime. The overtime exclusion is only for full-time employees paid by the hour; we assume you are one.',
     sources: [{ label: 'HB 463 (2026), as passed (PDF)', url: 'https://gov.georgia.gov/document/2026-signed-legislation/hb-463/download' }],
     checked: C1008,
   },
