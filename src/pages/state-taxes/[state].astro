@@ -272,7 +272,7 @@ const revenueLink = s.sourceUrl
             {(tipsStatus === 'follows' || tipsStatus === 'tips-only' || tipsStatus === 'own') && (
               <p>
                 Our estimate doesn’t subtract {tipsStatus === 'own' ? `${s.name}’s own break` : 'the deduction'} yet: it
-                applies the state tax to your full wages, so it can overstate your {s.name} tax if you have qualifying
+                applies the state tax to your full wages, so it can overstate your {s.name} tax if you have qualifying{' '}
                 {tipsStatus === 'tips-only' ? 'tips' : 'tips or overtime'}.
               </p>
             )}
