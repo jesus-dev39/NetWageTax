@@ -21,6 +21,12 @@ import { phaseoutExcess, phaseoutReduction, phaseoutSteps } from './phaseout';
 
 export type CarLoanIneligibilityReason = 'USED_VEHICLE' | 'ASSEMBLED_OUTSIDE_US';
 
+/** Why the vehicle doesn't qualify, for the calculator and the exports. */
+export const CAR_LOAN_INELIGIBLE_COPY: Record<CarLoanIneligibilityReason, string> = {
+  USED_VEHICLE: 'Used vehicles don’t qualify: the vehicle’s original use has to start with you.',
+  ASSEMBLED_OUTSIDE_US: 'Only vehicles with final assembly in the United States qualify.',
+};
+
 export interface CarLoanInterestInput {
   filingStatus: FilingStatus;
   /** Modified adjusted gross income, USD, >= 0. */

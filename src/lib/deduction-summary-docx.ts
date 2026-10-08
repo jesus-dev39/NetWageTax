@@ -100,6 +100,23 @@ function lineRow(line: SummaryLine): TableRow {
   });
 }
 
+/** Page footer with the estimate disclaimer, shared by the deduction worksheets. */
+export function disclaimerFooter(): Footer {
+  return new Footer({
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        border: { top: { style: BorderStyle.SINGLE, size: 4, color: LINE, space: 6 } },
+        children: [text(SUMMARY_DISCLAIMER, { bold: true, size: 16, color: INK_2 })],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [text('NetWageTax.com is not affiliated with the IRS or any government agency.', { size: 16, color: INK_2 })],
+      }),
+    ],
+  });
+}
+
 export function metaRow(label: string, value: string): Paragraph {
   return new Paragraph({
     spacing: { after: 40 },
@@ -121,21 +138,7 @@ export function buildSummaryDocument(summary: DeductionSummary): Document {
             margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
           },
         },
-        footers: {
-          default: new Footer({
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                border: { top: { style: BorderStyle.SINGLE, size: 4, color: LINE, space: 6 } },
-                children: [text(SUMMARY_DISCLAIMER, { bold: true, size: 16, color: INK_2 })],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [text('NetWageTax.com is not affiliated with the IRS or any government agency.', { size: 16, color: INK_2 })],
-              }),
-            ],
-          }),
-        },
+        footers: { default: disclaimerFooter() },
         children: [
           new Paragraph({
             spacing: { after: 60 },

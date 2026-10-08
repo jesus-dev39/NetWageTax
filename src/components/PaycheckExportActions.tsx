@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal, flushSync } from 'react-dom';
 import type { PaycheckInput, PaycheckResult } from '../lib/paycheck';
 import {
   buildPaycheckSummary,
   PAYCHECK_DISCLAIMER,
+  PAYCHECK_TAX_YEAR,
   PAYCHECK_NOT_A_PAYSTUB,
   type PaycheckSummary,
   type PaycheckSummaryRow,
 } from '../lib/paycheck-summary';
 import { formatUSDCents } from './CurrencyInput';
-import ExportAdModal, { type ExportFormat, type ExportRequest } from './ExportAdModal';
-import ExportToolbar from './ExportToolbar';
+import ExportActions from './ExportActions';
 import { VoucherFigure, VoucherFooter, VoucherHeader } from './VoucherParts';
 
 interface Props {
@@ -19,58 +17,18 @@ interface Props {
 }
 
 export default function PaycheckExportActions({ input, result }: Props) {
-  const canExport = result.grossAnnual > 0;
-  const [generatedAt, setGeneratedAt] = useState(() => new Date());
-  const [mounted, setMounted] = useState(false);
-  const [request, setRequest] = useState<ExportRequest | null>(null);
-
-  const summary = useMemo(() => buildPaycheckSummary(input, result, generatedAt), [input, result, generatedAt]);
-
-  // Portaled to <body> after hydration (so server and client markup match) for the print stylesheet.
-  useEffect(() => setMounted(true), []);
-
-  // Stamp the estimate at print time, including Ctrl+P.
-  useEffect(() => {
-    const stamp = () => flushSync(() => setGeneratedAt(new Date()));
-    window.addEventListener('beforeprint', stamp);
-    return () => window.removeEventListener('beforeprint', stamp);
-  }, []);
-
-  function handlePrint() {
-    flushSync(() => setGeneratedAt(new Date()));
-    window.print();
-  }
-
-  const fresh = () => buildPaycheckSummary(input, result, new Date());
-
-  // Every format opens the same modal; files are built from fresh data at click time.
-  function exportRequest(format: ExportFormat): ExportRequest {
-    const titles: Record<ExportFormat, string> = {
-      pdf: `Your ${summary.taxYear} paycheck estimate (PDF)`,
-      docx: `Your ${summary.taxYear} paycheck estimate (Word)`,
-      xlsx: `Your ${summary.taxYear} paycheck estimate (Excel)`,
-    };
-    const run: Record<ExportFormat, () => Promise<void> | void> = {
-      pdf: handlePrint,
-      docx: async () => (await import('../lib/paycheck-summary-docx')).downloadPaycheckDocx(fresh()),
-      xlsx: async () => (await import('../lib/paycheck-summary-xlsx')).downloadPaycheckXlsx(fresh()),
-    };
-    return { format, title: titles[format], run: run[format] };
-  }
-
+  const build = (at: Date) => buildPaycheckSummary(input, result, at);
   return (
-    <div className="print:hidden">
-      <ExportToolbar
-        heading="Save this estimate"
-        canExport={canExport}
-        disabledHint="Enter your pay to enable exports."
-        onSelect={(format) => setRequest(exportRequest(format))}
-      />
-
-      <ExportAdModal request={request} onClose={() => setRequest(null)} />
-
-      {mounted && canExport && createPortal(<PaycheckVoucher summary={summary} />, document.body)}
-    </div>
+    <ExportActions
+      heading="Save this estimate"
+      canExport={result.grossAnnual > 0}
+      disabledHint="Enter your pay to enable exports."
+      title={`Your ${PAYCHECK_TAX_YEAR} paycheck estimate`}
+      build={build}
+      voucher={(summary) => <PaycheckVoucher summary={summary} />}
+      docx={async (s) => (await import('../lib/paycheck-summary-docx')).downloadPaycheckDocx(s)}
+      xlsx={async (s) => (await import('../lib/paycheck-summary-xlsx')).downloadPaycheckXlsx(s)}
+    />
   );
 }
 

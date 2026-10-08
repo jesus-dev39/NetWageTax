@@ -78,7 +78,8 @@ publish the next year's numbers, and all states every January.
       and the 2025 instructions. When the final form and the 2026 instructions are out, check the amounts,
       thresholds, the birth date cutoff (January 2, 1962), the car loan rounding (part steps rounded up), the
       vehicle and loan requirements (also in TD 10054, effective November 9, 2026), and the wording of each calculator against them,
-      then remove `SCHEDULE_1A_DRAFT_NOTICE` (`src/lib/site.ts`) from their assumptions. The draft carries the
+      then remove `SCHEDULE_1A_DRAFT_NOTICE` (`src/lib/site.ts`) from their assumptions and exports, and drop "draft" from
+      the `basis` lines in `src/lib/schedule-1a-summary.ts`. The draft carries the
       total to Form 1040 line 13a (13b in 2025): the site cites no 1040 line numbers for 2026 until then.
 
 - [ ] **Guide "Which states tax tips and overtime": full review (January 2027).** Re-check the category,

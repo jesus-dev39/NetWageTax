@@ -7,10 +7,13 @@ import {
   isCoveredByStandardDeduction,
 } from '../lib/marginal-rate';
 import { SENIOR_PARAMS_BY_YEAR, seniorBirthCutoffLabel, type FilingStatus } from '../lib/obbba-params';
-import { calculateSeniorDeduction } from '../lib/senior-deduction';
+import { calculateSeniorDeduction, SENIOR_MFS_NOTE as MFS_NOTE, seniorIneligibilityNote } from '../lib/senior-deduction';
+import { buildSeniorSummary } from '../lib/schedule-1a-summary';
 import { SCHEDULE_1A_DRAFT_NOTICE } from '../lib/site';
 import { FederalTaxRows, QualificationChecklist, ResultPanel, Row, minusUSD, type CheckItem } from './calculator-parts';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
+import ExportActions from './ExportActions';
+import Schedule1aVoucher from './Schedule1aVoucher';
 import { Checkbox, Field, RadioGroup, type RadioOption } from './form';
 
 const TAX_YEAR = 2026;
@@ -18,7 +21,6 @@ const CUTOFF = seniorBirthCutoffLabel(TAX_YEAR);
 const PHASEOUT = SENIOR_PARAMS_BY_YEAR[TAX_YEAR].phaseout;
 const RATE = PHASEOUT.kind === 'rate' ? PHASEOUT.rate : 0;
 const RATE_LABEL = `${+(RATE * 100).toFixed(2)}%`;
-const MFS_NOTE = 'Married filing separately can’t claim the senior deduction: married couples must file jointly.';
 
 const FILING_STATUSES: RadioOption<FilingStatus>[] = [
   { value: 'single', label: 'Single' },
@@ -62,12 +64,7 @@ export default function SeniorDeductionApp() {
   const federal = compareFederalTax(magiValue, result.deductionFinal, filingStatus, extraStandardDeduction);
   const coveredByStandardDeduction = isCoveredByStandardDeduction(magiValue, filingStatus, extraStandardDeduction);
 
-  const notQualifyingNote =
-    result.ineligibilityReason === 'NO_QUALIFYING_PERSON'
-      ? isMfj
-        ? `Neither of you was born before ${CUTOFF}, so neither qualifies for ${TAX_YEAR}.`
-        : `You need to be born before ${CUTOFF} to qualify for ${TAX_YEAR}.`
-      : null;
+  const notQualifyingNote = result.ineligibilityReason === 'NO_QUALIFYING_PERSON' ? seniorIneligibilityNote(result) : null;
 
   const statusLine = isMfs
     ? MFS_NOTE
@@ -221,6 +218,22 @@ export default function SeniorDeductionApp() {
           </section>
 
           <FederalTaxRows comparison={federal} deductionLabel="senior deduction" />
+
+          <ExportActions
+            heading={`Save your ${TAX_YEAR} senior deduction worksheet`}
+            canExport={magiValue > 0}
+            disabledHint="Enter your MAGI to enable exports."
+            title={`Your ${TAX_YEAR} senior deduction worksheet`}
+            build={(at) =>
+              buildSeniorSummary(
+                { result, federal, coveredByStandardDeduction, taxpayerIs65: taxpayer65 === 'yes', spouseIs65: isMfj && spouse65 === 'yes' },
+                at,
+              )
+            }
+            voucher={(summary) => <Schedule1aVoucher summary={summary} />}
+            docx={async (s) => (await import('../lib/schedule-1a-docx')).downloadSchedule1aDocx(s)}
+            xlsx={async (s) => (await import('../lib/schedule-1a-xlsx')).downloadSchedule1aXlsx(s)}
+          />
 
           <p className="border-l-4 border-warning bg-warning-tint px-4 py-3 text-[15px] text-ink">
             Estimates only, not tax advice. Savings assume the {TAX_YEAR} standard deduction, plus{' '}
