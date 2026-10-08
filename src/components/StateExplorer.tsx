@@ -11,6 +11,7 @@ import {
   type StateTaxInfo,
   type TaxStructure,
 } from '../lib/state-tax-data';
+import { EXAMPLE_WAGE } from '../lib/state-page-content';
 import { TIPS_OVERTIME_GUIDE_PATH } from '../lib/state-tips-overtime';
 import { formatUSD } from './CurrencyInput';
 import { Field, RADIO_CLASS } from './form';
@@ -20,7 +21,6 @@ import USStateMap, { MAP_LEGEND } from './USStateMap';
 
 const PAYCHECK_PATH = '/tools/paycheck-calculator/';
 const OBBBA_PATH = '/tools/obbba-tax-calculator/';
-const EXAMPLE_WAGES = 50_000;
 const STRUCTURES: TaxStructure[] = ['none', 'flat', 'graduated'];
 
 // Both calculators read ?state=<postal code> on mount and preselect it.
@@ -143,7 +143,7 @@ export default function StateExplorer() {
 }
 
 function StateDetail({ info }: { info: StateTaxInfo }) {
-  const example = calculateStateIncomeTax(EXAMPLE_WAGES, info.code);
+  const example = calculateStateIncomeTax(EXAMPLE_WAGE, info.code);
   return (
     <div aria-live="polite">
       <h3 className="text-xl/[1.3] font-bold text-ink">{info.name}</h3>
@@ -153,7 +153,7 @@ function StateDetail({ info }: { info: StateTaxInfo }) {
       <p className="mt-3 text-[15px] text-ink-2">{info.note}</p>
       <dl className="num mt-3 border-t border-line text-[15px]">
         <div className="flex justify-between gap-4 border-b border-line py-2">
-          <dt className="text-ink-2">Est. tax on {formatUSD(EXAMPLE_WAGES)} of wages</dt>
+          <dt className="text-ink-2">Est. tax on {formatUSD(EXAMPLE_WAGE)} of wages</dt>
           <dd className="font-semibold text-ink">{formatUSD(example)}</dd>
         </div>
         <div className="flex justify-between gap-4 border-b border-line py-2">
