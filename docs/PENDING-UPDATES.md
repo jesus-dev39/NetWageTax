@@ -81,6 +81,20 @@ publish the next year's numbers, and all states every January.
       then remove `SCHEDULE_1A_DRAFT_NOTICE` (`src/lib/site.ts`) from their assumptions. The draft carries the
       total to Form 1040 line 13a (13b in 2025): the site cites no 1040 line numbers for 2026 until then.
 
+- [ ] **Guide "Which states tax tips and overtime": full review (January 2027).** Re-check the category,
+      details, official source, and date of all 50 states + DC for tax year 2027, after the January
+      sessions start and the 2026 state forms are out. Pay special attention to the states marked
+      "Starts from federal AGI and no state deduction was enacted in 2026" (AR, CT, IL, KS, LA, OH, OK,
+      UT, WI, WV), the ones checked on a 2025 document (MO, MS, MT, ND, OH), Indiana (deduction for 2026
+      only), and Oregon (the SB 1507 referendum). Data: `src/lib/state-tips-overtime.ts`; update the
+      `checked` date on every row.
+
+- [ ] **DC tips and overtime: 2026 Form D-40 instructions (when DC publishes them, usually December).**
+      DC is "Not yet confirmed": its 2025 decoupling acts were emergency/temporary (Act 26-214, Law 26-89)
+      and Congress disapproved the temporary law (Pub. L. 119-78, February 18, 2026). When the 2026 D-40
+      instructions are out, check whether DC allows the federal tips and overtime deductions, then set
+      `TIPS_OVERTIME_RULES.DC` to the right category with that source.
+
 ## After the redesign ships
 
 - [ ] **Bracket engine (approved October 4, 2026).** Replace `exemptAmount × estimateRate` with a

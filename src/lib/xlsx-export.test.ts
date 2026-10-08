@@ -39,7 +39,7 @@ describe('tips & overtime .xlsx', () => {
     expect(ws['!merges']?.some((m) => m.s.r === 0 && m.e.c === 5)).toBe(true);
   });
 
-  it('adds the state tips and overtime note under the state row only for verified states', () => {
+  it('adds the state tips and overtime note under the state row', () => {
     const ga = buildDeductionSummary(
       { result, tipsReported: 30_000, overtimeReported: 5_000, savings: 6_600, stateTax: estimateStateTax(160_000, 'GA') },
       at,
@@ -48,7 +48,7 @@ describe('tips & overtime .xlsx', () => {
     const i = gaRows.findIndex((r) => r[0] === 'Estimated state income tax (GA)');
     expect(gaRows[i + 1][0]).toBe(ga.stateTipsOvertimeNote);
     expect(String(gaRows[i + 1][0])).toContain('$1,750');
-    expect(summary.stateTipsOvertimeNote).toBeUndefined();
+    expect(summary.stateTipsOvertimeNote).toBe('Illinois doesn’t follow the federal deduction, so it taxes tips and overtime.');
   });
 
   it('stores the breakdown as formatted numbers with SUM totals', () => {

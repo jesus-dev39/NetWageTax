@@ -14,12 +14,14 @@
  *
  * No incluye impuestos locales (condados, ciudades, school districts) ni
  * créditos estatales. El tratamiento estatal de la deducción federal OBBBA de
- * propinas/horas extra varía y no está en los datos (salvo followsFederalTipsOvertime),
- * así que la estimación se calcula sobre el MAGI completo.
+ * propinas/horas extra está en state-tips-overtime.ts (campo tipsOvertime), pero la
+ * estimación todavía se calcula sobre el MAGI completo.
  *
  * Fuentes: departamentos de hacienda estatales y legislación 2025 aprobada
  * con efecto para el año fiscal 2026. Revisar cada enero (DATA_AS_OF).
  */
+
+import { TIPS_OVERTIME_RULES, type TipsOvertimeRule } from './state-tips-overtime';
 
 export const STATE_TAX_DATA_AS_OF = '2026 tax year (laws enacted through mid-2026)';
 
@@ -52,13 +54,8 @@ export interface StateTaxInfo {
   localTaxLabel: string;
   /** Official state revenue department website ('' = not yet verified). */
   sourceUrl: string;
-  /**
-   * Whether the state lets you subtract the federal tips/overtime deduction (Schedule 1-A).
-   * undefined = no verified data; pages must not claim either way.
-   */
-  followsFederalTipsOvertime?: boolean;
-  /** What the state itself does with tips and overtime, when verified (e.g. its own exclusion). Our estimate doesn't apply it. */
-  tipsOvertimeNote?: string;
+  /** How the state treats the federal tips and overtime deduction, with sources (state-tips-overtime.ts). */
+  tipsOvertime: TipsOvertimeRule;
   /** Official document the current rate comes from (a law or a state publication), when verified. */
   rateSource?: { url: string; label: string };
   /** Full single-filer bracket schedule, when verified. Pages show a table only if present. Display only: the estimate doesn't use it. */
@@ -79,7 +76,7 @@ export interface TaxBracket {
   rate: number;
 }
 
-type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel'>;
+type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime'>;
 
 const NO_TAX = (code: StateCode, name: string, note: string): Row => ({
   code, name, structure: 'none', estimateRate: 0, exemptAmount: 0, note,
@@ -231,14 +228,6 @@ const SOURCE_URLS: Record<StateCode, string> = {
   WY: 'https://revenue.wyo.gov/',
 };
 
-/** Only states whose data explicitly says so. Missing = unknown. */
-const FOLLOWS_FEDERAL_TIPS_OVERTIME: Partial<Record<StateCode, boolean>> = {
-  AZ: true,
-  CA: false,
-  GA: false,
-  MI: true,
-};
-
 /**
  * Short "Local income taxes" answer where the default ('Some cities and counties') would be wrong.
  * Must agree with the state's localTaxNote.
@@ -257,15 +246,6 @@ const LOCAL_TAX_LABELS: Partial<Record<StateCode, string>> = {
   NY: 'New York City and Yonkers',
   OH: 'Cities and school districts',
   PA: 'Most municipalities',
-};
-
-/** Verified notes on a state's own treatment of tips and overtime. */
-const TIPS_OVERTIME_NOTES: Partial<Record<StateCode, string>> = {
-  // HB 4168 (2026, signed June 13, 2026).
-  AZ: 'Arizona follows the federal deduction. HB 4168 (2026) adds a state subtraction for qualified tips and the premium part of qualified overtime pay, matching the amounts you deduct on your federal return (Schedule 1-A).',
-  GA: 'Georgia doesn’t follow the federal deduction. It has its own exclusion of up to $1,750 of overtime and $1,750 of cash tips for 2026 through 2028.',
-  // https://www.michigan.gov/treasury/reference/taxpayer-notices/notice-regarding-new-deductions-for-qualified-overtime-compensation-and-qualified-tips
-  MI: 'Michigan has its own temporary deductions for qualified tips and overtime for 2026 through 2028. They match the amounts you deduct on your federal return (Schedule 1-A); nonresidents can deduct only tips and overtime earned for work in Michigan.',
 };
 
 /** Official documents for current rates, added state by state as each is verified. */
@@ -426,8 +406,7 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   slug: slugify(r.name),
   sourceUrl: SOURCE_URLS[r.code],
   localTaxLabel: r.localTaxNote ? (LOCAL_TAX_LABELS[r.code] ?? 'Some cities and counties') : 'None',
-  followsFederalTipsOvertime: FOLLOWS_FEDERAL_TIPS_OVERTIME[r.code],
-  tipsOvertimeNote: TIPS_OVERTIME_NOTES[r.code],
+  tipsOvertime: TIPS_OVERTIME_RULES[r.code],
   rateSource: RATE_SOURCES[r.code],
   brackets: BRACKETS[r.code]?.brackets,
   bracketsYear: BRACKETS[r.code]?.year,
