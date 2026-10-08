@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal, flushSync } from 'react-dom';
 import {
   buildDeductionSummary,
   SAVINGS_LINE_LABEL,
@@ -9,70 +7,24 @@ import {
   type SummaryInput,
 } from '../lib/deduction-summary';
 import { formatUSD } from './CurrencyInput';
-import ExportAdModal, { type ExportFormat, type ExportRequest } from './ExportAdModal';
-import ExportToolbar from './ExportToolbar';
+import ExportActions from './ExportActions';
 import { VoucherFigure, VoucherFooter, VoucherHeader } from './VoucherParts';
 
 type Props = SummaryInput;
 
 export default function ExportSummaryActions(props: Props) {
   const { result, tipsReported, overtimeReported, savings, stateTax } = props;
-  const canExport = result.totalCombinedDeduction > 0;
-
-  const [generatedAt, setGeneratedAt] = useState(() => new Date());
-  const [mounted, setMounted] = useState(false);
-  const [request, setRequest] = useState<ExportRequest | null>(null);
-
-  const summary = useMemo(
-    () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, generatedAt),
-    [result, tipsReported, overtimeReported, savings, stateTax, generatedAt],
-  );
-
-  // The voucher is portaled to <body> after hydration so print CSS can hide every other body child.
-  useEffect(() => setMounted(true), []);
-
-  // Stamp the voucher at print time, including prints started from the browser menu / Ctrl+P.
-  useEffect(() => {
-    const stamp = () => flushSync(() => setGeneratedAt(new Date()));
-    window.addEventListener('beforeprint', stamp);
-    return () => window.removeEventListener('beforeprint', stamp);
-  }, []);
-
-  function handlePrint() {
-    flushSync(() => setGeneratedAt(new Date()));
-    window.print();
-  }
-
-  const fresh = () => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, new Date());
-
-  // Every format opens the same modal; files are built from fresh data at click time.
-  function exportRequest(format: ExportFormat): ExportRequest {
-    const titles: Record<ExportFormat, string> = {
-      pdf: `Your ${result.taxYear} tips and overtime worksheet (PDF)`,
-      docx: `Your ${result.taxYear} tips and overtime worksheet (Word)`,
-      xlsx: `Your ${result.taxYear} tips and overtime worksheet (Excel)`,
-    };
-    const run: Record<ExportFormat, () => Promise<void> | void> = {
-      pdf: handlePrint,
-      docx: async () => (await import('../lib/deduction-summary-docx')).downloadSummaryDocx(fresh()),
-      xlsx: async () => (await import('../lib/deduction-summary-xlsx')).downloadDeductionXlsx(fresh()),
-    };
-    return { format, title: titles[format], run: run[format] };
-  }
-
   return (
-    <div className="print:hidden">
-      <ExportToolbar
-        heading={`Save your ${result.taxYear} deduction worksheet`}
-        canExport={canExport}
-        disabledHint="Enter a qualifying tips or overtime amount to enable exports."
-        onSelect={(format) => setRequest(exportRequest(format))}
-      />
-
-      <ExportAdModal request={request} onClose={() => setRequest(null)} />
-
-      {mounted && canExport && createPortal(<PrintVoucher summary={summary} />, document.body)}
-    </div>
+    <ExportActions
+      heading={`Save your ${result.taxYear} deduction worksheet`}
+      canExport={result.totalCombinedDeduction > 0}
+      disabledHint="Enter a qualifying tips or overtime amount to enable exports."
+      title={`Your ${result.taxYear} tips and overtime worksheet`}
+      build={(at) => buildDeductionSummary({ result, tipsReported, overtimeReported, savings, stateTax }, at)}
+      voucher={(summary) => <PrintVoucher summary={summary} />}
+      docx={async (s) => (await import('../lib/deduction-summary-docx')).downloadSummaryDocx(s)}
+      xlsx={async (s) => (await import('../lib/deduction-summary-xlsx')).downloadDeductionXlsx(s)}
+    />
   );
 }
 

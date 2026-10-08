@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
-import { calculateCarLoanInterestDeduction, type CarLoanIneligibilityReason } from '../lib/car-loan-interest';
+import { calculateCarLoanInterestDeduction, CAR_LOAN_INELIGIBLE_COPY as INELIGIBLE_COPY } from '../lib/car-loan-interest';
 import { compareFederalTax, isCoveredByStandardDeduction } from '../lib/marginal-rate';
 import { CAR_LOAN_PARAMS_BY_YEAR, type FilingStatus } from '../lib/obbba-params';
+import { buildCarLoanSummary } from '../lib/schedule-1a-summary';
 import { SCHEDULE_1A_DRAFT_NOTICE } from '../lib/site';
 import { FederalTaxRows, QualificationChecklist, ResultPanel, Row, minusUSD, type CheckItem } from './calculator-parts';
 import CurrencyInput, { formatUSD } from './CurrencyInput';
+import ExportActions from './ExportActions';
+import Schedule1aVoucher from './Schedule1aVoucher';
 import { Checkbox, Field, RadioGroup, type RadioOption } from './form';
 
 const TAX_YEAR = 2026;
@@ -26,11 +29,6 @@ const YES_NO: RadioOption<YesNo>[] = [
   { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
 ];
-
-const INELIGIBLE_COPY: Record<CarLoanIneligibilityReason, string> = {
-  USED_VEHICLE: 'Used vehicles don’t qualify: the vehicle’s original use has to start with you.',
-  ASSEMBLED_OUTSIDE_US: 'Only vehicles with final assembly in the United States qualify.',
-};
 
 export default function CarLoanInterestApp() {
   const [filingStatus, setFilingStatus] = useState<FilingStatus>('single');
@@ -246,6 +244,17 @@ export default function CarLoanInterestApp() {
           </section>
 
           <FederalTaxRows comparison={federal} deductionLabel="car loan interest deduction" />
+
+          <ExportActions
+            heading={`Save your ${TAX_YEAR} car loan interest worksheet`}
+            canExport={interestValue > 0 && magiValue > 0}
+            disabledHint="Enter the interest you paid and your MAGI to enable exports."
+            title={`Your ${TAX_YEAR} car loan interest worksheet`}
+            build={(at) => buildCarLoanSummary({ result, federal, coveredByStandardDeduction }, at)}
+            voucher={(summary) => <Schedule1aVoucher summary={summary} />}
+            docx={async (s) => (await import('../lib/schedule-1a-docx')).downloadSchedule1aDocx(s)}
+            xlsx={async (s) => (await import('../lib/schedule-1a-xlsx')).downloadSchedule1aXlsx(s)}
+          />
 
           <p className="border-l-4 border-warning bg-warning-tint px-4 py-3 text-[15px] text-ink">
             Estimates only, not tax advice. Savings assume the {TAX_YEAR} standard deduction and federal brackets and treat

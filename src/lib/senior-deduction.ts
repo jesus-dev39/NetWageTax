@@ -14,6 +14,7 @@ import {
   ObbbaInvalidInputError,
   ObbbaYearNotSupportedError,
   SENIOR_PARAMS_BY_YEAR,
+  seniorBirthCutoffLabel,
   SUPPORTED_TAX_YEARS,
   type FilingStatus,
   type TaxYear,
@@ -104,4 +105,16 @@ export function calculateSeniorDeduction(input: SeniorDeductionInput): SeniorDed
     isEligible: qualifyingPeople > 0,
     ineligibilityReason,
   };
+}
+
+export const SENIOR_MFS_NOTE = 'Married filing separately can’t claim the senior deduction: married couples must file jointly.';
+
+/** Why nobody on the return qualifies, for the calculator and the exports; null when someone does. */
+export function seniorIneligibilityNote(result: SeniorDeductionResult): string | null {
+  if (result.ineligibilityReason === 'MARRIED_FILING_SEPARATELY') return SENIOR_MFS_NOTE;
+  if (result.ineligibilityReason !== 'NO_QUALIFYING_PERSON') return null;
+  const cutoff = seniorBirthCutoffLabel(result.taxYear);
+  return result.filingStatus === 'mfj'
+    ? `Neither of you was born before ${cutoff}, so neither qualifies for ${result.taxYear}.`
+    : `You need to be born before ${cutoff} to qualify for ${result.taxYear}.`;
 }
