@@ -2,6 +2,7 @@
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
+import FaqList from '../../components/FaqList.astro';
 import { formatUSD } from '../../components/CurrencyInput';
 import { formatLongDate } from '../../lib/site';
 import {
@@ -20,6 +21,7 @@ import {
   metaDescription,
   neighborRows,
   neighborSummary,
+  noIncomeTaxFaq,
   pageTitle,
   pct,
   rankingSentences,
@@ -62,13 +64,31 @@ const paycheckHref = `/tools/paycheck-calculator/?state=${s.code}#calculator`;
 
 const site = Astro.site ?? new URL('https://netwagetax.com');
 const abs = (path: string) => new URL(path, site).href;
-const jsonLd = {
-  '@context': 'https://schema.org',
+const breadcrumbs = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
     { '@type': 'ListItem', position: 2, name: 'State taxes', item: abs('/state-taxes/') },
     { '@type': 'ListItem', position: 3, name: s.name, item: abs(statePagePath(s)) },
+  ],
+};
+// States with no tax on wages answer "Does [State] have a state income tax?" in a FAQ.
+const faq = noIncomeTaxFaq(s);
+const faqs = faq ? [{ ...faq, link: { href: paycheckHref, label: `Calculate your ${s.name} paycheck` } }] : [];
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    ...(faq
+      ? [
+          {
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: faq.question, acceptedAnswer: { '@type': 'Answer', text: faq.answer.join(' ') } },
+            ],
+          },
+        ]
+      : []),
+    breadcrumbs,
   ],
 };
 
@@ -96,7 +116,7 @@ const revenueLink = s.sourceUrl
   : `the ${s.name} tax agency`;
 ---
 
-<BaseLayout title={title} description={description} ogType="article">
+<BaseLayout title={title} description={description} ogType="article" appendSiteName={s.structure !== 'none'}>
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
   <PageHeader
@@ -363,6 +383,18 @@ const revenueLink = s.sourceUrl
               </tbody>
             </table>
           </div>
+        )
+      }
+
+      {
+        faqs.length > 0 && (
+          <>
+            <h2 id="faq">Frequently asked questions</h2>
+            {/* Undo the prose h3 margin and size so the question lines up with the +/− toggle, as on the tool pages. */}
+            <div class="[&_h3]:!mt-0 [&_h3]:!text-lg/[1.4] [&_h3]:!font-semibold">
+              <FaqList faqs={faqs} />
+            </div>
+          </>
         )
       }
 

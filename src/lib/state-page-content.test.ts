@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { STATES, STATES_BY_CODE } from './state-tax-data';
-import { leadParagraph, metaDescription, pageTitle, rankingSentences, stateCalculatorLinks, stateTipsOvertimeNote, tipsOvertimeStatus } from './state-page-content';
+import { leadParagraph, MAX_TITLE_LENGTH, metaDescription, noIncomeTaxFaq, pageTitle, rankingSentences, stateCalculatorLinks, stateTipsOvertimeNote, tipsOvertimeStatus } from './state-page-content';
 
 describe('state page copy', () => {
   it('gives every state a unique title, description and lead', () => {
@@ -12,7 +12,27 @@ describe('state page copy', () => {
   it('names the tax structure in the title', () => {
     expect(pageTitle(STATES_BY_CODE.CA)).toBe('California Income Tax 2026: Rates, Brackets & Calculator');
     expect(pageTitle(STATES_BY_CODE.CO)).toBe('Colorado Income Tax 2026: 4.4% Flat Rate & Calculator');
-    expect(pageTitle(STATES_BY_CODE.TX)).toBe('Texas Income Tax 2026: No State Tax on Wages & Calculator');
+  });
+
+  it('answers "Does [State] have a state income tax?" on the 9 no-wage-tax pages', () => {
+    const none = STATES.filter((s) => s.structure === 'none');
+    expect(none.map((s) => s.code).sort()).toEqual(['AK', 'FL', 'NH', 'NV', 'SD', 'TN', 'TX', 'WA', 'WY']);
+    expect(pageTitle(STATES_BY_CODE.TX)).toBe('Does Texas Have a State Income Tax? No (2026) | NetWageTax');
+    expect(pageTitle(STATES_BY_CODE.NH)).toBe('Does New Hampshire Have a State Income Tax? No (2026 Guide)');
+    for (const s of none) {
+      const title = pageTitle(s);
+      expect(title.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+      expect(title.startsWith(`Does ${s.name} Have a State Income Tax? No (2026`)).toBe(true);
+      expect(metaDescription(s).startsWith(`No. ${s.name} doesn’t tax wages in 2026.`)).toBe(true);
+      expect(leadParagraph(s).startsWith(`No, ${s.name} doesn’t have a state income tax on wages.`)).toBe(true);
+      expect(noIncomeTaxFaq(s)?.question).toBe(`Does ${s.name} have a state income tax?`);
+      expect(noIncomeTaxFaq(s)?.answer[0].startsWith('No. ')).toBe(true);
+      expect(noIncomeTaxFaq(s)?.answer[0]).not.toContain('No tax on wages.');
+    }
+    expect(metaDescription(STATES_BY_CODE.WA)).toContain('only long-term capital gains');
+    expect(metaDescription(STATES_BY_CODE.NH)).toContain('repealed its Interest and Dividends Tax');
+    expect(metaDescription(STATES_BY_CODE.FL)).toContain('federal income tax, Social Security, and Medicare');
+    expect(noIncomeTaxFaq(STATES_BY_CODE.CA)).toBeUndefined();
   });
 
   it('ranks without awkward phrasing', () => {
