@@ -1,11 +1,16 @@
 ---
+import type { FaqPart } from '../lib/state-directory-content';
+
 /**
  * Frequently asked questions as native <details>, separated by 1px rules. The page builds the
  * matching FAQPage structured data from the same array.
  */
 interface Props {
-  /** `link` is shown after the answer only; it isn't part of the structured data text. */
-  faqs: { question: string; answer: string[]; link?: { href: string; label: string } }[];
+  /**
+   * A paragraph is a string, or parts with inline links (state-directory-content.ts). `link` is shown
+   * after the answer only; it isn't part of the structured data text.
+   */
+  faqs: { question: string; answer: (string | FaqPart[])[]; link?: { href: string; label: string } }[];
   /** Open the first answer by default. */
   openFirst?: boolean;
 }
@@ -26,7 +31,19 @@ const { faqs, openFirst = true } = Astro.props;
         </summary>
         <div class="space-y-3 pb-5 text-ink-2">
           {answer.map((p) => (
-            <p>{p}</p>
+            <p>
+              {typeof p === 'string'
+                ? p
+                : p.map((part) =>
+                    typeof part === 'string' ? (
+                      part
+                    ) : (
+                      <a href={part.href} class="text-link underline underline-offset-[3px] hover:decoration-2">
+                        {part.text}
+                      </a>
+                    ),
+                  )}
+            </p>
           ))}
           {link && (
             <p>
