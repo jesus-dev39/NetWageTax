@@ -11,6 +11,7 @@ Documentos relacionados:
 - `docs/DESIGN.md`: reglas de diseño (colores, tablas, tipografía).
 - `SPEC.md`: especificación original de la calculadora de propinas y horas extra.
 - `README.md`: descripción general del proyecto.
+- `scripts/check-production.sh` (`npm run check:prod`): comprobaciones de producción (sección 2.3).
 
 > **Regla de oro:** cualquier cifra fiscal que cambies tiene que venir de una fuente oficial (IRS,
 > SSA, el departamento de hacienda del estado o el texto de la ley). Guarda el enlace en el código,
@@ -158,6 +159,33 @@ debe estar en *Ready*.
 
 ### 2.3 Comprobaciones en producción
 
+**La forma rápida: un solo comando.** `scripts/check-production.sh` hace las comprobaciones a)–d) de
+esta sección, comprueba `robots.txt` y el caso de referencia 1 de la portada (sección 2.4):
+
+```sh
+npm run check:prod
+```
+
+Funciona igual en Git Bash y en PowerShell, porque `scripts/run-bash.mjs` busca Git Bash por ti.
+Tarda alrededor de un minuto, porque abre una a una todas las URL del sitemap. Al final dice:
+
+- **`TODO OK`**: todo está bien.
+- **`HA FALLADO (N):`** y debajo la lista de lo que ha fallado, por ejemplo
+  `/state-taxes/texas/ devuelve 500 (se esperaba 200)`.
+
+Para comprobar otra dirección (por ejemplo, un despliegue de vista previa de Vercel), pásala detrás
+de `--`:
+
+```sh
+npm run check:prod -- https://otra-direccion.vercel.app
+```
+
+Los casos de referencia 2, 3 y 4 (las calculadoras) no se pueden comprobar con `curl` porque se
+calculan en el navegador: hazlos a mano (sección 2.4).
+
+Si quieres entender qué hace el script, o te falla y quieres repetir una comprobación suelta, estos
+son los comandos equivalentes:
+
 **a) Páginas principales y archivos clave.** Todas deben dar `200`, salvo la página inexistente, que
 debe dar `404`:
 
@@ -253,8 +281,8 @@ Cada año hay que poner al día las cifras. Hazlo todo en una rama (sección 2.1
 
 ### 3.1 Cifras federales: tramos y deducción estándar
 
-**Dónde encontrarlas.** Cada otoño (normalmente entre octubre y noviembre), el IRS publica los ajustes
-por inflación del año siguiente en una *Revenue Procedure* (las de 2026 están en la **Rev. Proc.
+**Dónde encontrarlas.** Cada otoño, en octubre o noviembre (la de 2026 salió el 9 de octubre de
+2025), el IRS publica los ajustes por inflación del año siguiente en una *Revenue Procedure* (las de 2026 están en la **Rev. Proc.
 2025-32**). Búscala en irs.gov como "IRS releases tax inflation adjustments for tax year 2027". El
 comunicado enlaza al PDF de la Rev. Proc.
 
@@ -399,6 +427,38 @@ Esos datos aparecen en la guía `/guides/which-states-tax-tips-and-overtime/`, e
 estados y en la calculadora de propinas. Después de cambiarlos, repite el caso de referencia 2
 (Georgia) de la sección 2.4.
 
+### 3.4.1 Estados con cálculo especial
+
+> **Atención:** para estos estados, el método general de la sección 3.4 (aplicar los tramos a
+> $65,000 − `exemptAmount` y dividir) **no sirve tal cual**. Cada uno tiene una regla que el modelo
+> sencillo `(salario − exemptAmount) × estimateRate` no puede representar directamente. Por eso
+> `exemptAmount` o `estimateRate` se calcularon a mano para un *single* con $65,000, y la cuenta está
+> en el comentario que hay justo encima de la línea del estado en `state-tax-data.ts`. Lee ese
+> comentario antes de cambiar nada, rehaz la cuenta con las cifras nuevas y actualiza también el
+> comentario.
+
+| Estado | Qué tiene de especial | Qué hacer al actualizarlo |
+| :-- | :-- | :-- |
+| **Oregon** (`OR`) | Permite restar parte del impuesto **federal** pagado, con un tope que baja con los ingresos, y aplica un crédito por exención de $256. `estimateRate` = (tramos sobre $65,000 − $2,910 − $5,620 de impuesto federal − $256 de crédito) ÷ ($65,000 − $2,910) = $4,366 ÷ $62,090 = 7.03% | **Depende de las cifras federales:** cada vez que cambies los tramos federales (sección 3.1), recalcula el impuesto federal de un *single* con $65,000 y rehaz la cuenta. Comprueba también en las instrucciones del Form OR-40 el tope de la resta, el crédito por exención y los tramos |
+| **South Carolina** (`SC`) | Su deducción propia (SCIAD) es de $15,000 y se reduce en proporción a la parte del AGI federal entre $40,000 y $95,000. `exemptAmount` = la SCIAD a $65,000 ($8,190), así que solo es exacta a ese salario. La tabla de `BRACKETS.SC` lo explica | Recalcula la SCIAD a $65,000 con las cifras nuevas (la reducción se redondea hacia abajo a múltiplos de $10). A partir de 2027 el umbral del tramo ($30,000) se ajusta por inflación: actualiza `BRACKETS.SC` y luego `estimateRate` sobre $65,000 − la SCIAD |
+| **Wisconsin** (`WI`) | La deducción estándar decrece con los ingresos: $13,960 menos el 12% de lo que pase de $20,120 ($8,574 a $65,000), más $700 de exención = `exemptAmount` $9,274 | Toma del Form 1-ES (o de las instrucciones del Form 1) la deducción máxima, el porcentaje y el umbral nuevos, recalcula la deducción a $65,000 y suma la exención |
+| **Ohio** (`OH`) | Es `FLAT`, pero tiene un tramo al 0% ($26,050) y una exención personal que depende del MAGI: $2,400 hasta $40,000, $2,150 de $40,000 a $80,000 y $1,900 de $80,000 a $500,000. `exemptAmount` = $26,050 + $2,150 = $28,200, la exención que corresponde a $65,000, que la estimación aplica a todos los salarios (la `note` lo dice) | Actualiza el tramo al 0%, los tres niveles de exención y el tipo, y vuelve a sumar el tramo al 0% más la exención del nivel de $40,000–$80,000. Si cambian las cifras, cambia también la `note` |
+| **Utah** (`UT`) | Tipo único del 4.45% con `exemptAmount` = 0: el crédito del contribuyente (6% de la deducción estándar federal, que se reduce con los ingresos) **no se aplica**, y la `note` lo avisa | Actualiza el tipo y `RATE_SOURCES.UT`. Mantén la `note` del crédito mientras la estimación no lo calcule (está previsto en el *Bracket engine* de `docs/PENDING-UPDATES.md`) |
+| **Vermont** (`VT`) | Con un AGI superior a $150,000, el impuesto es el mayor entre el 3% del AGI y el de la tabla de tramos. La regla aparece en la `note` de `BRACKETS.VT`, pero la estimación no la aplica (a $65,000 no influye). `exemptAmount` mezcla la deducción estándar de 2025 ($7,650) y la exención de 2026 ($5,400) | Cuando salgan las tablas de tramos oficiales del año, sustituye `BRACKETS.VT` y cambia `year`. Actualiza la deducción estándar y la exención y recalcula `estimateRate`. Comprueba que la regla del 3% y el umbral de $150,000 no han cambiado. No uses las "VT Rate Schedules" de retención: no son los tramos del impuesto |
+| **Arkansas** (`AR`) | Dos tablas de tramos: con ingresos netos de hasta $94,700 se usa una que empieza en el 0%. El crédito personal de $29 no se aplica | Recalcula con la tabla de ingresos bajos (es la que corresponde a $65,000) y comprueba el límite de $94,700 |
+| **Maine** (`ME`) | La deducción estándar ($15,700) y la exención ($5,300) se reducen por encima de $102,250 de ingresos; `exemptAmount` = $21,000 solo vale por debajo de ese umbral | Toma las cifras nuevas de las tablas de retención de Maine (MRS) y comprueba que $65,000 sigue por debajo del umbral |
+| **Nebraska** (`NE`) | El crédito por exención personal ($176) no se aplica. La cuenta de `estimateRate` está en el comentario | Aplica los tramos nuevos a $65,000 − `exemptAmount`, sin el crédito |
+| **Alabama** (`AL`) y **Missouri** (`MO`) | Permiten restar el impuesto federal, como Oregon, pero el modelo no lo calcula aparte. Alabama, además, tiene su propia exención de horas extra: $1,000 por contribuyente (`TIPS_OVERTIME_RULES.AL`) | Si cambias sus cifras, ten en cuenta la resta del impuesto federal al calibrar `estimateRate` |
+| **Georgia** (`GA`) | Exención propia de propinas y horas extra ($1,750 cada una, `TIPS_OVERTIME_RULES.GA.own`). La deducción estándar sube a $15,000 en 2027 y el tipo puede bajar 0.125 puntos al año según la recaudación | Cada enero, confirma el tipo y la deducción (`exemptAmount`). Después, repite el caso de referencia 2 de la sección 2.4: si cambias el tipo, el texto de la línea estatal cambia, pero el ahorro federal ($960) no |
+| **California** (`CA`) | Recargo del 1% (Behavioral Health Services Tax) por encima de $1 millón; el tipo máximo de `bracketRange` (13.3%) lo incluye. `BRACKETS.CA` es todavía la tabla de 2025 | Actualiza `BRACKETS.CA` cuando la FTB publique la de 2026. El 12.3% y el "$1 million" también están escritos en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
+| **Massachusetts** (`MA`) | Recargo del 4% por encima de unos $1.08 millones, que la estimación no aplica | El umbral se ajusta por inflación: actualízalo en la `note` y en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
+| **New York** (`NY`) y **Connecticut** (`CT`) | Tienen *recapture* (los contribuyentes con ingresos altos pierden la ventaja de los tramos bajos), que no se calcula: solo se menciona en la nota | `BRACKETS.NY` sale ahora de las tablas de retención: cámbialo a las instrucciones del IT-201 cuando se publiquen (`docs/PENDING-UPDATES.md`) |
+| **Oregon**, deducción del coche | Oregon no permite la deducción de intereses del coche en su impuesto (SB 1507), y se dice en `CAR_LOAN_STATE_NOTE` (`src/lib/state-page-content.ts`) y en la FAQ de la calculadora del coche | Después del referéndum sobre SB 1507, actualiza las dos cosas si el resultado cambia la regla |
+
+Los tests de `src/lib/state-tax-data.test.ts` fijan algunos de estos valores (por ejemplo, el tipo y
+la deducción de Georgia). Si un test falla después de un cambio que has comprobado con la fuente
+oficial, actualiza el número del test.
+
 ### 3.5 Fechas de revisión
 
 Después de cada revisión, actualiza las fechas. La web las muestra a los usuarios.
@@ -441,8 +501,8 @@ demás se repiten cada año. Marca cada tarea en `docs/PENDING-UPDATES.md` cuand
 | **Julio** | Leyes que entran en vigor a mitad de año. Actualiza el texto de `STATE_TAX_DATA_AS_OF` ("laws enacted through mid-…") |
 | **Agosto** | Algunos estados revisan sus tablas de retención (Maine publicó las suyas en agosto de 2026): comprueba las deducciones que salían de ellas |
 | **Septiembre** | Repaso tranquilo de `docs/PENDING-UPDATES.md`: cierra lo pendiente antes de la temporada de otoño |
-| **Octubre** | **SSA:** base de la Social Security del año siguiente (sección 3.2). Revisión de los estados progresivos (`GRAD`) contra fuentes oficiales, añadiendo un `rateSource` a cada uno |
-| **Noviembre** | **IRS:** Rev. Proc. con los tramos y la deducción estándar del año siguiente (sección 3.1, normalmente a mediados de mes). Prepara la actualización en una rama, pero no cambies `SITE_TAX_YEAR` todavía. **(solo 2026)** Oregón: resultado del referéndum sobre SB 1507 (deducción del coche en el impuesto estatal) |
+| **Octubre** | **IRS:** atento a la Rev. Proc. con los tramos y la deducción estándar del año siguiente (sección 3.1). Sale en octubre o noviembre: la de 2026 salió el 9 de octubre de 2025. **SSA:** base de la Social Security del año siguiente (sección 3.2). Revisión de los estados progresivos (`GRAD`) contra fuentes oficiales, añadiendo un `rateSource` a cada uno |
+| **Noviembre** | **IRS:** si la Rev. Proc. no salió en octubre, sale ahora (sección 3.1). Cuando la tengas, actualiza también Oregon, que depende del impuesto federal (sección 3.4.1). Prepara la actualización en una rama, pero no cambies `SITE_TAX_YEAR` todavía. **(solo 2026)** Oregón: resultado del referéndum sobre SB 1507 (deducción del coche en el impuesto estatal) |
 | **Diciembre** | Instrucciones de los formularios estatales del año nuevo. **(solo 2026–2027)** Nueva York: cambia `bracketsSource` a las instrucciones del IT-201. DC: instrucciones del D-40 de 2026, para saber si sigue la deducción de propinas y horas extra (`TIPS_OVERTIME_RULES.DC`). California: tramos de 2026 en `BRACKETS.CA` cuando los publique la FTB. Alabama: aclarar si el tope de $1,000 de horas extra es por persona en declaración conjunta |
 
 ---
@@ -518,3 +578,179 @@ en recuperarse.
 Si alguna vez crees que hay que cambiar algo de esta tabla (por ejemplo, porque AdSense o Search
 Console lo piden), hazlo en una rama, cambia solo eso y comprueba en producción que AdSense y Search
 Console siguen sin errores.
+
+
+---
+
+## 7. AdSense
+
+### 7.1 Volver a solicitarlo
+
+Pide la revisión **solo cuando se cumplan las cuatro condiciones**:
+
+1. **Las páginas nuevas están indexadas.** En Search Console → **Páginas**, las calculadoras, las
+   guías y las páginas de los estados aparecen como indexadas. Para comprobar una URL concreta, usa
+   la sección 8.1.
+2. **Hay clics cada semana.** En Search Console → **Rendimiento**, la web recibe clics desde Google
+   todas las semanas, no solo de forma puntual.
+3. **Al menos una página está en posición 10 o mejor** (primera página de Google) para alguna
+   búsqueda. Lo ves en Rendimiento → **Páginas**, con la columna *Posición media* activada.
+4. **Las cifras de 2027 están publicadas**: has hecho la actualización anual (sección 3) y la web
+   muestra el año nuevo.
+
+Cuando se cumplan las cuatro:
+
+1. Entra en adsense.google.com → **Sitios**.
+2. Abre netwagetax.com y marca la casilla **"Confirmo que he resuelto los problemas"**.
+3. Pulsa **Solicitar revisión**.
+
+**Haz una sola solicitud y espera la respuesta**, aunque tarde semanas. No lo pidas "por probar": cada
+rechazo deja historial, y solicitarlo antes de tiempo solo retrasa la aprobación.
+
+Mientras tanto, la web está preparada: el script de AdSense ya está en el `<head>` y los huecos de
+los anuncios ya están en el código, pero sin `slotId` no muestran nada en producción (sección 7.2).
+
+### 7.2 Si lo aprueban: crear los bloques de anuncios y conectarlos
+
+**1. Crea los bloques en el panel.** En AdSense → **Anuncios** → **Por bloque de anuncios** →
+**Anuncios de display**:
+
+- Ponle como nombre el de la ubicación de la tabla de abajo (por ejemplo, `calculator-top`), para
+  reconocerlo luego en los informes.
+- Elige forma **horizontal** y tamaño **adaptable** (*responsive*).
+- Pulsa **Crear**. AdSense te enseña un código con una línea `data-ad-slot="1234567890"`. Ese número
+  es el **`slotId`**. Cópialo; el resto del código no hace falta, porque el componente ya lo genera.
+
+Crea un bloque por cada una de estas seis ubicaciones. Las páginas que comparten ubicación usan el
+mismo bloque.
+
+| Ubicación (`placement`) | Archivo | Dónde está en la página |
+| :-- | :-- | :-- |
+| `paycheck-top` | `src/pages/tools/paycheck-calculator.astro` | Debajo del título, encima de la calculadora (solo en pantallas medianas y grandes) |
+| `paycheck-bottom` | `src/pages/tools/paycheck-calculator.astro` | Después de las preguntas frecuentes, antes del aviso legal |
+| `calculator-top` | `src/pages/tools/obbba-tax-calculator.astro`, `src/pages/tools/senior-deduction-calculator.astro` y `src/pages/tools/car-loan-interest-deduction-calculator.astro` | Debajo del título, encima de la calculadora (solo en pantallas medianas y grandes) |
+| `calculator-bottom` | Las mismas tres páginas | Después de las preguntas frecuentes, antes del aviso legal |
+| `guide-tips-states-top` | `src/pages/guides/which-states-tax-tips-and-overtime.astro` | Debajo de la cabecera (solo en pantallas medianas y grandes) |
+| `guide-tips-states-bottom` | `src/pages/guides/which-states-tax-tips-and-overtime.astro` | Después de las preguntas frecuentes, antes de las fuentes |
+
+**2. Pon cada `slotId` en el código.** En cada archivo, busca el componente `<AdSlot ... />` que
+tiene ese `placement` y añádele el número:
+
+```astro
+<!-- Antes -->
+<AdSlot client:visible format="leaderboard" placement="calculator-top" />
+
+<!-- Después -->
+<AdSlot client:visible format="leaderboard" placement="calculator-top" slotId="1234567890" />
+```
+
+No cambies nada más del componente: `client:visible`, `format` y `placement` tienen que quedarse
+como están. El componente está en `src/components/AdSlot.tsx`: reserva el alto del anuncio para que
+la página no salte al cargarlo, y no muestra nada si falta el `slotId`.
+
+Publica con el procedimiento de la sección 2.
+
+**3. Reglas de colocación.** Son normas de AdSense, y los huecos actuales ya las cumplen. Si alguna
+vez añades uno nuevo:
+
+- **Nunca entre el formulario y el resultado** de una calculadora.
+- **Nunca junto a botones**, sobre todo los de imprimir y descargar (PDF, Word, Excel).
+- **Nunca en ventanas emergentes (modales).** `src/components/ExportAdModal.tsx`, a pesar del
+  nombre, es la ventana de descarga y no lleva anuncios: no se los añadas nunca.
+- En el móvil, no pongas un anuncio encima del primer campo del formulario. Por eso los huecos de
+  arriba están dentro de `<div class="hidden md:block">`.
+
+No actives los **anuncios automáticos** (*Auto ads*) en el panel: AdSense los colocaría por su
+cuenta, también en sitios que estas reglas prohíben.
+
+**4. Comprobar que se ven.**
+
+1. Abre la página en producción **sin bloqueador de anuncios** y en una pantalla de ordenador (los
+   huecos de arriba no se muestran en el móvil).
+2. Los primeros días es normal que algunos huecos salgan vacíos: AdSense tarda unas horas en empezar
+   a servir anuncios en un bloque nuevo.
+3. Para comprobarlo con precisión, abre la consola del navegador (F12 → *Console*) y escribe:
+
+   ```js
+   [...document.querySelectorAll('ins.adsbygoogle')].map((a) => a.closest('[data-ad-placement]').dataset.adPlacement + ': ' + a.dataset.adStatus)
+   ```
+
+   Cada hueco debe decir `filled` (con anuncio) o `unfilled` (AdSense no tenía anuncio para ese
+   momento). Si no aparece ningún hueco, falta el `slotId` o el despliegue no ha terminado.
+4. **No hagas clic en el anuncio para comprobarlo** (sección 7.3).
+
+### 7.3 Normas que no se pueden romper
+
+Romper cualquiera de estas normas puede hacer que Google cierre la cuenta para siempre y no pague lo
+pendiente:
+
+- **No hagas clic en tus propios anuncios**, ni para probarlos.
+- **No pidas a nadie que haga clic** (familia, amigos, grupos de intercambio de clics) ni animes a
+  hacerlo en la web ("apóyanos haciendo clic").
+- **No uses bots ni compres tráfico** que prometa visitas o clics automáticos. Tampoco recargues
+  páginas una y otra vez para generar impresiones.
+
+**Impuestos en España.** Los ingresos de AdSense los paga Google desde fuera de España, pero
+**tienes que declararlos en España**. Según cuánto ingreses y con qué regularidad, puede que tengas
+que darte de alta como actividad económica. Además, AdSense te pedirá información fiscal de EE. UU.
+(formulario W-8BEN). **Antes de cobrar el primer pago, consulta con una gestoría** cómo darte de
+alta y cómo declararlo.
+
+---
+
+## 8. Search Console
+
+Search Console (search.google.com/search-console) muestra cómo ve Google la web: qué páginas están
+indexadas, para qué búsquedas aparece y en qué posición.
+
+### 8.1 Pedir la indexación de una URL
+
+Úsalo cuando publiques una página nueva o cambies mucho una existente:
+
+1. Pega la URL completa (por ejemplo, `https://netwagetax.com/state-taxes/texas/`) en la barra
+   **Inspeccionar cualquier URL** de la parte superior.
+2. Espera a que termine la comprobación. Si dice que la URL no está en Google, o que ha cambiado,
+   pulsa **Solicitar indexación**.
+3. Google la añade a su cola. Puede tardar de unos días a un par de semanas.
+
+Hay un límite diario de solicitudes, y pedirla varias veces para la misma URL no la acelera. El
+sitemap (`sitemap-index.xml`, ya enviado en **Sitemaps**) avisa a Google de todas las páginas, así
+que solo hace falta pedirla a mano para las más importantes.
+
+### 8.2 Qué mirar cada semana
+
+En **Rendimiento** → **Resultados de búsqueda**, con los últimos 28 días y las cuatro métricas
+activadas (clics, impresiones, CTR y **posición media**):
+
+- **Pestaña Consultas:** las búsquedas por las que apareces. Fíjate en las que tienen muchas
+  impresiones y posición media entre 5 y 20: son las que más se pueden mejorar (title, descripción,
+  una pregunta en la FAQ...). Así se mejoraron en octubre de 2026 las páginas de los estados sin
+  impuesto.
+- **Pestaña Páginas:** qué páginas reciben más impresiones y clics, y su posición. Compara con la
+  semana anterior para ver si alguna sube o baja mucho.
+
+Apunta cada semana dos o tres cifras (clics totales, la mejor posición y la página con más
+impresiones): así sabrás cuándo se cumplen las condiciones para AdSense (sección 7.1).
+
+### 8.3 Estados de indexación: cuáles son normales y cuáles son problemas
+
+En **Indexación** → **Páginas** verás por qué hay páginas sin indexar.
+
+**Normales (no hay que hacer nada):**
+
+| Estado | Qué significa |
+| :-- | :-- |
+| **Página con redirección** | La URL redirige a otra. Es lo esperado para `/states` y para las direcciones sin barra final, que van a la versión con `/` |
+| **Descubierta: actualmente sin indexar** | Google conoce la URL pero aún no la ha visitado. Es habitual en una web joven: la irá rastreando |
+| **Rastreada: actualmente sin indexar** | Google la ha visitado y de momento ha decidido no incluirla. También es habitual. Si le pasa durante meses a una página importante, mejora su contenido y pide la indexación (sección 8.1) |
+| **Página alternativa con etiqueta canónica adecuada** | Es una variante de otra página (por ejemplo, con `?state=TX`) y Google usa la versión canónica |
+
+**Problemas (hay que arreglarlos):**
+
+| Estado | Qué significa | Qué hacer |
+| :-- | :-- | :-- |
+| **No se ha encontrado (404)** | Una URL que Google conocía ya no existe | Si la página debería existir, arréglala. Si la quitaste o la moviste a propósito, añade una redirección permanente en `vercel.json` a la página nueva |
+| **Error de servidor (5xx)** | La web falló cuando Google la visitó | Ejecuta `npm run check:prod` y mira el estado del despliegue en Vercel. Si coincide con una publicación, revierte (sección 5) |
+
+Cuando arregles un problema, entra en el detalle del estado y pulsa **Validar corrección** para que
+Google lo vuelva a comprobar.

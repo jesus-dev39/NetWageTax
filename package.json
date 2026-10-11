@@ -12,6 +12,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
+    "check:prod": "node scripts/run-bash.mjs scripts/check-production.sh",
     "generate:map": "node scripts/generate-state-paths.mjs"
   },
   "dependencies": {
