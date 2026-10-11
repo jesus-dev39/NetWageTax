@@ -41,9 +41,20 @@ export const STRUCTURE_NAME: Record<StateTaxInfo['structure'], string> = {
   graduated: 'Progressive brackets',
 };
 
-/** Page <title> (the layout appends "| NetWageTax"). */
+/** Longest <title> we use; search results cut longer ones. */
+export const MAX_TITLE_LENGTH = 60;
+
+/**
+ * Page <title>. The layout appends "| NetWageTax", except for states with no tax on wages: their
+ * title answers the search question ("Does Texas have a state income tax?") and is returned complete,
+ * shortened when needed to fit MAX_TITLE_LENGTH, so the page passes appendSiteName={false}.
+ */
 export function pageTitle(s: StateTaxInfo): string {
-  if (s.structure === 'none') return `${s.name} Income Tax 2026: No State Tax on Wages & Calculator`;
+  if (s.structure === 'none') {
+    const q = `Does ${s.name} Have a State Income Tax? No`;
+    const candidates = [`${q} (2026 Guide) | NetWageTax`, `${q} (2026) | NetWageTax`, `${q} (2026 Guide)`, `${q} (2026)`];
+    return candidates.find((c) => c.length <= MAX_TITLE_LENGTH) ?? candidates[candidates.length - 1];
+  }
   if (s.structure === 'flat') return `${s.name} Income Tax 2026: ${pct(s.estimateRate)} Flat Rate & Calculator`;
   return `${s.name} Income Tax 2026: Rates, Brackets & Calculator`;
 }
@@ -51,7 +62,10 @@ export function pageTitle(s: StateTaxInfo): string {
 export function metaDescription(s: StateTaxInfo): string {
   const tax = formatUSD(exampleTax(s));
   if (s.structure === 'none') {
-    return `${s.name} has no state income tax on wages in 2026, so $65,000 of salary owes $0 in state tax. Compare neighboring states and estimate your federal tips and overtime deduction.`;
+    const extra = NO_WAGE_TAX_EXTRA[s.code];
+    return extra
+      ? `No. ${s.name} doesn’t tax wages in 2026. ${extra.short} See what you still pay and estimate your take-home pay.`
+      : `No. ${s.name} doesn’t tax wages in 2026. See what you still pay (federal income tax, Social Security, and Medicare) and estimate your take-home pay.`;
   }
   if (s.structure === 'flat') {
     return `${s.name} taxes wages at a flat ${pct(s.estimateRate)} in 2026. A single filer earning $65,000 owes about ${tax} in state income tax. See the math, compare neighbors, and run the calculator.`;
@@ -60,12 +74,32 @@ export function metaDescription(s: StateTaxInfo): string {
   return `${s.name} income tax rates run from ${pct(lo)} to ${pct(hi)} in 2026. Estimated state tax on $65,000 of wages (single): about ${tax}. Compare neighbors and run the calculator.`;
 }
 
+/** States with no tax on wages that still tax (or recently taxed) some other income. */
+const NO_WAGE_TAX_EXTRA: Partial<Record<StateTaxInfo['code'], { short: string }>> = {
+  WA: { short: 'It taxes only long-term capital gains above a large exemption.' },
+  NH: { short: 'It repealed its Interest and Dividends Tax starting in 2025.' },
+};
+
+/** "Does [State] have a state income tax?" for the FAQ (and FAQPage data) on no-wage-tax pages. Plain text. */
+export function noIncomeTaxFaq(s: StateTaxInfo): { question: string; answer: string[] } | undefined {
+  if (s.structure !== 'none') return undefined;
+  return {
+    question: `Does ${s.name} have a state income tax?`,
+    answer: [
+      // Some notes open with "No tax on wages.", which the first sentence already says.
+      `No. ${s.name} doesn’t tax wages, so no state income tax is withheld from your paycheck in 2026. ${s.note.replace(/^No tax on wages\. /, '')}`,
+      `You still pay federal income tax, Social Security, and Medicare on your wages. The paycheck calculator with ${s.name} selected shows your take-home pay after those.`,
+    ],
+  };
+}
+
 /** Opening paragraph under the H1. */
 export function leadParagraph(s: StateTaxInfo): string {
   const tax = exampleTax(s);
   const eff = pct(tax / EXAMPLE_WAGE);
   if (s.structure === 'none') {
-    return `${s.name} does not tax wages, so a single filer earning ${formatUSD(EXAMPLE_WAGE)} owes ${formatUSD(0)} in state income tax for 2026.`;
+    const extra = NO_WAGE_TAX_EXTRA[s.code];
+    return `No, ${s.name} doesn’t have a state income tax on wages. A single filer earning ${formatUSD(EXAMPLE_WAGE)} owes ${formatUSD(0)} in ${s.name} income tax for 2026.${extra ? ` ${extra.short}` : ''}`;
   }
   if (s.structure === 'flat') {
     const base =

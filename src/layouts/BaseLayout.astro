@@ -10,12 +10,14 @@ interface Props {
   description: string;
   /** Open Graph type: "website" for the home page, "article" for tool pages. */
   ogType?: 'website' | 'article';
+  /** Append "| NetWageTax" to the title (default). Off when the title is already at the length limit. */
+  appendSiteName?: boolean;
 }
 
-const { title, description, ogType = 'website' } = Astro.props;
+const { title, description, ogType = 'website', appendSiteName = true } = Astro.props;
 
 const SITE_NAME = 'NetWageTax';
-const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
+const fullTitle = !appendSiteName || title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 // Canonical/OG URLs require `site` in astro.config.mjs.
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 
