@@ -1,12 +1,34 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
+import FaqList from '../../components/FaqList.astro';
 import StateExplorer from '../../components/StateExplorer';
+import { DIRECTORY_DESCRIPTION, DIRECTORY_TITLE, directoryFaqs, faqPlainText } from '../../lib/state-directory-content';
 import { statePagePath, STATES } from '../../lib/state-tax-data';
 
-const title = '2026 State Income Tax Map: Rates for All 50 States + DC';
-const description =
-  'Interactive map of 2026 state income tax rates. See which states have no income tax, which use a flat tax, and which are progressive, then estimate your tips and overtime deduction with state tax included.';
+const faqs = directoryFaqs();
+const site = Astro.site ?? new URL('https://netwagetax.com');
+const abs = (path: string) => new URL(path, site).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer.map(faqPlainText).join(' ') },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+        { '@type': 'ListItem', position: 2, name: 'State taxes', item: abs('/state-taxes/') },
+      ],
+    },
+  ],
+};
 
 // Legacy deep links (/state-taxes/?state=texas or ?state=TX) move to the static state pages.
 const redirects = Object.fromEntries(
@@ -23,7 +45,8 @@ const counts = {
 };
 ---
 
-<BaseLayout title={title} description={description} ogType="article">
+<BaseLayout title={DIRECTORY_TITLE} description={DIRECTORY_DESCRIPTION} ogType="article" appendSiteName={false}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <script slot="head" is:inline define:vars={{ redirects }}>
     (() => {
       const q = new URLSearchParams(location.search).get('state');
@@ -39,5 +62,12 @@ const counts = {
 
   <div class="container-page py-10">
     <StateExplorer client:load />
+
+    <section aria-labelledby="faq" class="mt-12 max-w-3xl">
+      <h2 id="faq" class="text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]">Frequently asked questions</h2>
+      <div class="mt-5">
+        <FaqList faqs={faqs} />
+      </div>
+    </section>
   </div>
 </BaseLayout>
