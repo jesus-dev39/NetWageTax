@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { calculateStateIncomeTax, findState, formatStateRate, relatedStates, statePagePath, STATES, STATES_BY_CODE } from './state-tax-data';
+import {
+  BRACKET_ENGINE_STATES,
+  calculateStateIncomeTax,
+  estimateStateTax,
+  findState,
+  formatStateRate,
+  relatedStates,
+  statePagePath,
+  stateTaxBreakdown,
+  STATES,
+  STATES_BY_CODE,
+} from './state-tax-data';
 import { US_STATE_PATHS } from './us-state-paths';
 
 describe('state tax dataset', () => {
@@ -39,6 +50,60 @@ describe('calculateStateIncomeTax', () => {
     expect(calculateStateIncomeTax(50_000, 'PA')).toBeCloseTo(1_535);
     expect(calculateStateIncomeTax(62_750, 'NC')).toBeCloseTo(50_000 * 0.0399);
     expect(calculateStateIncomeTax(10_000, 'NC')).toBe(0);
+  });
+
+  it('runs the bracket engine only for California, New York, South Carolina, and West Virginia', () => {
+    expect(BRACKET_ENGINE_STATES.map((s) => s.code)).toEqual(['CA', 'NY', 'SC', 'WV']);
+    // Vermont has a bracket table but stays on the simplified estimate.
+    expect(STATES_BY_CODE.VT.bracketEngine).toBeUndefined();
+  });
+
+  // Reference values worked out by hand from BRACKETS (single filer, wages = state income).
+  it.each([
+    // CA: $5,700 deduction. 1% to $11,079; 2% to $26,264; 4% to $41,452; 6% to $57,542; 8% to $72,724; 9.3%...
+    ['CA', 30_000, 375.21], //    24,300: 110.79 + 13,221 × 2%
+    ['CA', 65_000, 2_128.05], //  59,300: 1,987.41 + 1,758 × 8%
+    ['CA', 150_000, 9_858.54], // 144,300: 3,201.97 + 71,576 × 9.3%
+    ['CA', 1_200_000, 129_678.51], // 1,194,300: 72,219.83 + 451,347 × 12.3% + 194,300 × 1% surcharge
+    // NY: $8,000 deduction. 3.9% to $8,500; 4.4% to $11,700; 5.15% to $13,900; 5.4% to $80,650; 5.9% to $215,400
+    ['NY', 30_000, 1_023.0], //   22,000: 585.60 + 8,100 × 5.4%
+    ['NY', 65_000, 2_913.0], //   57,000: 585.60 + 43,100 × 5.4%
+    ['NY', 150_000, 7_809.75], // 142,000: 4,190.10 + 61,350 × 5.9% (recapture not included)
+    // SC: SCIAD $15,000 / $8,190 / $0. 1.99% to $30,000, then 5.21%
+    ['SC', 30_000, 298.5], //     15,000 × 1.99%
+    ['SC', 65_000, 1_993.8], //   56,810: 597 + 26,810 × 5.21%
+    ['SC', 150_000, 6_849.0], //  150,000: 597 + 120,000 × 5.21%
+    // WV: $2,000 exemption. 2.11% to $10,000; 2.81% to $25,000; 3.16% to $40,000; 4.22% to $60,000; 4.58%
+    ['WV', 30_000, 727.3], //     28,000: 632.50 + 3,000 × 3.16%
+    ['WV', 65_000, 2_087.9], //   63,000: 1,950.50 + 3,000 × 4.58%
+    ['WV', 150_000, 5_980.9], //  148,000: 1,950.50 + 88,000 × 4.58%
+  ] as const)('%s at $%i is $%d', (code, wages, expected) => {
+    expect(calculateStateIncomeTax(wages, code)).toBeCloseTo(expected, 2);
+  });
+
+  it('uses the single brackets for every filing status for now', () => {
+    expect(calculateStateIncomeTax(65_000, 'CA', 'mfj')).toBe(calculateStateIncomeTax(65_000, 'CA'));
+    expect(stateTaxBreakdown(65_000, 'CA', 'hoh')?.usedSingleBrackets).toBe(true);
+    expect(stateTaxBreakdown(65_000, 'TX')).toBeUndefined();
+  });
+
+  it('tells the calculators which method the state uses', () => {
+    expect(estimateStateTax(65_000, 'CA').usesBrackets).toBe(true);
+    expect(estimateStateTax(65_000, 'GA').usesBrackets).toBe(false);
+    expect(estimateStateTax(65_000, 'NY', 0, 'mfj').tax).toBeCloseTo(2_913);
+  });
+
+  it('breaks the $65,000 example into one line per bracket used', () => {
+    const r = stateTaxBreakdown(65_000, 'WV')!;
+    expect(r.deduction).toBe(2_000);
+    expect(r.lines.map((l) => [l.from, l.to])).toEqual([
+      [0, 10_000],
+      [10_000, 25_000],
+      [25_000, 40_000],
+      [40_000, 60_000],
+      [60_000, 63_000],
+    ]);
+    expect(stateTaxBreakdown(1_200_000, 'CA')!.surcharges[0].tax).toBeCloseTo(1_943);
   });
 });
 
@@ -120,9 +185,8 @@ describe('bracket schedules', () => {
     }
   });
 
-  it('does not change the $65,000 estimate', () => {
-    expect(calculateStateIncomeTax(65_000, 'CA')).toBeCloseTo((65_000 - 5_700) * 0.033);
-    expect(calculateStateIncomeTax(65_000, 'NY')).toBeCloseTo((65_000 - 8_000) * 0.051);
+  it('does not change the $65,000 estimate without an engine (display only)', () => {
+    expect(calculateStateIncomeTax(65_000, 'VT')).toBeCloseTo((65_000 - 13_050) * 0.0351);
   });
 });
 

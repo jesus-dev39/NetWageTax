@@ -127,7 +127,7 @@ export default function TaxCalculatorApp() {
       filingStatus,
       bothSpousesHaveOvertime: askBothSpouses && bothSpousesOvertime,
     });
-    return estimateStateTax(magiValue, stateCode, subtraction.total);
+    return estimateStateTax(magiValue, stateCode, subtraction.total, filingStatus);
   }, [stateCode, magiValue, result, tipsQualified, overtimeQualified, filingStatus, askBothSpouses, bothSpousesOvertime]);
 
   const phaseoutStart =

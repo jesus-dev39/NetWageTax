@@ -109,6 +109,9 @@ export function leadParagraph(s: StateTaxInfo): string {
     return `${s.name} taxes wages at a single ${pct(s.estimateRate)} rate ${base}. A single filer earning ${formatUSD(EXAMPLE_WAGE)} owes an estimated ${formatUSD(tax)} for 2026, an effective rate of ${eff}.`;
   }
   const [lo, hi] = s.bracketRange!;
+  if (s.bracketEngine) {
+    return `${s.name} uses progressive brackets, with rates from ${pct(lo)} to ${pct(hi)}. For a single filer earning ${formatUSD(EXAMPLE_WAGE)}, the 2026 tax worked out bracket by bracket is ${formatUSD(tax)}, about ${eff} of wages.`;
+  }
   return `${s.name} uses progressive brackets, with rates from ${pct(lo)} to ${pct(hi)}. For a single filer earning ${formatUSD(EXAMPLE_WAGE)}, our simplified 2026 estimate is ${formatUSD(tax)}, about ${eff} of wages.`;
 }
 

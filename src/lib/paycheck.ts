@@ -6,7 +6,8 @@
  * - Federal: deducción estándar 2026 + tramos 2026 (marginal-rate.ts).
  * - FICA: Social Security 6.2% hasta la base salarial 2026, Medicare 1.45%
  *   y Additional Medicare 0.9% sobre el umbral del estado civil (fica.ts).
- * - Estatal: modelo simplificado de state-tax-data.ts.
+ * - Estatal: state-tax-data.ts (tramos completos en los estados del motor,
+ *   estimación simplificada en los demás; tramos de soltero en todos).
  *
  * No incluye deducciones pre-tax (401(k), seguro médico, HSA), ajustes del
  * W-4, impuestos locales ni la deducción OBBBA de horas extra.
@@ -94,7 +95,7 @@ export function calculatePaycheck(input: PaycheckInput): PaycheckResult {
   const additionalMedicare = estimateAdditionalMedicare(grossAnnual, input.filingStatus);
   const medicare = grossAnnual * MEDICARE_RATE + additionalMedicare;
 
-  const stateTax = input.stateCode ? calculateStateIncomeTax(grossAnnual, input.stateCode) : 0;
+  const stateTax = input.stateCode ? calculateStateIncomeTax(grossAnnual, input.stateCode, input.filingStatus) : 0;
 
   const totalTax = federalTax + socialSecurity + medicare + stateTax;
   const netAnnual = grossAnnual - totalTax;

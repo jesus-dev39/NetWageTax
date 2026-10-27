@@ -384,7 +384,15 @@ Qué significa cada campo (los tipos se escriben en tanto por uno: 4.99% = `0.04
 | `note` | Explicación que aparece en la página del estado |
 | `localTaxNote` | Impuestos locales (ciudades, condados), si los hay |
 
-La estimación es `(salario − exemptAmount) × estimateRate`. Por eso, en los estados `GRAD`, cuando
+Hay dos formas de calcular el impuesto de un estado:
+
+- **Motor de tramos** (`src/lib/state-bracket-engine.ts`): resta la deducción del estado, aplica todos
+  los tramos de `BRACKETS` y suma los recargos. Lo usan los estados cuya entrada de `BRACKETS` tiene
+  `engine` (ahora California, New York, South Carolina y West Virginia). En ellos, `estimateRate` y
+  `exemptAmount` ya no se usan: se quedan en `ROWS` solo por si hubiera que volver a la estimación.
+- **Estimación simplificada**, en todos los demás: `(salario − exemptAmount) × estimateRate`.
+
+En la estimación simplificada, en los estados `GRAD`, cuando
 cambian los tramos hay que **recalcular** `estimateRate`: aplica los tramos nuevos a
 $65,000 − `exemptAmount`, divide el impuesto resultante entre esa misma base y redondea a cuatro
 decimales.
@@ -416,7 +424,56 @@ CA: {
 
 La página del estado muestra la tabla sola en cuanto la añades. Si `year` es anterior al año de la
 web, aparece automáticamente una nota que explica que las cifras del año nuevo todavía no están
-publicadas. La tabla solo se muestra: la estimación sigue usando `estimateRate`.
+publicadas. Mientras la entrada no tenga `engine`, la tabla solo se muestra: la estimación sigue
+usando `estimateRate`.
+
+**Pasar un estado al motor de tramos.** Cuando la tabla de `BRACKETS` de un estado esté comprobada
+con la fuente oficial, puedes hacer que el cálculo la use:
+
+1. **Comprueba la deducción** del estado para un *single* en la fuente oficial: deducción estándar,
+   exención personal o, si depende de la renta, la cifra máxima y entre qué ingresos se reduce.
+2. **Añade `engine`** a su entrada de `BRACKETS`. Hay dos tipos de deducción:
+
+   ```ts
+   WV: {
+     engine: { deduction: { kind: 'fixed', amount: 2_000, label: 'Personal exemption' } },
+     year: 2026,
+     // ...source, brackets y note, como antes
+   },
+   SC: {
+     engine: {
+       deduction: {
+         kind: 'phaseout',      // se reduce con la renta
+         max: 15_000,           // deducción completa
+         phaseoutStart: 40_000, // desde aquí empieza a reducirse
+         phaseoutEnd: 95_000,   // aquí ya es 0
+         roundDownTo: 10,       // la reducción se redondea hacia abajo a múltiplos de $10 (0 = sin redondeo)
+         label: 'South Carolina income adjusted deduction (SCIAD)',
+       },
+     },
+     // ...
+   },
+   ```
+
+   `label` es el texto de la fila de la deducción en el ejemplo de la página del estado. Si el estado
+   tiene un recargo, añade `surcharges` (ejemplo real en `BRACKETS.CA`:
+   `[{ over: 1_000_000, rate: 0.01, label: 'Behavioral Health Services Tax' }]`). Si tiene créditos
+   personales fijos, añade `personalCredits` con el importe en dólares. `federalTaxSubtraction` (restar
+   el impuesto federal, para Oregon, Alabama y Missouri) está preparado en el motor, pero todavía no
+   se usa: no lo añadas sin calcular antes el impuesto federal que hay que pasarle.
+3. **Calcula a mano** el impuesto a $30,000, $65,000 y $150,000 de salario y añade los tres casos a
+   la lista de `src/lib/state-tax-data.test.ts` (busca `Reference values worked out by hand`), con la
+   cuenta en un comentario. Añade también el código del estado al test de `BRACKET_ENGINE_STATES`.
+4. **Ejecuta las tres comprobaciones** (sección 1.3) y abre la página del estado: el ejemplo de
+   $65,000 debe tener una fila por tramo, sin el aviso amarillo de *Simplified estimate*.
+
+Nada más: `/methodology/`, la página del mapa y las calculadoras leen la lista de estados del motor
+(`BRACKET_ENGINE_STATES`) y se actualizan solas.
+
+Por ahora solo hay tramos de *single*: los demás estados civiles usan esos mismos tramos y las
+calculadoras lo dicen. Cuando tengas los de otro estado civil, añádelos en `bracketsByStatus` dentro
+de `engine` (por ejemplo `bracketsByStatus: { mfj: [...] }`); el motor los usará en lugar de los de
+*single* para ese estado civil.
 
 **Añadir la fuente del tipo.** Añade una entrada en `RATE_SOURCES`:
 
@@ -452,7 +509,7 @@ estados y en la calculadora de propinas. Después de cambiarlos, repite el caso 
 | Estado | Qué tiene de especial | Qué hacer al actualizarlo |
 | :-- | :-- | :-- |
 | **Oregon** (`OR`) | Permite restar parte del impuesto **federal** pagado, con un tope que baja con los ingresos, y aplica un crédito por exención de $256. `estimateRate` = (tramos sobre $65,000 − $2,910 − $5,620 de impuesto federal − $256 de crédito) ÷ ($65,000 − $2,910) = $4,366 ÷ $62,090 = 7.03% | **Depende de las cifras federales:** cada vez que cambies los tramos federales (sección 3.1), recalcula el impuesto federal de un *single* con $65,000 y rehaz la cuenta. Comprueba también en las instrucciones del Form OR-40 el tope de la resta, el crédito por exención y los tramos |
-| **South Carolina** (`SC`) | Su deducción propia (SCIAD) es de $15,000 y se reduce en proporción a la parte del AGI federal entre $40,000 y $95,000. `exemptAmount` = la SCIAD a $65,000 ($8,190), así que solo es exacta a ese salario. La tabla de `BRACKETS.SC` lo explica | Recalcula la SCIAD a $65,000 con las cifras nuevas (la reducción se redondea hacia abajo a múltiplos de $10). A partir de 2027 el umbral del tramo ($30,000) se ajusta por inflación: actualiza `BRACKETS.SC` y luego `estimateRate` sobre $65,000 − la SCIAD |
+| **South Carolina** (`SC`) | Su deducción propia (SCIAD) es de $15,000 y se reduce en proporción a la parte del AGI federal entre $40,000 y $95,000. Se calcula con el motor de tramos: la SCIAD está en `BRACKETS.SC.engine` y se aplica a cada salario | Actualiza en `BRACKETS.SC.engine` la cifra máxima, el inicio y el final de la reducción y el redondeo (hoy, hacia abajo a múltiplos de $10). A partir de 2027 el umbral del tramo ($30,000) se ajusta por inflación: actualiza `BRACKETS.SC` y los valores de referencia de SC en los tests |
 | **Wisconsin** (`WI`) | La deducción estándar decrece con los ingresos: $13,960 menos el 12% de lo que pase de $20,120 ($8,574 a $65,000), más $700 de exención = `exemptAmount` $9,274 | Toma del Form 1-ES (o de las instrucciones del Form 1) la deducción máxima, el porcentaje y el umbral nuevos, recalcula la deducción a $65,000 y suma la exención |
 | **Ohio** (`OH`) | Es `FLAT`, pero tiene un tramo al 0% ($26,050) y una exención personal que depende del MAGI: $2,400 hasta $40,000, $2,150 de $40,000 a $80,000 y $1,900 de $80,000 a $500,000. `exemptAmount` = $26,050 + $2,150 = $28,200, la exención que corresponde a $65,000, que la estimación aplica a todos los salarios (la `note` lo dice) | Actualiza el tramo al 0%, los tres niveles de exención y el tipo, y vuelve a sumar el tramo al 0% más la exención del nivel de $40,000–$80,000. Si cambian las cifras, cambia también la `note` |
 | **Utah** (`UT`) | Tipo único del 4.45% con `exemptAmount` = 0: el crédito del contribuyente (6% de la deducción estándar federal, que se reduce con los ingresos) **no se aplica**, y la `note` lo avisa | Actualiza el tipo y `RATE_SOURCES.UT`. Mantén la `note` del crédito mientras la estimación no lo calcule (está previsto en el *Bracket engine* de `docs/PENDING-UPDATES.md`) |
@@ -462,9 +519,9 @@ estados y en la calculadora de propinas. Después de cambiarlos, repite el caso 
 | **Nebraska** (`NE`) | El crédito por exención personal ($176) no se aplica. La cuenta de `estimateRate` está en el comentario | Aplica los tramos nuevos a $65,000 − `exemptAmount`, sin el crédito |
 | **Alabama** (`AL`) y **Missouri** (`MO`) | Permiten restar el impuesto federal, como Oregon, pero el modelo no lo calcula aparte. Alabama, además, tiene su propia exención de horas extra: $1,000 por contribuyente (`TIPS_OVERTIME_RULES.AL`) | Si cambias sus cifras, ten en cuenta la resta del impuesto federal al calibrar `estimateRate` |
 | **Georgia** (`GA`) | Exención propia de propinas y horas extra ($1,750 cada una, `TIPS_OVERTIME_RULES.GA.own`). La deducción estándar sube a $15,000 en 2027 y el tipo puede bajar 0.125 puntos al año según la recaudación | Cada enero, confirma el tipo y la deducción (`exemptAmount`). Después, repite el caso de referencia 2 de la sección 2.4: si cambias el tipo, el texto de la línea estatal cambia, pero el ahorro federal ($960) no |
-| **California** (`CA`) | Recargo del 1% (Behavioral Health Services Tax) por encima de $1 millón; el tipo máximo de `bracketRange` (13.3%) lo incluye. `BRACKETS.CA` es todavía la tabla de 2025 | Actualiza `BRACKETS.CA` cuando la FTB publique la de 2026. El 12.3% y el "$1 million" también están escritos en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
+| **California** (`CA`) | Recargo del 1% (Behavioral Health Services Tax) por encima de $1 millón de base imponible; el tipo máximo de `bracketRange` (13.3%) lo incluye. Se calcula con el motor de tramos, con el recargo en `BRACKETS.CA.engine.surcharges`. `BRACKETS.CA` es todavía la tabla de 2025, y el crédito por exención personal no se aplica | Actualiza `BRACKETS.CA` y la deducción estándar de `engine` cuando la FTB publique las cifras de 2026, y luego los valores de referencia de CA en los tests. El 12.3% y el "$1 million" también están escritos en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
 | **Massachusetts** (`MA`) | Recargo del 4% por encima de unos $1.08 millones, que la estimación no aplica | El umbral se ajusta por inflación: actualízalo en la `note` y en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
-| **New York** (`NY`) y **Connecticut** (`CT`) | Tienen *recapture* (los contribuyentes con ingresos altos pierden la ventaja de los tramos bajos), que no se calcula: solo se menciona en la nota | `BRACKETS.NY` sale ahora de las tablas de retención: cámbialo a las instrucciones del IT-201 cuando se publiquen (`docs/PENDING-UPDATES.md`) |
+| **New York** (`NY`) y **Connecticut** (`CT`) | Tienen *recapture* (los contribuyentes con ingresos altos pierden la ventaja de los tramos bajos), que no se calcula: solo se menciona en la nota. New York se calcula con el motor de tramos (sin el *recapture*) | `BRACKETS.NY` sale ahora de las tablas de retención: cámbialo a las instrucciones del IT-201 cuando se publiquen (`docs/PENDING-UPDATES.md`) |
 | **Oregon**, deducción del coche | Oregon no permite la deducción de intereses del coche en su impuesto (SB 1507), y se dice en `CAR_LOAN_STATE_NOTE` (`src/lib/state-page-content.ts`) y en la FAQ de la calculadora del coche | Después del referéndum sobre SB 1507, actualiza las dos cosas si el resultado cambia la regla |
 
 Los tests de `src/lib/state-tax-data.test.ts` fijan algunos de estos valores (por ejemplo, el tipo y

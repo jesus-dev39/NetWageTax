@@ -204,7 +204,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
               detail:
                 stateTax.structure === 'none'
                   ? 'No state income tax'
-                  : `${stateTax.rateLabel} · simplified single-filer estimate, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
+                  : `${stateTax.rateLabel} · ${stateTax.usesBrackets ? 'single-filer brackets for every filing status' : 'simplified single-filer estimate'}, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
             },
           ]
         : []),

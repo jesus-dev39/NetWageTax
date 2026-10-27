@@ -25,7 +25,8 @@ publish the next year's numbers, and all states every January.
       tables) with the IT-201 instructions' tax rate schedule, and confirm the single-filer brackets
       match the ones on the page.
 - [ ] **California: update to the 2026 brackets when the FTB publishes them.** Replace the 2025
-      schedule in `BRACKETS.CA` and set `year: 2026`. The inflation note above the table then
+      schedule in `BRACKETS.CA` and set `year: 2026`, check the single standard deduction in its
+      `engine` (now $5,700) and update the CA reference values in `state-tax-data.test.ts`. The inflation note above the table then
       disappears on its own (it only shows when `bracketsYear` is before 2026).
 - [ ] **Georgia: check the 2027 rate and standard deduction (January 2027).** HB 463 (2026) cuts the
       rate by 0.125 point a year toward 3.99% only if state revenue conditions are met: confirm whether
@@ -72,8 +73,8 @@ publish the next year's numbers, and all states every January.
       standard deduction in `exemptAmount` (now the 2025 $7,650 + the 2026 $5,400 exemption), and
       recalibrate `estimateRate` at $65,000.
 - [ ] **South Carolina: 2027 bracket indexing (January 2027).** The $30,000 threshold is the 2026 figure;
-      H.4216 indexes it under Section 12-6-520 starting in 2027. Update `BRACKETS.SC` and the
-      `estimateRate` once SCDOR publishes the 2027 figure.
+      H.4216 indexes it under Section 12-6-520 starting in 2027. Update `BRACKETS.SC` and the SC
+      reference values in `state-tax-data.test.ts` once SCDOR publishes the 2027 figure.
 - [ ] **All states: review the 2027 data (January 15, 2027).** Rates, `exemptAmount`, `estimateRate`,
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
       Then update `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` and the tax year shown on the pages.
@@ -124,6 +125,13 @@ publish the next year's numbers, and all states every January.
       $94,700, with a note for higher incomes; New York and Connecticut recapture stays a note, not part
       of the calculation; California's 1% Behavioral Health Services Tax is its own row in the
       calculation.
+      - [x] Phase 1: the engine (`src/lib/state-bracket-engine.ts`: deduction, brackets, surcharges,
+            personal credits, and the federal income tax subtraction, not active yet) runs for California,
+            New York, South Carolina, and West Virginia, with single-filer brackets for every filing status.
+            The state pages show the $65,000 example bracket by bracket.
+      - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFJ and
+            HoH brackets (`bracketsByStatus`), turn on the federal income tax subtraction for Oregon, Alabama,
+            and Missouri, and decide on California's personal exemption credit.
       - Utah (credits piece): the taxpayer tax credit (6% of the federal standard deduction, reduced as
         income rises) isn't applied today. Include it with its income phase-out when the engine runs on
         brackets and credits.

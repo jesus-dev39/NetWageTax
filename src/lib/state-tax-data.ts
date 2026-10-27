@@ -3,7 +3,8 @@
  * Estimaciones del impuesto estatal sobre la renta (salarios) para 2026:
  * 50 estados + DC.
  *
- * Modelo (deliberadamente simple, ver SPEC):
+ * Los estados con `engine` en BRACKETS (CA, NY, SC, WV) se calculan tramo a tramo
+ * con state-bracket-engine.ts. Los demás usan el modelo simplificado:
  *   impuesto ≈ max(0, ingreso − exemptAmount) × estimateRate
  * - 'none':       sin impuesto sobre salarios.
  * - 'flat':       estimateRate = tipo estatutario; exemptAmount ≈ deducción
@@ -21,7 +22,11 @@
  * con efecto para el año fiscal 2026. Revisar cada enero (DATA_AS_OF).
  */
 
+import type { FilingStatus } from './obbba-params';
+import { computeBracketTax, type BracketEngineResult, type BracketEngineRules, type TaxBracket } from './state-bracket-engine';
 import { TIPS_OVERTIME_RULES, type TipsOvertimeRule } from './state-tips-overtime';
+
+export type { TaxBracket };
 
 export const STATE_TAX_DATA_AS_OF = '2026 tax year (laws enacted through mid-2026)';
 
@@ -41,9 +46,9 @@ export interface StateTaxInfo {
   name: string;
   slug: string;
   structure: TaxStructure;
-  /** Rate (0–1) applied to income above exemptAmount in the estimate. */
+  /** Rate (0–1) applied to income above exemptAmount in the estimate. Not used when `bracketEngine` is set. */
   estimateRate: number;
-  /** Approximate single-filer income not subject to the rate (standard deduction, exemptions, 0% bracket). */
+  /** Approximate single-filer income not subject to the rate (standard deduction, exemptions, 0% bracket). Not used when `bracketEngine` is set. */
   exemptAmount: number;
   /** Graduated states: lowest and highest statutory marginal rates (0–1). */
   bracketRange?: [number, number];
@@ -58,8 +63,10 @@ export interface StateTaxInfo {
   tipsOvertime: TipsOvertimeRule;
   /** Official document the current rate comes from (a law or a state publication), when verified. */
   rateSource?: { url: string; label: string };
-  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. Display only: the estimate doesn't use it. */
+  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. */
   brackets?: TaxBracket[];
+  /** Set when the state is calculated bracket by bracket (state-bracket-engine.ts) instead of with estimateRate. */
+  bracketEngine?: BracketEngineRules;
   /** Tax year of `brackets` (set whenever `brackets` is). */
   bracketsYear?: number;
   /** Official document the `brackets` were taken from. */
@@ -68,12 +75,6 @@ export interface StateTaxInfo {
   bracketsNote?: string;
   /** Bordering states (DC counts as bordering MD and VA). */
   neighbors: StateCode[];
-}
-
-/** One bracket of a single filer's schedule: `rate` applies to taxable income above `over`. */
-export interface TaxBracket {
-  over: number;
-  rate: number;
 }
 
 type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime'>;
@@ -271,14 +272,31 @@ interface BracketSchedule {
   source: string;
   brackets: TaxBracket[];
   note?: string;
+  /**
+   * Set once the schedule is fit for the calculation: calculateStateIncomeTax then runs the bracket
+   * engine (state-bracket-engine.ts) with these rules and `brackets`, instead of estimateRate.
+   */
+  engine?: Omit<BracketEngineRules, 'brackets'>;
 }
 
 /**
  * Verified single-filer bracket schedules, each from an official document. Add states one by one;
- * pages pick them up automatically. Display only: calculateStateIncomeTax still uses estimateRate.
+ * pages pick them up automatically. Without `engine`, the table is display only and
+ * calculateStateIncomeTax uses estimateRate.
  */
 const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
   SC: {
+    // H.4216: the SCIAD reduction is rounded down to a multiple of $10 ($8,190 at $65,000 of federal AGI).
+    engine: {
+      deduction: {
+        kind: 'phaseout',
+        max: 15_000,
+        phaseoutStart: 40_000,
+        phaseoutEnd: 95_000,
+        roundDownTo: 10,
+        label: 'South Carolina income adjusted deduction (SCIAD)',
+      },
+    },
     year: 2026,
     source: 'https://www.scstatehouse.gov/sess126_2025-2026/bills/4216.htm',
     brackets: [
@@ -288,6 +306,7 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     note: 'Brackets apply to South Carolina taxable income, after the SCIAD deduction: $15,000 for single filers, reduced by the share of federal AGI above $40,000 over $55,000 (so $8,190 at $65,000 and $0 from $95,000).',
   },
   WV: {
+    engine: { deduction: { kind: 'fixed', amount: 2_000, label: 'Personal exemption' } },
     year: 2026,
     source: 'https://www.wvlegislature.gov/Bill_Text_HTML/2026_SESSIONS/RS/bills/sb392%20sub1%20enr.htm',
     brackets: [
@@ -300,6 +319,12 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     note: 'Brackets apply to West Virginia taxable income, after the $2,000 personal exemption.',
   },
   CA: {
+    // The $5,700 deduction is the single standard deduction as the estimate already used it. The personal
+    // exemption credit isn't applied (no personal credits in phase 1).
+    engine: {
+      deduction: { kind: 'fixed', amount: 5_700, label: 'Standard deduction' },
+      surcharges: [{ over: 1_000_000, rate: 0.01, label: 'Behavioral Health Services Tax' }],
+    },
     year: 2025,
     source: 'https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf',
     brackets: [
@@ -327,6 +352,8 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     note: 'If your adjusted gross income is over $150,000, Vermont tax is the greater of 3% of AGI or the rate schedule amount.',
   },
   NY: {
+    // Tax benefit recapture isn't calculated; the bracket note mentions it.
+    engine: { deduction: { kind: 'fixed', amount: 8_000, label: 'Standard deduction' } },
     year: 2026,
     source: 'https://www.tax.ny.gov/pdf/publications/withholding/nys50_t_nys.pdf',
     brackets: [
@@ -412,8 +439,16 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   bracketsYear: BRACKETS[r.code]?.year,
   bracketsSource: BRACKETS[r.code]?.source,
   bracketsNote: BRACKETS[r.code]?.note,
+  bracketEngine: engineRules(BRACKETS[r.code]),
   neighbors: NEIGHBORS[r.code],
 })).sort((a, b) => a.name.localeCompare(b.name));
+
+function engineRules(schedule: BracketSchedule | undefined): BracketEngineRules | undefined {
+  return schedule?.engine && { ...schedule.engine, brackets: schedule.brackets };
+}
+
+/** States calculated bracket by bracket, in name order. */
+export const BRACKET_ENGINE_STATES = STATES.filter((s) => s.bracketEngine);
 
 /** Canonical page for a state, e.g. /state-taxes/new-york/. */
 export const statePagePath = (s: Pick<StateTaxInfo, 'slug'>) => `/state-taxes/${s.slug}/`;
@@ -443,10 +478,20 @@ export function findState(value: string | null | undefined): StateTaxInfo | unde
   return STATES.find((s) => s.code.toLowerCase() === v || s.slug === v);
 }
 
-/** Estimated state income tax on wages (USD). See the model at the top of this file. */
-export function calculateStateIncomeTax(taxableIncome: number, stateCode: StateCode): number {
+/**
+ * Estimated state income tax on wages (USD). States with a `bracketEngine` run it; the rest use the
+ * simplified model at the top of this file. `filingStatus` only matters once a state has brackets for it.
+ */
+export function calculateStateIncomeTax(taxableIncome: number, stateCode: StateCode, filingStatus: FilingStatus = 'single'): number {
   const s = STATES_BY_CODE[stateCode];
+  if (s.bracketEngine) return computeBracketTax(s.bracketEngine, { income: taxableIncome, filingStatus }).tax;
   return Math.max(0, taxableIncome - s.exemptAmount) * s.estimateRate;
+}
+
+/** Step-by-step bracket calculation for states that use the engine; undefined for the rest. */
+export function stateTaxBreakdown(income: number, stateCode: StateCode, filingStatus: FilingStatus = 'single'): BracketEngineResult | undefined {
+  const rules = STATES_BY_CODE[stateCode].bracketEngine;
+  return rules && computeBracketTax(rules, { income, filingStatus });
 }
 
 const pct = (r: number) => `${+(r * 100).toFixed(2)}%`;
@@ -474,10 +519,17 @@ export interface StateTaxEstimate {
   tax: number;
   /** Tips and overtime subtracted before the estimate (state-tips-overtime-subtraction.ts); 0 if none. */
   stateDeduction: number;
+  /** True when the tax comes from the state's single-filer brackets (bracket engine), not the simplified estimate. */
+  usesBrackets: boolean;
 }
 
 /** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
-export function estimateStateTax(income: number, stateCode: StateCode, stateDeduction = 0): StateTaxEstimate {
+export function estimateStateTax(
+  income: number,
+  stateCode: StateCode,
+  stateDeduction = 0,
+  filingStatus: FilingStatus = 'single',
+): StateTaxEstimate {
   const s = STATES_BY_CODE[stateCode];
   const deduction = s.structure === 'none' ? 0 : Math.max(0, Math.min(stateDeduction, income));
   return {
@@ -485,7 +537,11 @@ export function estimateStateTax(income: number, stateCode: StateCode, stateDedu
     name: s.name,
     structure: s.structure,
     rateLabel: formatStateRate(s),
-    tax: calculateStateIncomeTax(income - deduction, stateCode),
+    tax: calculateStateIncomeTax(income - deduction, stateCode, filingStatus),
     stateDeduction: deduction,
+    usesBrackets: Boolean(s.bracketEngine),
   };
 }
+
+/** Assumption shown wherever a bracket-engine state's tax appears. */
+export const SINGLE_BRACKETS_NOTE = 'Calculated with the state’s single-filer brackets for every filing status.';
