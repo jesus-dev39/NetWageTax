@@ -311,9 +311,21 @@ Actualiza también el comentario de cabecera del archivo con el número de la Re
 **Dónde encontrarla.** La Social Security Administration (SSA) anuncia la base salarial máxima
 (*contribution and benefit base*) del año siguiente en octubre, junto con el ajuste de las
 pensiones (*COLA*). La página oficial es <https://www.ssa.gov/oact/cola/cbb.html>. Para 2026 es
-$184,500.
+$184,500; para 2027, $192,300 (anuncio del 14 de octubre de 2026).
 
 **Archivo:** `src/lib/fica.ts` → constante `SOCIAL_SECURITY_WAGE_BASE_2026`.
+
+La cifra se publica en octubre, pero la web sigue mostrando el año en curso hasta que se cambia
+`SITE_TAX_YEAR`. Por eso se hace en dos momentos:
+
+1. **Cuando la SSA la anuncia (octubre):** **no** toques la constante de 2026, que es la que usa la
+   web. Añade debajo una nueva, `SOCIAL_SECURITY_WAGE_BASE_2027`, con su comentario (fuente, fecha
+   del anuncio y la nota de que aún no se usa), y márcalo como hecho en `docs/PENDING-UPDATES.md`.
+   Los tests no cambian, porque nada usa todavía la constante nueva.
+2. **Cuando la web pasa a 2027:** borra la línea de `SOCIAL_SECURITY_WAGE_BASE_2027`, pon su valor
+   en `SOCIAL_SECURITY_WAGE_BASE_2026` y renombra esta a `..._2027` con *Rename Symbol* (`F2`), como
+   dice el aviso del principio de esta sección. Si renombras sin borrar antes la otra, habrá dos
+   constantes con el mismo nombre y el build fallará.
 
 Lo demás de ese archivo lo fija la ley y no cambia con la inflación: `SOCIAL_SECURITY_RATE` (6.2%),
 `MEDICARE_RATE` (1.45%), `ADDITIONAL_MEDICARE_RATE` (0.9%) y `ADDITIONAL_MEDICARE_THRESHOLD`
