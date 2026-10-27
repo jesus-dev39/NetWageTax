@@ -8,7 +8,8 @@
  *   a) Deducción: fija (estándar + exención) o dependiente de la renta (SCIAD).
  *   b) Tramos del estado sobre la base imponible.
  *   c) Recargos especiales (el 1% de California por encima de $1,000,000).
- *   d) Créditos personales fijos, que restan del impuesto.
+ *   d) Créditos personales, que restan del impuesto (con una reducción opcional
+ *      según la renta, como el de California).
  *   e) Resta del impuesto federal (Oregon, Alabama, Missouri): preparada pero sin
  *      activar. Es una resta de la renta, no del impuesto, así que cuando se active
  *      reduce la base imponible junto con la deducción del paso a).
@@ -52,6 +53,15 @@ export interface Surcharge {
   label: string;
 }
 
+/** Step d): a personal credit subtracted from the tax, optionally reduced as income rises. */
+export interface PersonalCredit {
+  amount: number;
+  /** Row label on the state page, e.g. "Personal exemption credit". */
+  label: string;
+  /** `reductionPerStep` less for each `stepSize`, or part of one, of income above `start`; never below 0. */
+  phaseout?: { start: number; stepSize: number; reductionPerStep: number };
+}
+
 /** Step e): subtraction of federal income tax paid, up to an optional cap. Not active in any state yet. */
 export interface FederalTaxSubtraction {
   cap?: number;
@@ -65,8 +75,7 @@ export interface BracketEngineRules {
   /** Brackets for other filing statuses, when the state's are added (MFJ, HoH, MFS). */
   bracketsByStatus?: Partial<Record<Exclude<FilingStatus, 'single'>, TaxBracket[]>>;
   surcharges?: Surcharge[];
-  /** Step d): fixed personal credits subtracted from the tax (USD). */
-  personalCredits?: number;
+  personalCredits?: PersonalCredit;
   federalTaxSubtraction?: FederalTaxSubtraction;
 }
 
@@ -102,7 +111,9 @@ export interface BracketEngineResult {
   lines: BracketLine[];
   bracketTax: number;
   surcharges: SurchargeLine[];
+  /** Personal credit actually subtracted (after its phase-out, and no more than the tax). */
   personalCredits: number;
+  personalCreditLabel?: string;
   tax: number;
   /** True when the filing status had no schedule of its own and the single brackets were used. */
   usedSingleBrackets: boolean;
@@ -115,6 +126,12 @@ export function stateDeductionAmount(d: StateDeduction, income: number): number 
   const raw = (d.max * (income - d.phaseoutStart)) / (d.phaseoutEnd - d.phaseoutStart);
   const reduction = d.roundDownTo > 0 ? Math.floor(raw / d.roundDownTo) * d.roundDownTo : raw;
   return Math.max(0, d.max - reduction);
+}
+
+export function personalCreditAmount(c: PersonalCredit, income: number): number {
+  if (!c.phaseout || income <= c.phaseout.start) return c.amount;
+  const steps = Math.ceil((income - c.phaseout.start) / c.phaseout.stepSize);
+  return Math.max(0, c.amount - steps * c.phaseout.reductionPerStep);
 }
 
 export function bracketLines(taxable: number, brackets: TaxBracket[]): BracketLine[] {
@@ -153,7 +170,8 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
   const beforeCredits = bracketTax + surcharges.reduce((sum, s) => sum + s.tax, 0);
 
   // d)
-  const personalCredits = Math.min(beforeCredits, rules.personalCredits ?? 0);
+  const credit = rules.personalCredits;
+  const personalCredits = credit ? Math.min(beforeCredits, personalCreditAmount(credit, income)) : 0;
 
   return {
     income,
@@ -165,6 +183,7 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
     bracketTax,
     surcharges,
     personalCredits,
+    personalCreditLabel: credit?.label,
     tax: beforeCredits - personalCredits,
     usedSingleBrackets: status !== 'single' && !own,
   };

@@ -60,11 +60,13 @@ describe('calculateStateIncomeTax', () => {
 
   // Reference values worked out by hand from BRACKETS (single filer, wages = state income).
   it.each([
-    // CA: $5,700 deduction. 1% to $11,079; 2% to $26,264; 4% to $41,452; 6% to $57,542; 8% to $72,724; 9.3%...
-    ['CA', 30_000, 375.21], //    24,300: 110.79 + 13,221 × 2%
-    ['CA', 65_000, 2_128.05], //  59,300: 1,987.41 + 1,758 × 8%
-    ['CA', 150_000, 9_858.54], // 144,300: 3,201.97 + 71,576 × 9.3%
-    ['CA', 1_200_000, 129_678.51], // 1,194,300: 72,219.83 + 451,347 × 12.3% + 194,300 × 1% surcharge
+    // CA: $5,706 deduction; $153 credit, $6 less per $2,500 (or part) of AGI over $252,203.
+    // 1% to $11,079; 2% to $26,264; 4% to $41,452; 6% to $57,542; 8% to $72,724; 9.3%...
+    ['CA', 30_000, 222.09], //    24,294: 110.79 + 13,215 × 2% − 153
+    ['CA', 65_000, 1_974.57], //  59,294: 1,987.41 + 1,752 × 8% − 153
+    ['CA', 150_000, 9_704.98], // 144,294: 3,201.97 + 71,570 × 9.3% − 153
+    ['CA', 270_000, 20_912.98], // 264,294: 3,201.97 + 191,570 × 9.3% − (153 − 8 steps × 6 = 105)
+    ['CA', 1_200_000, 129_677.71], // 1,194,294: 72,219.83 + 451,341 × 12.3% + 194,294 × 1% surcharge; credit 0
     // NY: $8,000 deduction. 3.9% to $8,500; 4.4% to $11,700; 5.15% to $13,900; 5.4% to $80,650; 5.9% to $215,400
     ['NY', 30_000, 1_023.0], //   22,000: 585.60 + 8,100 × 5.4%
     ['NY', 65_000, 2_913.0], //   57,000: 585.60 + 43,100 × 5.4%
@@ -103,7 +105,8 @@ describe('calculateStateIncomeTax', () => {
       [40_000, 60_000],
       [60_000, 63_000],
     ]);
-    expect(stateTaxBreakdown(1_200_000, 'CA')!.surcharges[0].tax).toBeCloseTo(1_943);
+    expect(stateTaxBreakdown(1_200_000, 'CA')!.surcharges[0].tax).toBeCloseTo(1_942.94);
+    expect(stateTaxBreakdown(65_000, 'CA')).toMatchObject({ personalCredits: 153, personalCreditLabel: 'Personal exemption credit' });
   });
 });
 

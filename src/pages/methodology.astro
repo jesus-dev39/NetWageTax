@@ -128,8 +128,9 @@ const summary: { label: string; value: string; note?: string }[] = [
             </>
           ))
         }. We subtract the state's own deduction or exemption (in South Carolina, a deduction that shrinks as income
-        rises), run every bracket on the rest, and add special surcharges such as California's 1% tax on taxable
-        income over $1 million. Each state page shows the calculation bracket by bracket.
+        rises), run every bracket on the rest, add special surcharges such as California's 1% tax on taxable
+        income over $1 million, and subtract personal credits such as California's personal exemption credit. Each
+        state page shows the calculation bracket by bracket.
       </li>
       <li>
         <strong>Simplified estimate</strong>, for the other states that tax wages. Flat-rate states apply their rate to
@@ -140,7 +141,7 @@ const summary: { label: string; value: string; note?: string }[] = [
       </li>
       <li>
         Both use single-filer figures whatever filing status you choose: we don't have the brackets for married or
-        head-of-household filers yet. Neither includes state tax credits or local income taxes. In the tips and overtime
+        head-of-household filers yet. Neither includes other state tax credits or local income taxes. In the tips and overtime
         calculator, both first subtract what your state allows for tips and overtime: the final federal deduction in
         states that follow it, the tips part only in states that follow it for tips only, and the state's own capped
         amounts in Georgia and Alabama. The paycheck calculator and the state pages tax full wages. Each state's
@@ -160,7 +161,7 @@ const summary: { label: string; value: string; note?: string }[] = [
         No pre-tax deductions: no 401(k) or 403(b) contributions, health insurance premiums, or HSA contributions.
       </li>
       <li>No Form W-4 adjustments for dependents, other income, or extra withholding.</li>
-      <li>No federal or state tax credits.</li>
+      <li>No federal or state tax credits, except the personal credits of the states calculated bracket by bracket.</li>
       <li>No local income taxes from cities, counties, or school districts.</li>
       <li>
         In the paycheck calculator: 52 weeks of pay a year, overtime paid at {OVERTIME_MULTIPLIER}× your hourly rate,

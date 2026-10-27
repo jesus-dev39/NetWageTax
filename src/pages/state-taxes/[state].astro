@@ -261,7 +261,7 @@ const revenueLink = s.sourceUrl
                   ))}
                   {breakdown.personalCredits > 0 && (
                     <tr>
-                      <th scope="row" class={`${td} text-left font-normal`}>Personal credits</th>
+                      <th scope="row" class={`${td} text-left font-normal`}>{breakdown.personalCreditLabel}</th>
                       <td class={`${td} text-right`}>−{formatUSDCents(breakdown.personalCredits)}</td>
                     </tr>
                   )}
@@ -482,7 +482,8 @@ const revenueLink = s.sourceUrl
     </article>
 
     <p class="mt-10 max-w-3xl text-sm text-ink-2">
-      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and state credits. They are
+      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and{' '}
+      {breakdown?.personalCreditLabel ? `state credits other than the ${breakdown.personalCreditLabel.toLowerCase()}` : 'state credits'}. They are
       not tax advice. See our <a href="/disclaimer/" class="text-link underline underline-offset-[3px]">disclaimer</a> and{' '}
       <a href="/methodology/" class="text-link underline underline-offset-[3px]">how we calculate</a>.
     </p>

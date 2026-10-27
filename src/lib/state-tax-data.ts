@@ -319,11 +319,17 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     note: 'Brackets apply to West Virginia taxable income, after the $2,000 personal exemption.',
   },
   CA: {
-    // The $5,700 deduction is the single standard deduction as the estimate already used it. The personal
-    // exemption credit isn't applied (no personal credits in phase 1).
+    // 2025 single standard deduction (Form 540 instructions, https://www.ftb.ca.gov/forms/2025/2025-540-instructions.html)
+    // and personal exemption credit, $6 less for each $2,500 or part of federal AGI over $252,203
+    // (540 2EZ tax table, https://www.ftb.ca.gov/forms/2025/2025-540-2ez-taxtable-single.pdf).
     engine: {
-      deduction: { kind: 'fixed', amount: 5_700, label: 'Standard deduction' },
+      deduction: { kind: 'fixed', amount: 5_706, label: 'Standard deduction' },
       surcharges: [{ over: 1_000_000, rate: 0.01, label: 'Behavioral Health Services Tax' }],
+      personalCredits: {
+        amount: 153,
+        label: 'Personal exemption credit',
+        phaseout: { start: 252_203, stepSize: 2_500, reductionPerStep: 6 },
+      },
     },
     year: 2025,
     source: 'https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf',
@@ -367,7 +373,7 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
       { over: 5_000_000, rate: 0.103 },
       { over: 25_000_000, rate: 0.109 },
     ],
-    note: "New York cut its five lowest rates by 0.1 percentage point for 2026. Higher earners may also be subject to New York's tax benefit recapture, which isn't shown here. New York City and Yonkers residents pay local income tax on top of these rates.",
+    note: "New York cut its five lowest rates by 0.1 percentage point for 2026. New York's tax benefit recapture starts to apply once New York AGI is over $107,650. We don't calculate it, so above that income our figure is lower than the actual tax. New York City and Yonkers residents pay local income tax on top of these rates.",
   },
 };
 

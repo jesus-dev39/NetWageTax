@@ -25,8 +25,8 @@ publish the next year's numbers, and all states every January.
       tables) with the IT-201 instructions' tax rate schedule, and confirm the single-filer brackets
       match the ones on the page.
 - [ ] **California: update to the 2026 brackets when the FTB publishes them.** Replace the 2025
-      schedule in `BRACKETS.CA` and set `year: 2026`, check the single standard deduction in its
-      `engine` (now $5,700) and update the CA reference values in `state-tax-data.test.ts`. The inflation note above the table then
+      schedule in `BRACKETS.CA` and set `year: 2026`, update the single standard deduction ($5,706)
+      and the personal exemption credit ($153, phase-out above $252,203) in its `engine`, and update the CA reference values in `state-tax-data.test.ts`. The inflation note above the table then
       disappears on its own (it only shows when `bracketsYear` is before 2026).
 - [ ] **Georgia: check the 2027 rate and standard deduction (January 2027).** HB 463 (2026) cuts the
       rate by 0.125 point a year toward 3.99% only if state revenue conditions are met: confirm whether
@@ -131,7 +131,7 @@ publish the next year's numbers, and all states every January.
             The state pages show the $65,000 example bracket by bracket.
       - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFJ and
             HoH brackets (`bracketsByStatus`), turn on the federal income tax subtraction for Oregon, Alabama,
-            and Missouri, and decide on California's personal exemption credit.
+            and Missouri.
       - Utah (credits piece): the taxpayer tax credit (6% of the federal standard deduction, reduced as
         income rises) isn't applied today. Include it with its income phase-out when the engine runs on
         brackets and credits.

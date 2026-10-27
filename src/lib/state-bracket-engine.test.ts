@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bracketLines, computeBracketTax, stateDeductionAmount, type BracketEngineRules, type StateDeduction } from './state-bracket-engine';
+import { bracketLines, computeBracketTax, personalCreditAmount, stateDeductionAmount, type BracketEngineRules, type StateDeduction } from './state-bracket-engine';
 
 const SCIAD: StateDeduction = { kind: 'phaseout', max: 15_000, phaseoutStart: 40_000, phaseoutEnd: 95_000, roundDownTo: 10, label: 'SCIAD' };
 
@@ -60,8 +60,19 @@ describe('computeBracketTax', () => {
   });
 
   it('subtracts personal credits from the tax, not below zero', () => {
-    expect(computeBracketTax({ ...RULES, personalCredits: 100 }, { income: 17_000 }).tax).toBeCloseTo(200);
-    expect(computeBracketTax({ ...RULES, personalCredits: 1_000 }, { income: 17_000 }).tax).toBe(0);
+    const credit = (amount: number) => ({ ...RULES, personalCredits: { amount, label: 'Credit' } });
+    expect(computeBracketTax(credit(100), { income: 17_000 }).tax).toBeCloseTo(200);
+    expect(computeBracketTax(credit(1_000), { income: 17_000 }).tax).toBe(0);
+    expect(computeBracketTax(credit(100), { income: 17_000 }).personalCreditLabel).toBe('Credit');
+  });
+
+  it('reduces a credit for each step, or part of one, of income above the start, never below 0', () => {
+    const c = { amount: 153, label: 'Credit', phaseout: { start: 252_203, stepSize: 2_500, reductionPerStep: 6 } };
+    expect(personalCreditAmount(c, 252_203)).toBe(153);
+    expect(personalCreditAmount(c, 252_204)).toBe(147); // a part of a step counts as a full step
+    expect(personalCreditAmount(c, 254_703)).toBe(147);
+    expect(personalCreditAmount(c, 254_704)).toBe(141);
+    expect(personalCreditAmount(c, 1_000_000)).toBe(0);
   });
 
   it('subtracts federal income tax from the base only when the rule is set, up to its cap', () => {
