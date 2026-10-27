@@ -240,6 +240,7 @@ export default function PaycheckCalculatorApp() {
             stateName={state?.name ?? null}
             stateRate={state ? formatStateRate(state) : null}
             stateIsNoTax={state?.structure === 'none'}
+            stateUsesBrackets={Boolean(state?.bracketEngine)}
             overtimePay={result.overtimePay}
           />
         </div>
@@ -262,9 +263,11 @@ function WithholdingExplanation(props: {
   stateName: string | null;
   stateRate: string | null;
   stateIsNoTax: boolean;
+  stateUsesBrackets: boolean;
   overtimePay: number;
 }) {
-  const { gross, standardDeduction, taxable, marginalRate, federalTax, additionalMedicare, stateName, stateRate, stateIsNoTax, overtimePay } = props;
+  const { gross, standardDeduction, taxable, marginalRate, federalTax, additionalMedicare, stateName, stateRate, stateIsNoTax, stateUsesBrackets, overtimePay } =
+    props;
   const capWeek = gross > SOCIAL_SECURITY_WAGE_BASE_2026 ? Math.ceil(SOCIAL_SECURITY_WAGE_BASE_2026 / (gross / 52)) : null;
 
   const items: { title: string; body: ReactNode }[] = [
@@ -299,7 +302,9 @@ function WithholdingExplanation(props: {
       body: stateName
         ? stateIsNoTax
           ? `${stateName} doesn’t tax wages.`
-          : `${stateName}: ${stateRate}. Single-filer estimate; local taxes (city, county, school district) aren’t included.`
+          : stateUsesBrackets
+            ? `${stateName}: ${stateRate}. Calculated bracket by bracket with ${stateName}’s single-filer brackets, whatever filing status you choose; local taxes (city, county, school district) aren’t included.`
+            : `${stateName}: ${stateRate}. Single-filer estimate; local taxes (city, county, school district) aren’t included.`
         : 'Choose your state to include it. Nine states don’t tax wages at all.',
     },
   ];

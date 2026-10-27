@@ -13,7 +13,13 @@ import { ADDITIONAL_STANDARD_DEDUCTION_AGED_2026, STANDARD_DEDUCTION_2026, TAX_B
 import { CAR_LOAN_PARAMS_BY_YEAR, PARAMS_BY_YEAR, SENIOR_PARAMS_BY_YEAR } from '../lib/obbba-params';
 import { OVERTIME_MULTIPLIER } from '../lib/paycheck';
 import { formatLongDate, SITE_TAX_YEAR } from '../lib/site';
-import { GRADUATED_REFERENCE_WAGE, STATE_TAX_DATA_AS_OF, STATE_TAX_LAST_UPDATED, STATES } from '../lib/state-tax-data';
+import {
+  BRACKET_ENGINE_STATES,
+  GRADUATED_REFERENCE_WAGE,
+  STATE_TAX_DATA_AS_OF,
+  STATE_TAX_LAST_UPDATED,
+  statePagePath,
+} from '../lib/state-tax-data';
 
 // Every figure on this page comes from the constants the calculators use.
 const pct = (r: number) => `${+(r * 100).toFixed(2)}%`;
@@ -107,22 +113,36 @@ const summary: { label: string; value: string; note?: string }[] = [
       phase-outs. For the inputs you enter, these follow the law step by step.
     </p>
     <p>
-      <strong>Estimated:</strong> state income tax. We use one simplified formula for all {STATES.length}{' '}
-      jurisdictions instead of each state's full tax return:
+      <strong>State income tax</strong> is calculated in one of two ways, depending on the state. Neither is a full
+      state tax return:
     </p>
     <ul>
       <li>States with no wage tax are $0.</li>
       <li>
-        Flat-rate states apply their rate to wages above an approximate single-filer deduction or exemption.
+        <strong>Full bracket calculation:</strong>{' '}
+        {
+          BRACKET_ENGINE_STATES.map((s, i) => (
+            <>
+              {i > 0 && (i === BRACKET_ENGINE_STATES.length - 1 ? ', and ' : ', ')}
+              <a href={statePagePath(s)}>{s.name}</a>
+            </>
+          ))
+        }. We subtract the state's own deduction or exemption (in South Carolina, a deduction that shrinks as income
+        rises), run every bracket on the rest, add special surcharges such as California's 1% tax on taxable
+        income over $1 million, and subtract personal credits such as California's personal exemption credit. Each
+        state page shows the calculation bracket by bracket.
       </li>
       <li>
-        States with progressive brackets use one average rate, calibrated for a single filer earning about{' '}
-        {formatUSD(GRADUATED_REFERENCE_WAGE)}, instead of running every bracket. Results are close for typical
-        salaries and less accurate for much higher or lower incomes.
+        <strong>Simplified estimate</strong>, for the other states that tax wages. Flat-rate states apply their rate to
+        wages above an approximate single-filer deduction or exemption. The other states with progressive brackets
+        use one average rate, calibrated for a single filer earning about {formatUSD(GRADUATED_REFERENCE_WAGE)},
+        instead of running every bracket. Results are close for typical salaries and less accurate for much higher or
+        lower incomes.
       </li>
       <li>
-        The state estimate uses single-filer figures whatever filing status you choose. In the tips and overtime
-        calculator, it first subtracts what your state allows for tips and overtime: the final federal deduction in
+        Both use single-filer figures whatever filing status you choose: we don't have the brackets for married or
+        head-of-household filers yet. Neither includes other state tax credits or local income taxes. In the tips and overtime
+        calculator, both first subtract what your state allows for tips and overtime: the final federal deduction in
         states that follow it, the tips part only in states that follow it for tips only, and the state's own capped
         amounts in Georgia and Alabama. The paycheck calculator and the state pages tax full wages. Each state's
         treatment is listed in our guide to <a href="/guides/which-states-tax-tips-and-overtime/">which states tax tips
@@ -141,7 +161,7 @@ const summary: { label: string; value: string; note?: string }[] = [
         No pre-tax deductions: no 401(k) or 403(b) contributions, health insurance premiums, or HSA contributions.
       </li>
       <li>No Form W-4 adjustments for dependents, other income, or extra withholding.</li>
-      <li>No federal or state tax credits.</li>
+      <li>No federal or state tax credits, except the personal credits of the states calculated bracket by bracket.</li>
       <li>No local income taxes from cities, counties, or school districts.</li>
       <li>
         In the paycheck calculator: 52 weeks of pay a year, overtime paid at {OVERTIME_MULTIPLIER}× your hourly rate,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  BRACKET_ENGINE_STATES,
   calculateStateIncomeTax,
   formatStateRate,
   STATE_TAX_DATA_AS_OF,
@@ -18,6 +19,9 @@ import { Field, RADIO_CLASS } from './form';
 import NativeSelect from './NativeSelect';
 import NoStateTaxBadge from './NoStateTaxBadge';
 import USStateMap, { MAP_LEGEND } from './USStateMap';
+
+/** "California, New York, South Carolina, and West Virginia" */
+const ENGINE_STATE_NAMES = new Intl.ListFormat('en-US', { type: 'conjunction' }).format(BRACKET_ENGINE_STATES.map((s) => s.name));
 
 const PAYCHECK_PATH = '/tools/paycheck-calculator/';
 const OBBBA_PATH = '/tools/obbba-tax-calculator/';
@@ -127,8 +131,7 @@ export default function StateExplorer() {
 
         <p className="mt-8 max-w-3xl text-sm text-ink-2">
           Data: {STATE_TAX_DATA_AS_OF}. Estimates cover state income tax on wages for a single filer and exclude local
-          income taxes and state credits. Progressive-state estimates use the typical effective rate for about $65,000 of
-          wages. Each state decides whether to follow the federal tips and overtime deduction:{' '}
+          income taxes and state credits. {ENGINE_STATE_NAMES} are calculated bracket by bracket; the other progressive-state estimates use the typical effective rate for about $65,000 of wages. Each state decides whether to follow the federal tips and overtime deduction:{' '}
           <a href={TIPS_OVERTIME_GUIDE_PATH} className={link}>
             see which states tax tips and overtime
           </a>

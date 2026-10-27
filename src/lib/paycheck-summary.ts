@@ -92,7 +92,9 @@ export function buildPaycheckRows(input: PaycheckInput, r: PaycheckResult): Payc
       state ? `State income tax (${state.code})` : 'State income tax',
       r.stateTax,
       'tax',
-      state ? `${state.name} · ${formatStateRate(state)} · excludes local taxes` : 'No state selected',
+      state
+        ? `${state.name} · ${formatStateRate(state)}${state.bracketEngine ? ' · single-filer brackets' : ''} · excludes local taxes`
+        : 'No state selected',
     ),
     row('Total taxes withheld (est.)', r.totalTax, 'subtotal'),
     row('Net take-home pay', r.netAnnual, 'net'),

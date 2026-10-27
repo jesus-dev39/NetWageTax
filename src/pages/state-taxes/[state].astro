@@ -3,7 +3,7 @@ import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import FaqList from '../../components/FaqList.astro';
-import { formatUSD } from '../../components/CurrencyInput';
+import { formatUSD, formatUSDCents } from '../../components/CurrencyInput';
 import { formatLongDate } from '../../lib/site';
 import {
   formatStateRate,
@@ -12,6 +12,7 @@ import {
   STATE_TAX_DATA_AS_OF,
   STATE_TAX_LAST_UPDATED,
   STATES,
+  stateTaxBreakdown,
   type StateTaxInfo,
 } from '../../lib/state-tax-data';
 import {
@@ -44,6 +45,8 @@ const title = pageTitle(s);
 const description = metaDescription(s);
 const tax = exampleTax(s);
 const taxable = Math.max(0, EXAMPLE_WAGE - s.exemptAmount);
+// States on the bracket engine show the example one bracket per row, in cents so the rows add up.
+const breakdown = stateTaxBreakdown(EXAMPLE_WAGE, s.code);
 const neighbors = neighborRows(s);
 const related = relatedStates(s.code);
 const tipsStatus = tipsOvertimeStatus(s);
@@ -222,6 +225,59 @@ const revenueLink = s.sourceUrl
             On a {formatUSD(EXAMPLE_WAGE)} salary, {s.name} state income tax is <strong>{formatUSD(0)}</strong>. You
             still pay federal income tax and FICA (Social Security and Medicare).
           </p>
+        ) : breakdown ? (
+          <>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[15px]">
+                <caption class="sr-only">State income tax on a {formatUSD(EXAMPLE_WAGE)} salary, bracket by bracket</caption>
+                <tbody>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>Wages</th>
+                    <td class={`${td} text-right`}>{formatUSDCents(breakdown.income)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>{breakdown.deductionLabel}</th>
+                    <td class={`${td} text-right`}>−{formatUSDCents(breakdown.deduction)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-semibold`}>Taxable income</th>
+                    <td class={`${td} text-right font-semibold`}>{formatUSDCents(breakdown.taxableIncome)}</td>
+                  </tr>
+                  {breakdown.lines.map((l) => (
+                    <tr>
+                      <th scope="row" class={`${td} text-left font-normal`}>
+                        {pct(l.rate)} on {formatUSD(l.from)} – {formatUSD(l.to)}
+                      </th>
+                      <td class={`${td} text-right`}>{formatUSDCents(l.tax)}</td>
+                    </tr>
+                  ))}
+                  {breakdown.surcharges.map((x) => (
+                    <tr>
+                      <th scope="row" class={`${td} text-left font-normal`}>
+                        {x.label}: {pct(x.rate)} over {formatUSD(x.over)}
+                      </th>
+                      <td class={`${td} text-right`}>{formatUSDCents(x.tax)}</td>
+                    </tr>
+                  ))}
+                  {breakdown.personalCredits > 0 && (
+                    <tr>
+                      <th scope="row" class={`${td} text-left font-normal`}>{breakdown.personalCreditLabel}</th>
+                      <td class={`${td} text-right`}>−{formatUSDCents(breakdown.personalCredits)}</td>
+                    </tr>
+                  )}
+                  <tr class="font-bold">
+                    <th scope="row" class="border-t-2 border-ink px-3 py-2 text-left">{s.name} income tax</th>
+                    <td class="border-t-2 border-ink px-3 py-2 text-right">{formatUSDCents(breakdown.tax)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              That works out to about {formatUSD(tax / 12)} a month, or an effective rate of {pct(tax / EXAMPLE_WAGE)} of
+              wages. Each rate applies only to the part of taxable income inside its bracket.
+              {s.bracketsYear! < PAGE_TAX_YEAR && ` The calculation uses the ${s.bracketsYear} bracket thresholds until ${s.name} publishes the ${PAGE_TAX_YEAR} ones.`}
+            </p>
+          </>
         ) : (
           <>
             <div class="overflow-x-auto">
@@ -426,7 +482,8 @@ const revenueLink = s.sourceUrl
     </article>
 
     <p class="mt-10 max-w-3xl text-sm text-ink-2">
-      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and state credits. They are
+      Estimates cover {s.name} income tax on wages for a single filer and exclude local taxes and{' '}
+      {breakdown?.personalCreditLabel ? `state credits other than the ${breakdown.personalCreditLabel.toLowerCase()}` : 'state credits'}. They are
       not tax advice. See our <a href="/disclaimer/" class="text-link underline underline-offset-[3px]">disclaimer</a> and{' '}
       <a href="/methodology/" class="text-link underline underline-offset-[3px]">how we calculate</a>.
     </p>
