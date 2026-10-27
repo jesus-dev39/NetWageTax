@@ -15,6 +15,11 @@ publish the next year's numbers, and all states every January.
       brackets and standard deductions in `marginal-rate.ts`, the Social Security wage base in
       `fica.ts`, and check the tips and overtime parameters in `obbba-params.ts`. Decide with the
       January state review when the site switches `SITE_TAX_YEAR` to 2027.
+  - [x] **Social Security wage base 2027:** $192,300 (SSA, October 14, 2026,
+        https://www.ssa.gov/oact/cola/cbb.html), added as `SOCIAL_SECURITY_WAGE_BASE_2027` in
+        `fica.ts`. Not used yet: switch to it when the site moves to 2027 (MAINTENANCE.md, section 3.2).
+  - [ ] **Federal brackets and standard deductions 2027** (IRS Revenue Procedure), and the tips and
+        overtime parameters in `obbba-params.ts`.
 - [ ] **New York: switch the bracket source (Dec 2026–Jan 2027).** Once the 2026 Form IT-201
       instructions are published, replace `bracketsSource` (currently the NYS-50-T-NYS withholding
       tables) with the IT-201 instructions' tax rate schedule, and confirm the single-filer brackets

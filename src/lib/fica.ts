@@ -22,6 +22,13 @@ export const FICA_BASELINE_RATE = SOCIAL_SECURITY_RATE + MEDICARE_RATE;
 /** Base salarial máxima de Social Security para 2026 (SSA, octubre 2025). */
 export const SOCIAL_SECURITY_WAGE_BASE_2026 = 184_500;
 
+/**
+ * Base salarial máxima de Social Security para 2027 (SSA, anuncio del 14 de
+ * octubre de 2026: https://www.ssa.gov/oact/cola/cbb.html). No se usa hasta
+ * que la web pase a 2027 (SITE_TAX_YEAR).
+ */
+export const SOCIAL_SECURITY_WAGE_BASE_2027 = 192_300;
+
 export interface FicaEstimate {
   socialSecurity: number;
   medicare: number;
