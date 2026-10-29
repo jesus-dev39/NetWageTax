@@ -647,6 +647,8 @@ export interface StateTaxEstimate {
   method: string;
   /** SINGLE_RATES_WARNING when the filing status isn't single and the state has no rates of its own for it. */
   singleRatesWarning?: string;
+  /** DEPENDENTS_NOTE for filing statuses other than single (dependentsNote()). */
+  dependentsNote?: string;
 }
 
 /** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
@@ -668,6 +670,7 @@ export function estimateStateTax(
     usesBrackets: Boolean(s.bracketEngine),
     method: stateTaxMethod(stateCode, filingStatus),
     singleRatesWarning: singleRatesWarning(stateCode, filingStatus),
+    dependentsNote: dependentsNote(stateCode, filingStatus),
   };
 }
 
@@ -678,6 +681,15 @@ export function estimateStateTax(
 export function stateTaxMethod(stateCode: StateCode, filingStatus: FilingStatus): string {
   if (!STATES_BY_CODE[stateCode].bracketEngine) return 'simplified single-filer estimate';
   return singleRatesWarning(stateCode, filingStatus) ? 'single-filer brackets' : 'brackets for your filing status';
+}
+
+/** Assumption shown next to the state tax for joint and head of household filers, who often have dependents. */
+export const DEPENDENTS_NOTE = 'Doesn’t include dependent credits or exemptions.';
+
+/** DEPENDENTS_NOTE when the state taxes wages and the filing status isn't single. */
+export function dependentsNote(stateCode: StateCode | null, filingStatus: FilingStatus): string | undefined {
+  if (!stateCode || filingStatus === 'single' || STATES_BY_CODE[stateCode].structure === 'none') return undefined;
+  return DEPENDENTS_NOTE;
 }
 
 /** Shown next to the state tax result whenever the filing status isn't single (see singleRatesWarning). */

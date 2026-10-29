@@ -512,7 +512,9 @@ del IT-201. South Carolina: la SCIAD de cada estado civil en el § 12-6-1140(15)
 tabla de § 11-21-4j(a) y la exención de § 11-21-16 ($2,000 por persona).
 
 Dos simplificaciones: no se cuentan dependientes (créditos o exenciones por dependiente en California,
-New York y West Virginia), y en New York la ley redondea al dólar las cantidades base de cada tramo
+New York y West Virginia); por eso, con un estado civil que no sea *Single*, las calculadoras y sus
+exportaciones añaden junto al impuesto estatal `DEPENDENTS_NOTE` ("Doesn’t include dependent credits
+or exemptions."), y en PENDING-UPDATES hay anotado un futuro campo de número de dependientes. Además, y en New York la ley redondea al dólar las cantidades base de cada tramo
 ("$1,174 plus 5.40%..."), mientras que el motor suma los tramos sin redondear: la diferencia es de
 menos de $1.
 

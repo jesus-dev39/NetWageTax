@@ -206,7 +206,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
               detail:
                 stateTax.structure === 'none'
                   ? 'No state income tax'
-                  : `${stateTax.rateLabel} · ${stateTax.method}, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
+                  : `${stateTax.rateLabel} · ${stateTax.method}, excludes local taxes${stateNote ? `. ${stateNote}` : ''}${stateTax.dependentsNote ? ` ${stateTax.dependentsNote}` : ''}`,
               warning: stateTax.singleRatesWarning,
             },
           ]

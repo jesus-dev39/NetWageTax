@@ -36,6 +36,7 @@ export function buildPaycheckWorkbook(s: PaycheckSummary): WorkBook {
         s.gross.annual > 0 ? pctCell(r.annual / s.gross.annual) : null,
       ],
       ...(r.warning ? [[wide(`   ${r.warning}`, COLS)]] : []),
+      ...(r.note ? [[wide(`   ${r.note}`, COLS)]] : []),
     ]),
     [],
     [wide('Net take-home pay', COLS)],

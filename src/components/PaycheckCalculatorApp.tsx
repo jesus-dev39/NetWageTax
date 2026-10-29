@@ -11,7 +11,7 @@ import {
 } from '../lib/paycheck';
 import { buildPaycheckRows, PAYCHECK_TAX_YEAR } from '../lib/paycheck-summary';
 import { parsePaycheckSearchParams } from '../lib/paycheck-url';
-import { formatStateRate, singleRatesWarning, STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
+import { dependentsNote, formatStateRate, singleRatesWarning, STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
 import BreakdownBar from './BreakdownBar';
 import CurrencyInput, { formatUSD, formatUSDCents } from './CurrencyInput';
 import { describedBy, Field, HoursInput, RadioGroup } from './form';
@@ -231,6 +231,7 @@ export default function PaycheckCalculatorApp() {
                         <th scope="row" className={`px-3 py-2 text-left ${r.kind === 'tax' ? 'font-normal' : net ? 'font-bold' : 'font-semibold'} text-ink`}>
                           {r.label}
                           {r.warning && <SingleRatesWarning text={r.warning} />}
+                          {r.note && <span className="mt-1 block text-sm text-ink-2">{r.note}</span>}
                         </th>
                         {noState ? (
                           <td colSpan={2} className="px-3 py-2 text-right text-ink-2">
@@ -280,6 +281,7 @@ export default function PaycheckCalculatorApp() {
             stateIsNoTax={state?.structure === 'none'}
             stateUsesBrackets={Boolean(state?.bracketEngine)}
             stateOwnStatusRules={Boolean(state) && !singleRatesWarning(stateCode, filingStatus)}
+            stateDependentsNote={dependentsNote(stateCode, filingStatus)}
             overtimePay={result.overtimePay}
           />
         </div>
@@ -309,9 +311,10 @@ function WithholdingExplanation(props: {
   stateUsesBrackets: boolean;
   /** The state has brackets for the chosen filing status (no single-rates warning). */
   stateOwnStatusRules: boolean;
+  stateDependentsNote?: string;
   overtimePay: number;
 }) {
-  const { gross, standardDeduction, taxable, marginalRate, federalTax, additionalMedicare, stateName, stateRate, stateIsNoTax, stateUsesBrackets, stateOwnStatusRules, overtimePay } =
+  const { gross, standardDeduction, taxable, marginalRate, federalTax, additionalMedicare, stateName, stateRate, stateIsNoTax, stateUsesBrackets, stateOwnStatusRules, stateDependentsNote, overtimePay } =
     props;
   const capWeek = gross > SOCIAL_SECURITY_WAGE_BASE_2026 ? Math.ceil(SOCIAL_SECURITY_WAGE_BASE_2026 / (gross / 52)) : null;
 
@@ -348,8 +351,8 @@ function WithholdingExplanation(props: {
         ? stateIsNoTax
           ? `${stateName} doesn’t tax wages.`
           : stateUsesBrackets
-            ? `${stateName}: ${stateRate}. Calculated bracket by bracket with ${stateName}’s ${stateOwnStatusRules ? 'brackets and deduction for your filing status' : 'single-filer brackets'}; local taxes (city, county, school district) aren’t included.`
-            : `${stateName}: ${stateRate}. Single-filer estimate; local taxes (city, county, school district) aren’t included.`
+            ? `${stateName}: ${stateRate}. Calculated bracket by bracket with ${stateName}’s ${stateOwnStatusRules ? 'brackets and deduction for your filing status' : 'single-filer brackets'}; local taxes (city, county, school district) aren’t included.${stateDependentsNote ? ` ${stateDependentsNote}` : ''}`
+            : `${stateName}: ${stateRate}. Single-filer estimate; local taxes (city, county, school district) aren’t included.${stateDependentsNote ? ` ${stateDependentsNote}` : ''}`
         : 'Choose your state to include it. Nine states don’t tax wages at all.',
     },
   ];

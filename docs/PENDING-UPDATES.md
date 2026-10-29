@@ -135,6 +135,10 @@ publish the next year's numbers, and all states every January.
             the single rules there, with the single-rates warning.
       - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFS
             where it differs, turn on the federal income tax subtraction for Oregon, Alabama, and Missouri.
+      - [ ] Future improvement: a "number of dependents" field in the paycheck and tips calculators, to apply
+            dependent credits and exemptions (California's dependent exemption credit, New York's $1,000 and West
+            Virginia's $2,000 exemption per dependent). Until then the calculators say "Doesn’t include dependent
+            credits or exemptions" next to the state tax for joint and head of household filers.
       - [ ] California: when the FTB publishes the 2026 figures, update Schedules Y and Z, the $11,412
             joint/HoH standard deduction, and the credit phase-out thresholds ($504,411 joint, $378,310 HoH)
             together with the single ones, then the CA cases in `state-brackets-by-status.test.ts`.

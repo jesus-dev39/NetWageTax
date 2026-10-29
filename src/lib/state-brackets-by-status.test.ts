@@ -136,3 +136,26 @@ describe('how the calculators describe the state tax', async () => {
     expect(row.warning).toBeUndefined();
   });
 });
+
+describe('dependents note', async () => {
+  const { DEPENDENTS_NOTE, dependentsNote } = await import('./state-tax-data');
+  const { buildPaycheckRows } = await import('./paycheck-summary');
+  const { calculatePaycheck } = await import('./paycheck');
+
+  it('shows for joint and head of household filers in states that tax wages', () => {
+    expect(DEPENDENTS_NOTE).toBe('Doesn’t include dependent credits or exemptions.');
+    expect(dependentsNote('CA', 'hoh')).toBe(DEPENDENTS_NOTE);
+    expect(dependentsNote('IL', 'mfj')).toBe(DEPENDENTS_NOTE);
+    expect(dependentsNote('CA', 'single')).toBeUndefined();
+    expect(dependentsNote('TX', 'hoh')).toBeUndefined();
+    expect(estimateStateTax(65_000, 'NY', 0, 'hoh').dependentsNote).toBe(DEPENDENTS_NOTE);
+  });
+
+  it('goes under the paycheck state row', () => {
+    const input = {
+      mode: 'salary' as const, hourlyRate: 0, hoursPerWeek: 40, overtimeHoursPerWeek: 0, annualSalary: 65_000,
+      frequency: 'biweekly' as const, filingStatus: 'hoh' as const, stateCode: 'WV' as const,
+    };
+    expect(buildPaycheckRows(input, calculatePaycheck(input)).find((r) => r.label === 'State income tax (WV)')!.note).toBe(DEPENDENTS_NOTE);
+  });
+});
