@@ -393,13 +393,16 @@ Hay dos formas de calcular el impuesto de un estado:
 - **Estimación simplificada**, en todos los demás: `(salario − exemptAmount) × estimateRate`, más el
   recargo de la tabla `SURTAXES` si el estado tiene uno (hoy solo Massachusetts).
 
-**Estados civiles.** Ningún estado tiene todavía tramos de casados: todos se calculan con las cifras de
-*single*. Por eso, si el estado civil no es *Single*, las calculadoras de nómina (también la de la
-portada) y de propinas, y sus exportaciones (impresión, Word y Excel), muestran junto al impuesto
-estatal el aviso `SINGLE_RATES_WARNING` ("State tax uses single-filer rates for now, so it may be too
-high for married couples."). Lo decide `singleRatesWarning()` en `state-tax-data.ts`: cuando un estado
-del motor tenga tramos propios para un estado civil en `bracketsByStatus`, el aviso desaparece solo
-para ese estado y ese estado civil.
+**Estados civiles.** Los cuatro estados del motor (CA, NY, SC y WV) tienen reglas propias para
+*single*, *married filing jointly* y *head of household*. *Married filing separately* y los otros 47
+estados se calculan con las cifras de *single*. En esos casos, si el estado civil no es *Single*, las
+calculadoras de nómina (también la de la portada) y de propinas, y sus exportaciones (impresión, Word y
+Excel), muestran junto al impuesto estatal el aviso `SINGLE_RATES_WARNING` ("State tax uses
+single-filer rates for now, so it may be too high for married couples."). Lo decide
+`singleRatesWarning()` en `state-tax-data.ts`: el aviso desaparece en cuanto un estado del motor tiene
+tramos para ese estado civil en `bracketsByStatus`. El texto que describe el método ("brackets for your
+filing status", "single-filer brackets" o "simplified single-filer estimate") sale de
+`stateTaxMethod()`.
 
 En la estimación simplificada, en los estados `GRAD`, cuando
 cambian los tramos hay que **recalcular** `estimateRate`: aplica los tramos nuevos a
@@ -483,10 +486,35 @@ con la fuente oficial, puedes hacer que el cálculo la use:
 Nada más: `/methodology/`, la página del mapa y las calculadoras leen la lista de estados del motor
 (`BRACKET_ENGINE_STATES`) y se actualizan solas.
 
-Por ahora solo hay tramos de *single*: los demás estados civiles usan esos mismos tramos y las
-calculadoras lo dicen. Cuando tengas los de otro estado civil, añádelos en `bracketsByStatus` dentro
-de `engine` (por ejemplo `bracketsByStatus: { mfj: [...] }`); el motor los usará en lugar de los de
-*single* para ese estado civil.
+**Otros estados civiles.** Dentro de `engine`, un estado civil tiene reglas propias cuando aparece en
+`bracketsByStatus` (`mfj`, `hoh` o `mfs`). Para ese estado civil, el motor usa esos tramos, la
+deducción de `deductionByStatus` y el crédito de `personalCreditsByStatus`; si falta alguno de los
+dos, usa el de *single*. Los recargos (`surcharges`) son los mismos para todos. Un estado civil que no
+está en `bracketsByStatus` usa todas las reglas de *single* y muestra el aviso. Ejemplo real
+(`BRACKETS.SC`, mismos tramos para todos y deducción distinta):
+
+```ts
+engine: {
+  deduction: SCIAD(15_000, 40_000, 95_000),
+  bracketsByStatus: { mfj: SC_BRACKETS, hoh: SC_BRACKETS },
+  deductionByStatus: { mfj: SCIAD(30_000, 80_000, 190_000), hoh: SCIAD(22_500, 60_000, 142_500) },
+},
+```
+
+Si los tramos de un estado civil son distintos de los de *single* (California y New York), la página
+del estado añade su tabla debajo de la de *single*. Calcula a mano MFJ y HoH a $65,000, $120,000 y
+$250,000 y añádelos a `src/lib/state-brackets-by-status.test.ts`.
+
+Al actualizar cada año: California publica sus tablas Y (MFJ) y Z (HoH) en el mismo PDF que la X, y la
+deducción y los umbrales de reducción del crédito en las instrucciones del Form 540 (`BRACKETS.CA`,
+comentario). New York: Tax Law § 601(a) y (b) y la tabla de deducciones estándar de las instrucciones
+del IT-201. South Carolina: la SCIAD de cada estado civil en el § 12-6-1140(15). West Virginia: la
+tabla de § 11-21-4j(a) y la exención de § 11-21-16 ($2,000 por persona).
+
+Dos simplificaciones: no se cuentan dependientes (créditos o exenciones por dependiente en California,
+New York y West Virginia), y en New York la ley redondea al dólar las cantidades base de cada tramo
+("$1,174 plus 5.40%..."), mientras que el motor suma los tramos sin redondear: la diferencia es de
+menos de $1.
 
 **Añadir la fuente del tipo.** Añade una entrada en `RATE_SOURCES`:
 

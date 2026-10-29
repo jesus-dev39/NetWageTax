@@ -8,7 +8,7 @@ import { formatUSD, formatUSDCents } from '../components/CurrencyInput';
 import { referenceFor } from './deduction-summary';
 import { ADDITIONAL_MEDICARE_THRESHOLD, SOCIAL_SECURITY_WAGE_BASE_2026 } from './fica';
 import { PAY_FREQUENCIES, PAYCHECK_FILING_STATUSES, type PaycheckInput, type PaycheckResult } from './paycheck';
-import { formatStateRate, singleRatesWarning, STATES_BY_CODE } from './state-tax-data';
+import { formatStateRate, singleRatesWarning, STATES_BY_CODE, stateTaxMethod } from './state-tax-data';
 
 export const PAYCHECK_TAX_YEAR = 2026;
 export const PAYCHECK_DOCX_FILENAME = 'NetWageTax_2026_Paycheck_Estimate.docx';
@@ -96,7 +96,7 @@ export function buildPaycheckRows(input: PaycheckInput, r: PaycheckResult): Payc
         r.stateTax,
         'tax',
         state
-          ? `${state.name} · ${formatStateRate(state)}${state.bracketEngine ? ' · single-filer brackets' : ''} · excludes local taxes`
+          ? `${state.name} · ${formatStateRate(state)}${state.bracketEngine ? ` · ${stateTaxMethod(state.code, input.filingStatus)}` : ''} · excludes local taxes`
           : 'No state selected',
       ),
       warning: singleRatesWarning(input.stateCode, input.filingStatus),

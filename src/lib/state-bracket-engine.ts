@@ -14,8 +14,11 @@
  *      activar. Es una resta de la renta, no del impuesto, así que cuando se active
  *      reduce la base imponible junto con la deducción del paso a).
  *
- * Solo hay tramos de soltero. Los demás estados civiles usan esos mismos tramos
- * hasta que se añadan los suyos en `bracketsByStatus`.
+ * Estados civiles: un estado civil con tramos en `bracketsByStatus` usa esos
+ * tramos y, si existen, su deducción (`deductionByStatus`) y su crédito
+ * personal (`personalCreditsByStatus`). Los que no tienen tramos propios
+ * (hoy, married filing separately) usan todas las reglas de soltero. Los
+ * recargos son los mismos para todos.
  */
 
 import type { FilingStatus } from './obbba-params';
@@ -67,15 +70,24 @@ export interface FederalTaxSubtraction {
   cap?: number;
 }
 
+/** Filing statuses that can have rules of their own; single is the default. */
+export type OtherFilingStatus = Exclude<FilingStatus, 'single'>;
+
 /** Everything the engine needs about one state. */
 export interface BracketEngineRules {
+  /** Single-filer deduction, also used by every status without its own brackets. */
   deduction: StateDeduction;
   /** Single-filer brackets, also used for every status without its own schedule. */
   brackets: TaxBracket[];
-  /** Brackets for other filing statuses, when the state's are added (MFJ, HoH, MFS). */
-  bracketsByStatus?: Partial<Record<Exclude<FilingStatus, 'single'>, TaxBracket[]>>;
+  /** Brackets for other filing statuses (MFJ, HoH, MFS). A status listed here has its own rules. */
+  bracketsByStatus?: Partial<Record<OtherFilingStatus, TaxBracket[]>>;
+  /** Deduction of a status in `bracketsByStatus`, when it differs from the single one. */
+  deductionByStatus?: Partial<Record<OtherFilingStatus, StateDeduction>>;
   surcharges?: Surcharge[];
+  /** Single-filer personal credit, also used by every status without its own brackets. */
   personalCredits?: PersonalCredit;
+  /** Personal credit of a status in `bracketsByStatus`, when it differs from the single one. */
+  personalCreditsByStatus?: Partial<Record<OtherFilingStatus, PersonalCredit>>;
   federalTaxSubtraction?: FederalTaxSubtraction;
 }
 
@@ -151,9 +163,11 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
   const status = input.filingStatus ?? 'single';
   const own = status === 'single' ? undefined : rules.bracketsByStatus?.[status];
   const brackets = own ?? rules.brackets;
+  const stateDeduction = (own && status !== 'single' && rules.deductionByStatus?.[status]) || rules.deduction;
+  const credit = (own && status !== 'single' && rules.personalCreditsByStatus?.[status]) || rules.personalCredits;
 
   // a) and e): both reduce the income that the brackets apply to.
-  const deduction = Math.min(income, stateDeductionAmount(rules.deduction, income));
+  const deduction = Math.min(income, stateDeductionAmount(stateDeduction, income));
   const federalTaxSubtracted = rules.federalTaxSubtraction
     ? Math.min(income - deduction, Math.max(0, input.federalTax ?? 0), rules.federalTaxSubtraction.cap ?? Infinity)
     : 0;
@@ -170,13 +184,12 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
   const beforeCredits = bracketTax + surcharges.reduce((sum, s) => sum + s.tax, 0);
 
   // d)
-  const credit = rules.personalCredits;
   const personalCredits = credit ? Math.min(beforeCredits, personalCreditAmount(credit, income)) : 0;
 
   return {
     income,
     deduction,
-    deductionLabel: rules.deduction.label,
+    deductionLabel: stateDeduction.label,
     federalTaxSubtracted,
     taxableIncome,
     lines,

@@ -83,16 +83,20 @@ describe('calculateStateIncomeTax', () => {
     expect(calculateStateIncomeTax(wages, code)).toBeCloseTo(expected, 2);
   });
 
-  it('uses the single brackets for every filing status for now', () => {
-    expect(calculateStateIncomeTax(65_000, 'CA', 'mfj')).toBe(calculateStateIncomeTax(65_000, 'CA'));
-    expect(stateTaxBreakdown(65_000, 'CA', 'hoh')?.usedSingleBrackets).toBe(true);
+  it('uses each filing status’s own rules where the state has them, and the single rules otherwise', () => {
+    expect(calculateStateIncomeTax(65_000, 'CA', 'mfj')).not.toBe(calculateStateIncomeTax(65_000, 'CA'));
+    expect(stateTaxBreakdown(65_000, 'CA', 'hoh')?.usedSingleBrackets).toBe(false);
+    // Married filing separately has no schedule of its own yet: single brackets, deduction, and credit.
+    expect(stateTaxBreakdown(65_000, 'CA', 'mfs')?.usedSingleBrackets).toBe(true);
+    expect(calculateStateIncomeTax(65_000, 'CA', 'mfs')).toBe(calculateStateIncomeTax(65_000, 'CA'));
     expect(stateTaxBreakdown(65_000, 'TX')).toBeUndefined();
   });
 
   it('tells the calculators which method the state uses', () => {
     expect(estimateStateTax(65_000, 'CA').usesBrackets).toBe(true);
     expect(estimateStateTax(65_000, 'GA').usesBrackets).toBe(false);
-    expect(estimateStateTax(65_000, 'NY', 0, 'mfj').tax).toBeCloseTo(2_913);
+    // New York joint brackets on $48,950: $1,174.10 + 5.4% × ($48,950 − $27,900).
+    expect(estimateStateTax(65_000, 'NY', 0, 'mfj').tax).toBeCloseTo(2_310.8);
   });
 
   it('breaks the $65,000 example into one line per bracket used', () => {
