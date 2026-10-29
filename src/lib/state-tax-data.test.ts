@@ -52,8 +52,8 @@ describe('calculateStateIncomeTax', () => {
     expect(calculateStateIncomeTax(10_000, 'NC')).toBe(0);
   });
 
-  it('runs the bracket engine only for California, New York, South Carolina, and West Virginia', () => {
-    expect(BRACKET_ENGINE_STATES.map((s) => s.code)).toEqual(['CA', 'NY', 'SC', 'WV']);
+  it('runs the bracket engine for the nine verified states', () => {
+    expect(BRACKET_ENGINE_STATES.map((s) => s.code)).toEqual(['AZ', 'CA', 'GA', 'MD', 'NY', 'NC', 'OR', 'SC', 'WV']);
     // Vermont has a bracket table but stays on the simplified estimate.
     expect(STATES_BY_CODE.VT.bracketEngine).toBeUndefined();
   });
@@ -94,7 +94,7 @@ describe('calculateStateIncomeTax', () => {
 
   it('tells the calculators which method the state uses', () => {
     expect(estimateStateTax(65_000, 'CA').usesBrackets).toBe(true);
-    expect(estimateStateTax(65_000, 'GA').usesBrackets).toBe(false);
+    expect(estimateStateTax(65_000, 'IL').usesBrackets).toBe(false);
     // New York joint brackets on $48,950: $1,174.10 + 5.4% × ($48,950 − $27,900).
     expect(estimateStateTax(65_000, 'NY', 0, 'mfj').tax).toBeCloseTo(2_310.8);
   });
@@ -168,8 +168,8 @@ describe('state page data', () => {
 describe('bracket schedules', () => {
   const withBrackets = STATES.filter((s) => s.brackets);
 
-  it('includes the verified CA, NY, SC, VT, and WV schedules', () => {
-    expect(withBrackets.map((s) => s.code).sort()).toEqual(['CA', 'NY', 'SC', 'VT', 'WV']);
+  it('includes the verified schedules', () => {
+    expect(withBrackets.map((s) => s.code).sort()).toEqual(['AZ', 'CA', 'GA', 'MD', 'NC', 'NY', 'OR', 'SC', 'VT', 'WV']);
   });
 
   it('has a year and an official https source for every schedule', () => {
@@ -179,10 +179,14 @@ describe('bracket schedules', () => {
     }
   });
 
-  it('starts at $0, rises monotonically and stays inside bracketRange', () => {
+  it('starts at $0, rises monotonically and stays inside bracketRange (or is the flat rate)', () => {
     for (const s of withBrackets) {
       const b = s.brackets!;
       expect(b[0].over).toBe(0);
+      if (s.structure === 'flat') {
+        expect(b).toEqual([{ over: 0, rate: s.estimateRate }]);
+        continue;
+      }
       expect(b[0].rate).toBeCloseTo(s.bracketRange![0]);
       for (let i = 1; i < b.length; i++) {
         expect(b[i].over).toBeGreaterThan(b[i - 1].over);
@@ -280,13 +284,6 @@ describe('progressive states reviewed October 2026', () => {
     expect(STATES_BY_CODE.ME.exemptAmount).toBe(15_700 + 5_300);
     expect(STATES_BY_CODE.HI.exemptAmount).toBe(8_000 + 1_144);
     expect(STATES_BY_CODE.WI.exemptAmount).toBe(13_960 - Math.round(0.12 * (65_000 - 20_120)) + 700);
-  });
-
-  it('calibrates Oregon with the federal tax subtraction and the $256 credit', () => {
-    const federalTax = 12_400 * 0.1 + (65_000 - 16_100 - 12_400) * 0.12;
-    const taxable = 65_000 - 2_910 - federalTax;
-    const exact = 4_550 * 0.0475 + 6_850 * 0.0675 + (taxable - 11_400) * 0.0875 - 256;
-    expect(Math.abs(calculateStateIncomeTax(65_000, 'OR') - exact)).toBeLessThan(5);
   });
 
   it('marks Arizona as following the federal tips and overtime deduction (HB 4168)', () => {

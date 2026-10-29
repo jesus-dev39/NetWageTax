@@ -40,7 +40,7 @@ describe('single-rates warning for married couples', () => {
   });
 
   it('applies to every state that taxes wages without rules of its own for the filing status', () => {
-    const own = ['CA', 'NY', 'SC', 'WV'];
+    const own = ['AZ', 'CA', 'GA', 'MD', 'NC', 'NY', 'OR', 'SC', 'WV'];
     for (const status of ['mfj', 'hoh'] as FilingStatus[]) {
       for (const s of STATES.filter((x) => x.structure !== 'none')) {
         expect(singleRatesWarning(s.code, status)).toBe(own.includes(s.code) ? undefined : SINGLE_RATES_WARNING);
@@ -57,19 +57,19 @@ describe('single-rates warning for married couples', () => {
   });
 
   it('travels with the state estimate', () => {
-    expect(estimateStateTax(65_000, 'GA', 0, 'mfj').singleRatesWarning).toBe(SINGLE_RATES_WARNING);
-    expect(estimateStateTax(65_000, 'GA', 0, 'single').singleRatesWarning).toBeUndefined();
+    expect(estimateStateTax(65_000, 'IL', 0, 'mfj').singleRatesWarning).toBe(SINGLE_RATES_WARNING);
+    expect(estimateStateTax(65_000, 'IL', 0, 'single').singleRatesWarning).toBeUndefined();
     expect(estimateStateTax(65_000, 'NY', 0, 'mfj').singleRatesWarning).toBeUndefined();
   });
 
   describe('paycheck calculator and its exports', () => {
     const input: PaycheckInput = {
       mode: 'salary', hourlyRate: 0, hoursPerWeek: 40, overtimeHoursPerWeek: 0, annualSalary: 90_000,
-      frequency: 'biweekly', filingStatus: 'mfj', stateCode: 'GA',
+      frequency: 'biweekly', filingStatus: 'mfj', stateCode: 'IL',
     };
     const married = buildPaycheckSummary(input, calculatePaycheck(input), at);
     const single = buildPaycheckSummary({ ...input, filingStatus: 'single' }, calculatePaycheck({ ...input, filingStatus: 'single' }), at);
-    const stateRow = (s: typeof married) => s.rows.find((r) => r.label === 'State income tax (GA)')!;
+    const stateRow = (s: typeof married) => s.rows.find((r) => r.label === 'State income tax (IL)')!;
 
     it('marks the state row (on screen and in the print estimate)', () => {
       expect(stateRow(married).warning).toBe(SINGLE_RATES_WARNING);
@@ -79,7 +79,7 @@ describe('single-rates warning for married couples', () => {
 
     it('puts it right under the state row in the .xlsx', () => {
       const rows = rowsOf(paycheckWorkbookBytes(married));
-      const i = rows.findIndex((r) => r[0] === 'State income tax (GA)');
+      const i = rows.findIndex((r) => r[0] === 'State income tax (IL)');
       expect(String(rows[i + 1][0]).trim()).toBe(SINGLE_RATES_WARNING);
       expect(rowsOf(paycheckWorkbookBytes(single)).some((r) => String(r[0]).includes('single-filer rates'))).toBe(false);
     });
@@ -98,11 +98,11 @@ describe('single-rates warning for married couples', () => {
         hasQualifyingOvertime: false, overtimePremiumAmount: 0, isFLSANonExempt: true,
       });
       return buildDeductionSummary(
-        { result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, 'GA', 1_750, filingStatus) },
+        { result, tipsReported: 8_000, overtimeReported: 0, savings: 960, stateTax: estimateStateTax(52_000, 'IL', 0, filingStatus) },
         at,
       );
     };
-    const stateLine = (s: ReturnType<typeof summaryFor>) => s.lines.find((l) => l.label === 'Estimated state income tax (GA)')!;
+    const stateLine = (s: ReturnType<typeof summaryFor>) => s.lines.find((l) => l.label === 'Estimated state income tax (IL)')!;
 
     it('marks the state line for married filers only', () => {
       expect(stateLine(summaryFor('mfj')).warning).toBe(SINGLE_RATES_WARNING);

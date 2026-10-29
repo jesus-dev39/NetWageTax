@@ -10,13 +10,17 @@
  *   c) Recargos especiales (el 1% de California por encima de $1,000,000).
  *   d) Créditos personales, que restan del impuesto (con una reducción opcional
  *      según la renta, como el de California).
- *   e) Resta del impuesto federal (Oregon, Alabama, Missouri): preparada pero sin
- *      activar. Es una resta de la renta, no del impuesto, así que cuando se active
- *      reduce la base imponible junto con la deducción del paso a).
+ *   e) Resta del impuesto federal (Oregon; preparada para Alabama y Missouri). Es una
+ *      resta de la renta, no del impuesto: reduce la base imponible junto con la
+ *      deducción del paso a). Su tope puede depender del AGI federal (Oregon).
+ *
+ * Las reducciones que dependen de la renta (SCIAD, exención de Maryland, créditos,
+ * tope de la resta federal) usan el AGI federal (`agi`), que por defecto es `income`.
  *
  * Estados civiles: un estado civil con tramos en `bracketsByStatus` usa esos
- * tramos y, si existen, su deducción (`deductionByStatus`) y su crédito
- * personal (`personalCreditsByStatus`). Los que no tienen tramos propios
+ * tramos y, si existen, su deducción (`deductionByStatus`), su crédito
+ * personal (`personalCreditsByStatus`) y su resta federal
+ * (`federalTaxSubtractionByStatus`). Los que no tienen tramos propios
  * (hoy, married filing separately) usan todas las reglas de soltero. Los
  * recargos son los mismos para todos.
  */
@@ -47,6 +51,12 @@ export type StateDeduction =
       /** The reduction is rounded down to a multiple of this amount (0 = no rounding). */
       roundDownTo: number;
       label: string;
+    }
+  | {
+      /** Depends on the federal AGI band (Maryland's personal exemption): the first tier with agi ≤ `upTo`. */
+      kind: 'tiers';
+      tiers: { upTo: number; amount: number }[];
+      label: string;
     };
 
 /** Step c): an extra rate on taxable income above a threshold. */
@@ -63,11 +73,15 @@ export interface PersonalCredit {
   label: string;
   /** `reductionPerStep` less for each `stepSize`, or part of one, of income above `start`; never below 0. */
   phaseout?: { start: number; stepSize: number; reductionPerStep: number };
+  /** No credit at all once federal AGI is over this amount (Oregon's exemption credit). */
+  incomeLimit?: number;
 }
 
-/** Step e): subtraction of federal income tax paid, up to an optional cap. Not active in any state yet. */
+/** Step e): subtraction of federal income tax paid, up to an optional cap. */
 export interface FederalTaxSubtraction {
   cap?: number;
+  /** Cap by federal AGI band (Oregon): the first tier with agi < `below` sets the cap instead of `cap`. */
+  capByAgi?: { below: number; cap: number }[];
 }
 
 /** Filing statuses that can have rules of their own; single is the default. */
@@ -89,14 +103,18 @@ export interface BracketEngineRules {
   /** Personal credit of a status in `bracketsByStatus`, when it differs from the single one. */
   personalCreditsByStatus?: Partial<Record<OtherFilingStatus, PersonalCredit>>;
   federalTaxSubtraction?: FederalTaxSubtraction;
+  /** Federal tax subtraction of a status in `bracketsByStatus`, when it differs from the single one. */
+  federalTaxSubtractionByStatus?: Partial<Record<OtherFilingStatus, FederalTaxSubtraction>>;
 }
 
 export interface BracketEngineInput {
   /** State income before the deduction (wages, less any state tips and overtime subtraction). */
   income: number;
   filingStatus?: FilingStatus;
-  /** Federal income tax, for states with an active `federalTaxSubtraction`. */
+  /** Federal income tax actually paid, for states with a `federalTaxSubtraction`. */
   federalTax?: number;
+  /** Federal AGI for income-based reductions; defaults to `income`. */
+  agi?: number;
 }
 
 /** One bracket the taxable income reached: `taxed` dollars between `from` and `to` at `rate`. */
@@ -133,6 +151,7 @@ export interface BracketEngineResult {
 
 export function stateDeductionAmount(d: StateDeduction, income: number): number {
   if (d.kind === 'fixed') return d.amount;
+  if (d.kind === 'tiers') return (d.tiers.find((t) => income <= t.upTo) ?? d.tiers[d.tiers.length - 1]).amount;
   if (income <= d.phaseoutStart) return d.max;
   if (income >= d.phaseoutEnd) return 0;
   const raw = (d.max * (income - d.phaseoutStart)) / (d.phaseoutEnd - d.phaseoutStart);
@@ -141,9 +160,16 @@ export function stateDeductionAmount(d: StateDeduction, income: number): number 
 }
 
 export function personalCreditAmount(c: PersonalCredit, income: number): number {
+  if (c.incomeLimit !== undefined && income > c.incomeLimit) return 0;
   if (!c.phaseout || income <= c.phaseout.start) return c.amount;
   const steps = Math.ceil((income - c.phaseout.start) / c.phaseout.stepSize);
   return Math.max(0, c.amount - steps * c.phaseout.reductionPerStep);
+}
+
+/** Most federal tax that can be subtracted at this federal AGI. */
+export function federalTaxSubtractionCap(f: FederalTaxSubtraction, agi: number): number {
+  const tier = f.capByAgi?.find((t) => agi < t.below);
+  return tier ? tier.cap : (f.cap ?? Infinity);
 }
 
 export function bracketLines(taxable: number, brackets: TaxBracket[]): BracketLine[] {
@@ -163,13 +189,17 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
   const status = input.filingStatus ?? 'single';
   const own = status === 'single' ? undefined : rules.bracketsByStatus?.[status];
   const brackets = own ?? rules.brackets;
-  const stateDeduction = (own && status !== 'single' && rules.deductionByStatus?.[status]) || rules.deduction;
-  const credit = (own && status !== 'single' && rules.personalCreditsByStatus?.[status]) || rules.personalCredits;
+  const byStatus = <T>(map: Partial<Record<OtherFilingStatus, T>> | undefined): T | undefined =>
+    own && status !== 'single' ? map?.[status] : undefined;
+  const stateDeduction = byStatus(rules.deductionByStatus) ?? rules.deduction;
+  const credit = byStatus(rules.personalCreditsByStatus) ?? rules.personalCredits;
+  const subtraction = byStatus(rules.federalTaxSubtractionByStatus) ?? rules.federalTaxSubtraction;
+  const agi = Math.max(0, input.agi ?? income);
 
   // a) and e): both reduce the income that the brackets apply to.
-  const deduction = Math.min(income, stateDeductionAmount(stateDeduction, income));
-  const federalTaxSubtracted = rules.federalTaxSubtraction
-    ? Math.min(income - deduction, Math.max(0, input.federalTax ?? 0), rules.federalTaxSubtraction.cap ?? Infinity)
+  const deduction = Math.min(income, stateDeductionAmount(stateDeduction, agi));
+  const federalTaxSubtracted = subtraction
+    ? Math.min(income - deduction, Math.max(0, input.federalTax ?? 0), federalTaxSubtractionCap(subtraction, agi))
     : 0;
   const taxableIncome = income - deduction - federalTaxSubtracted;
 
@@ -184,7 +214,7 @@ export function computeBracketTax(rules: BracketEngineRules, input: BracketEngin
   const beforeCredits = bracketTax + surcharges.reduce((sum, s) => sum + s.tax, 0);
 
   // d)
-  const personalCredits = credit ? Math.min(beforeCredits, personalCreditAmount(credit, income)) : 0;
+  const personalCredits = credit ? Math.min(beforeCredits, personalCreditAmount(credit, agi)) : 0;
 
   return {
     income,

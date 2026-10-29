@@ -128,9 +128,12 @@ const summary: { label: string; value: string; note?: string }[] = [
             </>
           ))
         }. We subtract the state's own deduction or exemption (in South Carolina, a deduction that shrinks as income
-        rises), run every bracket on the rest, add special surcharges such as California's 1% tax on taxable
-        income over $1 million, and subtract personal credits such as California's personal exemption credit. Each
-        state page shows the calculation bracket by bracket.
+        rises; in Maryland, personal exemptions that shrink above $100,000 of federal AGI) and, in Oregon, the
+        federal income tax you pay, up to its limit. Then we run every bracket on the rest, add special surcharges
+        such as California's 1% tax on taxable income over $1 million, and subtract personal credits such as
+        California's personal exemption credit. In the tips and overtime calculator, Oregon's subtraction
+        uses your federal tax after the tips and overtime deduction. Maryland's figure is state tax only: county
+        income taxes aren't included. Each state page shows the calculation bracket by bracket.
       </li>
       <li>
         <strong>Simplified estimate</strong>, for the other states that tax wages. Flat-rate states apply their rate to

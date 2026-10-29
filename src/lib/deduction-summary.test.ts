@@ -70,7 +70,7 @@ describe('buildDeductionSummary', () => {
     const line = s.lines.find((l) => l.label === 'Estimated state income tax (GA)')!;
     // (52,000 − 1,750 − 15,000) × 4.99% = $1,758.98.
     expect(line.value).toBe('$1,759');
-    expect(line.detail).toContain('simplified single-filer estimate');
+    expect(line.detail).toContain('brackets for your filing status');
     expect(line.detail).toContain('Includes your $1,750 state deduction.');
   });
 
