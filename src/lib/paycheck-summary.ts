@@ -44,6 +44,8 @@ export interface PaycheckSummary {
   periods: number;
   filingStatus: string;
   stateName: string | null;
+  /** Label of the withheld total (totalWithheldLabel). */
+  totalLabel: string;
   earnings: string;
   gross: { perPeriod: number; annual: number };
   taxes: { perPeriod: number; annual: number };
@@ -58,6 +60,9 @@ export function describeEarnings(input: PaycheckInput): string {
   const ot = input.overtimeHoursPerWeek > 0 ? ` + ${input.overtimeHoursPerWeek} overtime hrs at 1.5×` : '';
   return `${formatUSDCents(input.hourlyRate || 0)}/hr × ${input.hoursPerWeek || 0} hrs/week${ot}`;
 }
+
+/** "Total taxes withheld (est.)", or "Total taxes and deductions (est.)" when a state payroll deduction is included. */
+export const totalWithheldLabel = (r: PaycheckResult) => (r.statePayroll ? 'Total taxes and deductions (est.)' : 'Total taxes withheld (est.)');
 
 /** Line items shared by the on-screen table, the print estimate, and the Word file. */
 export function buildPaycheckRows(input: PaycheckInput, r: PaycheckResult): PaycheckSummaryRow[] {
@@ -104,7 +109,15 @@ export function buildPaycheckRows(input: PaycheckInput, r: PaycheckResult): Payc
       warning: singleRatesWarning(input.stateCode, input.filingStatus),
       note: dependentsNote(input.stateCode, input.filingStatus),
     },
-    row('Total taxes withheld (est.)', r.totalTax, 'subtotal'),
+    ...(r.statePayroll
+      ? [
+          {
+            ...row(r.statePayroll.label, r.statePayroll.total, 'tax', r.statePayroll.lines.map((l) => l.detail).join(' · ')),
+            note: r.statePayroll.note,
+          },
+        ]
+      : []),
+    row(totalWithheldLabel(r), r.totalTax, 'subtotal'),
     row('Net take-home pay', r.netAnnual, 'net'),
   ];
 }
@@ -135,6 +148,7 @@ export function buildPaycheckSummary(input: PaycheckInput, r: PaycheckResult, ge
     periods: r.periods,
     filingStatus: PAYCHECK_FILING_STATUSES.find((f) => f.value === input.filingStatus)!.label,
     stateName: state?.name ?? null,
+    totalLabel: totalWithheldLabel(r),
     earnings: describeEarnings(input),
     gross: { perPeriod: per(r.grossAnnual), annual: r.grossAnnual },
     taxes: { perPeriod: per(r.totalTax), annual: r.totalTax },
