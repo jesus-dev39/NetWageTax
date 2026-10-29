@@ -567,6 +567,34 @@ estados y en la calculadora de propinas. Después de cambiarlos, repite el caso 
 | **New York** (`NY`) y **Connecticut** (`CT`) | Tienen *recapture* (los contribuyentes con ingresos altos pierden la ventaja de los tramos bajos), que no se calcula: solo se menciona en la nota. New York se calcula con el motor de tramos (sin el *recapture*) | `BRACKETS.NY` sale ahora de las tablas de retención: cámbialo a las instrucciones del IT-201 cuando se publiquen (`docs/PENDING-UPDATES.md`) |
 | **Oregon**, deducción del coche | Oregon no permite la deducción de intereses del coche en su impuesto (SB 1507), y se dice en `CAR_LOAN_STATE_NOTE` (`src/lib/state-page-content.ts`) y en la FAQ de la calculadora del coche | Después del referéndum sobre SB 1507, actualiza las dos cosas si el resultado cambia la regla |
 
+### 3.4.2 Descuentos estatales de nómina (SDI, baja pagada, desempleo)
+
+Están en `src/lib/state-payroll-deductions.ts` (`STATE_PAYROLL_RULES`): un programa por línea, con su
+tipo del trabajador (`rate`), su tope salarial anual (`wageCap`) o su máximo semanal o anual
+(`weeklyMax`, `annualMax`), las fuentes y la fecha de consulta (`checked`). Se aplica siempre la parte
+**máxima** que la empresa puede descontar al trabajador, y los descuentos se restan del neto sin
+cambiar la base de ningún impuesto (son post-tax). Los impuestos locales siguen fuera.
+
+**Casi todos cambian cada enero.** Comprueba en la agencia de cada estado (los enlaces están en
+`sources`) y actualiza `rate`, `wageCap`, `weeklyMax`, `annualMax` y `checked`:
+
+| Estado | Qué cambia | Dónde mirarlo |
+| :-- | :-- | :-- |
+| California SDI | Tipo (1.3% en 2026; la EDD prevé 1.4% en 2027). Sin tope | EDD, DE 202 |
+| New York SDI y PFL | SDI: 0.5% con máximo de $0.60 por semana (ley, no cambia). PFL: tipo y máximo anual ($411.91 en 2026; para 2027 ya publicado 0.452% y $451.81) | paidfamilyleave.ny.gov |
+| New Jersey TDI, FLI, UI y WF/SWF | Tipos del trabajador y las dos bases ($171,100 TDI/FLI, $44,800 UI/WF en 2026) | NJDOL, rate information |
+| Washington PFML y WA Cares | PFML: tipo total y la parte del trabajador (1.13% × 71.43% en 2026; 1.2% × 70.7% en 2027) y el tope (base de la Social Security). WA Cares: 0.58%, sin tope | paidleave.wa.gov, wacaresfund.wa.gov |
+| Massachusetts PFML | Tipo total y reparto: en 2026, 0.28% de *medical leave* (40% del 0.70%) + 0.18% de *family leave* (100%) = 0.46%. En 2027 cambia el reparto (Chapter 101 of the Acts of 2026) | mass.gov (bloquea las descargas: ábrelo en el navegador) |
+| Oregon Paid Leave y Statewide Transit Tax | Tipo (60% del 1%) y tope; el *transit tax* (0.1% en 2026, se llegó a anunciar 0.2%) | Paid Leave Oregon, Oregon DOR |
+| Rhode Island TDI | Tipo (1.1%) y base ($100,000) | DLT (bloquea las descargas) |
+| Hawaii TDI | Máximo semanal ($7.50 en 2026, el 0.5% de la base semanal de $1,500.21) | DLIR/DCD, aviso de diciembre |
+| Colorado FAMLI, Connecticut, Minnesota, Delaware, Maine | Tipo y tope. Colorado baja a 0.86% total en 2027; Delaware y Maine fijan su tipo por ley hasta 2026 y 2027; Minnesota usa la base de la Social Security redondeada al millar ($185,000) | Agencia de cada estado |
+| Alaska UI, Pennsylvania UC | Tipo del trabajador y, en Alaska, la base ($54,200 en 2026) | AK DOLWD, PA DLI |
+| Maryland, Vermont | Solo una nota: Maryland empieza a cotizar el 1 de enero de 2027 (entonces hay que añadir sus programas); en Vermont la empresa decide si descuenta hasta el 0.11% | — |
+
+Después, actualiza los valores a mano de `src/lib/state-payroll-deductions.test.ts` (a $65,000 y por
+encima de los topes).
+
 Los tests de `src/lib/state-tax-data.test.ts` fijan algunos de estos valores (por ejemplo, el tipo y
 la deducción de Georgia). Si un test falla después de un cambio que has comprobado con la fuente
 oficial, actualiza el número del test.
@@ -606,7 +634,7 @@ demás se repiten cada año. Marca cada tarea en `docs/PENDING-UPDATES.md` cuand
 | Mes | Qué revisar |
 | :-- | :-- |
 | **Todos los meses** | Search Console (errores de indexación y páginas que pierden posiciones). Comprobaciones de producción de la sección 2.3. AdSense: que no haya avisos de política ni de `ads.txt` |
-| **Enero** | **Revisión completa de los estados** (hacia el 15): tipos, `exemptAmount`, `estimateRate`, `bracketRange`, notas, impuestos locales, tablas de tramos y `sourceUrl` de los 50 estados + DC. **Guía de propinas y horas extra:** revisa la categoría, el detalle, la fuente y la fecha de cada estado, sobre todo los marcados como *inferred* (AR, CT, IL, KS, LA, OH, OK, UT, WI, WV). Actualiza `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` y las fechas `checked`. Decide si cambias `SITE_TAX_YEAR` al año nuevo. **(solo 2026–2027)** Vermont: tramos y deducción estándar de 2026 (`BRACKETS.VT`). Carolina del Sur: tramo de 2027 indexado (`BRACKETS.SC`). Georgia: confirma el tipo de 2027 (4.865% o 4.99%) y si la deducción estándar sube a $15,375 |
+| **Enero** | **Descuentos estatales de nómina** (sección 3.4.2): tipos, topes y máximos de SDI, PFML, TDI, WA Cares y desempleo del trabajador de los 15 estados, y Maryland a partir de 2027. **Revisión completa de los estados** (hacia el 15): tipos, `exemptAmount`, `estimateRate`, `bracketRange`, notas, impuestos locales, tablas de tramos y `sourceUrl` de los 50 estados + DC. **Guía de propinas y horas extra:** revisa la categoría, el detalle, la fuente y la fecha de cada estado, sobre todo los marcados como *inferred* (AR, CT, IL, KS, LA, OH, OK, UT, WI, WV). Actualiza `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` y las fechas `checked`. Decide si cambias `SITE_TAX_YEAR` al año nuevo. **(solo 2026–2027)** Vermont: tramos y deducción estándar de 2026 (`BRACKETS.VT`). Carolina del Sur: tramo de 2027 indexado (`BRACKETS.SC`). Georgia: confirma el tipo de 2027 (4.865% o 4.99%) y si la deducción estándar sube a $15,375 |
 | **Febrero** | Formularios estatales definitivos del año anterior: confirma las cifras que se basaban en borradores. **(solo 2026–2027)** Schedule 1-A definitivo de 2026 y sus instrucciones: revisa las calculadoras de mayores y de coche y retira `SCHEDULE_1A_DRAFT_NOTICE` |
 | **Marzo–abril** | Temporada de declaraciones: es cuando más visitas hay; vigila que todo funcione. Algunos estados publican sus tipos del año (Michigan publicó el de 2026 el 15 de abril) |
 | **Mayo–junio** | Terminan las sesiones legislativas de muchos estados: busca leyes nuevas que cambien tipos o la deducción de propinas y horas extra (en 2026, Arizona firmó HB 4168 el 13 de junio) |

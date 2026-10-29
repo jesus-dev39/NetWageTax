@@ -135,6 +135,8 @@ publish the next year's numbers, and all states every January.
             the single rules there, with the single-rates warning.
       - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFS
             where it differs, turn on the federal income tax subtraction for Oregon, Alabama, and Missouri.
+      - [ ] **Maryland FAMLI (January 2027):** contributions start January 1, 2027. Add its employee rate and
+            wage cap to `STATE_PAYROLL_RULES.MD` and drop the note-only entry.
       - [ ] Future improvement: a "number of dependents" field in the paycheck and tips calculators, to apply
             dependent credits and exemptions (California's dependent exemption credit, New York's $1,000 and West
             Virginia's $2,000 exemption per dependent). Until then the calculators say "Doesn’t include dependent

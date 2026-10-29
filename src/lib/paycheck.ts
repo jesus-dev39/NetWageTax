@@ -7,7 +7,9 @@
  * - FICA: Social Security 6.2% hasta la base salarial 2026, Medicare 1.45%
  *   y Additional Medicare 0.9% sobre el umbral del estado civil (fica.ts).
  * - Estatal: state-tax-data.ts (tramos completos en los estados del motor,
- *   estimación simplificada en los demás; tramos de soltero en todos).
+ *   estimación simplificada en los demás).
+ * - Descuentos estatales de nómina (SDI, PFML...): state-payroll-deductions.ts. Son
+ *   post-tax: se restan del neto sin cambiar la base de ningún impuesto.
  *
  * No incluye deducciones pre-tax (401(k), seguro médico, HSA), ajustes del
  * W-4, impuestos locales ni la deducción OBBBA de horas extra.
@@ -15,6 +17,7 @@
 
 import { estimateAdditionalMedicare, MEDICARE_RATE, SOCIAL_SECURITY_RATE, SOCIAL_SECURITY_WAGE_BASE_2026 } from './fica';
 import { computeFederalIncomeTax, getMarginalRate, STANDARD_DEDUCTION_2026 } from './marginal-rate';
+import { statePayrollDeductions, type StatePayrollDeductions } from './state-payroll-deductions';
 import { calculateStateIncomeTax, type StateCode } from './state-tax-data';
 
 export type PayMode = 'hourly' | 'salary';
@@ -64,6 +67,9 @@ export interface PaycheckResult {
   medicare: number;
   additionalMedicare: number;
   stateTax: number;
+  /** State payroll deductions (SDI, PFML...), post-tax; null when the state has none. */
+  statePayroll: StatePayrollDeductions | null;
+  /** Everything withheld: income taxes, FICA, and state payroll deductions. */
   totalTax: number;
   netAnnual: number;
   netPerPeriod: number;
@@ -135,7 +141,9 @@ export function calculatePaycheck(input: PaycheckInput): PaycheckResult {
 
   const stateTax = input.stateCode ? calculateStateIncomeTax(grossAnnual, input.stateCode, input.filingStatus) : 0;
 
-  const totalTax = federalTax + socialSecurity + medicare + stateTax;
+  const statePayroll = statePayrollDeductions(input.stateCode, grossAnnual);
+
+  const totalTax = federalTax + socialSecurity + medicare + stateTax + (statePayroll?.total ?? 0);
   const netAnnual = grossAnnual - totalTax;
 
   return {
@@ -151,6 +159,7 @@ export function calculatePaycheck(input: PaycheckInput): PaycheckResult {
     medicare,
     additionalMedicare,
     stateTax,
+    statePayroll,
     totalTax,
     netAnnual,
     netPerPeriod: netAnnual / periods,

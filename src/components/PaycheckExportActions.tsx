@@ -67,7 +67,7 @@ export function PaycheckVoucher({ summary: s }: { summary: PaycheckSummary }) {
 
       <section className="mt-3 grid grid-cols-3 gap-3 break-inside-avoid">
         <VoucherFigure label="Gross pay" {...figure(s.gross.perPeriod, s.gross.annual)} />
-        <VoucherFigure label="Total taxes withheld (est.)" {...figure(s.taxes.perPeriod, s.taxes.annual)} />
+        <VoucherFigure label={s.totalLabel} {...figure(s.taxes.perPeriod, s.taxes.annual)} />
         <VoucherFigure label="Take-home pay" {...figure(s.net.perPeriod, s.net.annual)} accent />
       </section>
 

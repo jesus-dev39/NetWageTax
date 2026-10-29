@@ -52,6 +52,7 @@ export default function HomePaycheckEstimate() {
     { key: 'federal', value: r.federalTax, color: 'bg-data-federal' },
     { key: 'fica', value: fica, color: 'bg-data-fica' },
     { key: 'state', value: r.stateTax, color: 'bg-data-state' },
+    { key: 'state-payroll', value: r.statePayroll?.total ?? 0, color: 'bg-data-state/55' },
   ];
 
   return (
@@ -129,11 +130,22 @@ export default function HomePaycheckEstimate() {
           </NativeSelect>
         </div>
 
-        <div>
+        {/* Highlighted until a state is chosen: state income tax and payroll deductions change take-home pay. */}
+        <div className={state ? '' : 'rounded-panel border-2 border-link bg-page p-3'}>
           <label htmlFor="home-state" className="mb-1.5 block font-semibold text-ink">
             State
           </label>
-          <NativeSelect id="home-state" value={stateCode ?? ''} onChange={(e) => setStateCode((e.target.value || null) as StateCode | null)}>
+          {!state && (
+            <p id="home-state-hint" className="mb-1.5 text-[15px] font-semibold text-link">
+              Add your state for an accurate take-home figure
+            </p>
+          )}
+          <NativeSelect
+            id="home-state"
+            value={stateCode ?? ''}
+            onChange={(e) => setStateCode((e.target.value || null) as StateCode | null)}
+            aria-describedby={state ? undefined : 'home-state-hint'}
+          >
             <option value="">Choose a state</option>
             {STATES.map((s) => (
               <option key={s.code} value={s.code}>
@@ -161,7 +173,10 @@ export default function HomePaycheckEstimate() {
               <Row color="bg-data-federal" label="Federal income tax" value={minus(per(r.federalTax))} />
               <Row color="bg-data-fica" label="Social Security & Medicare" value={minus(per(fica))} />
               {state ? (
-                <Row color="bg-data-state" label={`${state.name} income tax`} value={minus(per(r.stateTax))} />
+                <>
+                  <Row color="bg-data-state" label={`${state.name} income tax`} value={minus(per(r.stateTax))} />
+                  {r.statePayroll && <Row color="bg-data-state/55" label={r.statePayroll.label} value={minus(per(r.statePayroll.total))} />}
+                </>
               ) : (
                 <Row color="bg-data-state" label="State income tax" value="Choose a state" muted />
               )}
