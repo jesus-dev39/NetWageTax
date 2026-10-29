@@ -47,6 +47,15 @@ const tax = exampleTax(s);
 const taxable = Math.max(0, EXAMPLE_WAGE - s.exemptAmount);
 // States on the bracket engine show the example one bracket per row, in cents so the rows add up.
 const breakdown = stateTaxBreakdown(EXAMPLE_WAGE, s.code);
+// Joint and head of household schedules that differ from the single one (California, New York).
+const STATUS_TABLES = [
+  ['mfj', 'married couples filing jointly'],
+  ['hoh', 'heads of household'],
+] as const;
+const statusTables = STATUS_TABLES.flatMap(([status, who]) => {
+  const brackets = s.bracketEngine?.bracketsByStatus?.[status];
+  return brackets && JSON.stringify(brackets) !== JSON.stringify(s.brackets) ? [{ id: `brackets-${status}`, who, brackets }] : [];
+});
 const neighbors = neighborRows(s);
 const related = relatedStates(s.code);
 const tipsStatus = tipsOvertimeStatus(s);
@@ -207,6 +216,32 @@ const revenueLink = s.sourceUrl
                   </tbody>
                 </table>
               </div>
+              {statusTables.map((t) => (
+                <>
+                  <h3 id={t.id}>{s.name} tax brackets for {t.who}</h3>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-[15px]">
+                      <thead>
+                        <tr>
+                          <th scope="col" class={th}>Taxable income</th>
+                          <th scope="col" class={`${th} text-right`}>Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {t.brackets.map((b, i) => {
+                          const next = t.brackets[i + 1];
+                          return (
+                            <tr>
+                              <td class={td}>{next ? `${formatUSD(b.over)} – ${formatUSD(next.over)}` : `Over ${formatUSD(b.over)}`}</td>
+                              <td class={`${td} text-right`}>{pct(b.rate)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ))}
               {s.bracketsNote && <p class="text-[15px] text-ink-2">{s.bracketsNote}</p>}
             </>
           ) : (

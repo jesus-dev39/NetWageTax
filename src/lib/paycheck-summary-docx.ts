@@ -66,6 +66,7 @@ function bodyRow(r: PaycheckSummaryRow): TableRow {
   const label = [new Paragraph({ children: [text(r.label, { bold: strong })] })];
   if (r.detail) label.push(new Paragraph({ children: [text(r.detail, { size: 17, color: INK_2 })] }));
   if (r.warning) label.push(warningParagraph(r.warning));
+  if (r.note) label.push(new Paragraph({ children: [text(r.note, { size: 17, color: INK_2 })] }));
   const money = (n: number) =>
     new Paragraph({ alignment: AlignmentType.RIGHT, children: [text(formatUSDCents(n), { bold: strong })] });
   return new TableRow({

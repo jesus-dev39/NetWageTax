@@ -58,6 +58,7 @@ export function buildDeductionWorkbook(s: DeductionSummary): WorkBook {
   );
   if (s.stateTax?.singleRatesWarning) rows.push([wide(s.stateTax.singleRatesWarning, COLS)]);
   if (s.stateTipsOvertimeNote) rows.push([wide(s.stateTipsOvertimeNote, COLS)]);
+  if (s.stateTax?.dependentsNote) rows.push([wide(s.stateTax.dependentsNote, COLS)]);
   if (s.savingsNote) rows.push([wide(s.savingsNote, COLS)]);
 
   rows.push([], [wide(SUMMARY_DISCLAIMER, COLS)], [wide(SUMMARY_LEGAL_NOTICE, COLS)]);

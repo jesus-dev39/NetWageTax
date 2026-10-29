@@ -39,10 +39,15 @@ describe('single-rates warning for married couples', () => {
     expect(SINGLE_RATES_WARNING).toBe('State tax uses single-filer rates for now, so it may be too high for married couples.');
   });
 
-  it('applies to every state that taxes wages when the filing status is not single', () => {
-    for (const status of ['mfj', 'mfs', 'hoh'] as FilingStatus[]) {
-      for (const s of STATES.filter((x) => x.structure !== 'none')) expect(singleRatesWarning(s.code, status)).toBe(SINGLE_RATES_WARNING);
+  it('applies to every state that taxes wages without rules of its own for the filing status', () => {
+    const own = ['CA', 'NY', 'SC', 'WV'];
+    for (const status of ['mfj', 'hoh'] as FilingStatus[]) {
+      for (const s of STATES.filter((x) => x.structure !== 'none')) {
+        expect(singleRatesWarning(s.code, status)).toBe(own.includes(s.code) ? undefined : SINGLE_RATES_WARNING);
+      }
     }
+    // Married filing separately still uses single rules everywhere.
+    for (const s of STATES.filter((x) => x.structure !== 'none')) expect(singleRatesWarning(s.code, 'mfs')).toBe(SINGLE_RATES_WARNING);
   });
 
   it('is off for single filers, states without a wage tax, and no state', () => {
@@ -52,8 +57,9 @@ describe('single-rates warning for married couples', () => {
   });
 
   it('travels with the state estimate', () => {
-    expect(estimateStateTax(65_000, 'NY', 0, 'mfj').singleRatesWarning).toBe(SINGLE_RATES_WARNING);
-    expect(estimateStateTax(65_000, 'NY', 0, 'single').singleRatesWarning).toBeUndefined();
+    expect(estimateStateTax(65_000, 'GA', 0, 'mfj').singleRatesWarning).toBe(SINGLE_RATES_WARNING);
+    expect(estimateStateTax(65_000, 'GA', 0, 'single').singleRatesWarning).toBeUndefined();
+    expect(estimateStateTax(65_000, 'NY', 0, 'mfj').singleRatesWarning).toBeUndefined();
   });
 
   describe('paycheck calculator and its exports', () => {

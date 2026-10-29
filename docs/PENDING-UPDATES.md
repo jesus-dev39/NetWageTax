@@ -130,9 +130,18 @@ publish the next year's numbers, and all states every January.
             personal credits, and the federal income tax subtraction, not active yet) runs for California,
             New York, South Carolina, and West Virginia, with single-filer brackets for every filing status.
             The state pages show the $65,000 example bracket by bracket.
-      - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFJ and
-            HoH brackets (`bracketsByStatus`), turn on the federal income tax subtraction for Oregon, Alabama,
-            and Missouri.
+      - [x] Phase 2: MFJ and HoH rules (`bracketsByStatus`, `deductionByStatus`, `personalCreditsByStatus`)
+            for California, New York, South Carolina, and West Virginia. Married filing separately still uses
+            the single rules there, with the single-rates warning.
+      - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFS
+            where it differs, turn on the federal income tax subtraction for Oregon, Alabama, and Missouri.
+      - [ ] Future improvement: a "number of dependents" field in the paycheck and tips calculators, to apply
+            dependent credits and exemptions (California's dependent exemption credit, New York's $1,000 and West
+            Virginia's $2,000 exemption per dependent). Until then the calculators say "Doesn’t include dependent
+            credits or exemptions" next to the state tax for joint and head of household filers.
+      - [ ] California: when the FTB publishes the 2026 figures, update Schedules Y and Z, the $11,412
+            joint/HoH standard deduction, and the credit phase-out thresholds ($504,411 joint, $378,310 HoH)
+            together with the single ones, then the CA cases in `state-brackets-by-status.test.ts`.
       - Utah (credits piece): the taxpayer tax credit (6% of the federal standard deduction, reduced as
         income rises) isn't applied today. Include it with its income phase-out when the engine runs on
         brackets and credits.

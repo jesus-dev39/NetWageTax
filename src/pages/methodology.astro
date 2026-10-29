@@ -140,8 +140,10 @@ const summary: { label: string; value: string; note?: string }[] = [
         lower incomes.
       </li>
       <li>
-        Both use single-filer figures whatever filing status you choose: we don't have the brackets for married or
-        head-of-household filers yet. Neither includes other state tax credits or local income taxes. In the tips and overtime
+        The bracket calculation uses each state's own brackets, deduction, and credits for single, married filing
+        jointly, and head of household returns. Married filing separately, and every filing status in the simplified
+        estimate, use single-filer figures, and the calculators say so next to the state tax: we don't have those
+        brackets yet. Neither includes other state tax credits or local income taxes. In the tips and overtime
         calculator, both first subtract what your state allows for tips and overtime: the final federal deduction in
         states that follow it, the tips part only in states that follow it for tips only, and the state's own capped
         amounts in Georgia and Alabama. The paycheck calculator and the state pages tax full wages. Each state's

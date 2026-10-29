@@ -126,9 +126,9 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
                 detail={
                   summary.stateTax.structure === 'none'
                     ? 'No state income tax on wages'
-                    : `${summary.stateTax.rateLabel} · ${summary.stateTax.usesBrackets ? 'single-filer brackets' : 'simplified single-filer estimate'}, excludes local taxes`
+                    : `${summary.stateTax.rateLabel} · ${summary.stateTax.method}, excludes local taxes`
                 }
-                note={summary.stateTipsOvertimeNote}
+                note={[summary.stateTipsOvertimeNote, summary.stateTax.dependentsNote].filter(Boolean).join(' ') || undefined}
                 warning={summary.stateTax.singleRatesWarning}
                 value={formatUSD(summary.stateTax.tax)}
               />

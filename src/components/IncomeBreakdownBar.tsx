@@ -19,8 +19,8 @@ interface Props {
 export function stateTaxHint(stateTax: StateTaxEstimate): string {
   const info = STATES_BY_CODE[stateTax.code];
   if (tipsOvertimeStatus(info) === 'no-wage-tax') return `${stateTax.name}: no state income tax.`;
-  const method = stateTax.usesBrackets ? 'single-filer brackets' : 'simplified estimate';
-  return `${stateTax.name}, ${stateTax.rateLabel}, ${method}. ${stateTipsOvertimeNote(info, stateTax.stateDeduction)}`;
+  const dependents = stateTax.dependentsNote ? ` ${stateTax.dependentsNote}` : '';
+  return `${stateTax.name}, ${stateTax.rateLabel}, ${stateTax.method}. ${stateTipsOvertimeNote(info, stateTax.stateDeduction)}${dependents}`;
 }
 
 export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stateTax = null }: Props) {
@@ -91,7 +91,11 @@ export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stat
       <p className="mt-3 text-sm text-ink-2">
         Assumes all MAGI is wages. Social Security applies only to the first {formatUSD(SOCIAL_SECURITY_WAGE_BASE_2026)} of 2026
         wages; the 0.9% Additional Medicare Tax is not included.
-        {stateTax && stateTax.structure !== 'none' && ' State tax is a single-filer estimate and excludes local income taxes.'}
+        {stateTax &&
+          stateTax.structure !== 'none' &&
+          (stateTax.singleRatesWarning
+            ? ' State tax uses single-filer figures and excludes local income taxes.'
+            : ` State tax uses ${stateTax.name}’s ${stateTax.usesBrackets ? 'brackets for your filing status' : 'simplified estimate'} and excludes local income taxes.`)}
       </p>
     </section>
   );

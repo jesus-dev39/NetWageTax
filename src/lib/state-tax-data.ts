@@ -23,7 +23,14 @@
  */
 
 import type { FilingStatus } from './obbba-params';
-import { computeBracketTax, type BracketEngineResult, type BracketEngineRules, type Surcharge, type TaxBracket } from './state-bracket-engine';
+import {
+  computeBracketTax,
+  type BracketEngineResult,
+  type BracketEngineRules,
+  type StateDeduction,
+  type Surcharge,
+  type TaxBracket,
+} from './state-bracket-engine';
 import { TIPS_OVERTIME_RULES, type TipsOvertimeRule } from './state-tips-overtime';
 
 export type { TaxBracket };
@@ -63,7 +70,7 @@ export interface StateTaxInfo {
   tipsOvertime: TipsOvertimeRule;
   /** Official document the current rate comes from (a law or a state publication), when verified. */
   rateSource?: { url: string; label: string };
-  /** Full single-filer bracket schedule, when verified. Pages show a table only if present. */
+  /** Full single-filer bracket schedule, when verified. Pages show a table only if present (plus `bracketEngine.bracketsByStatus`). */
   brackets?: TaxBracket[];
   /** Set when the state is calculated bracket by bracket (state-bracket-engine.ts) instead of with estimateRate. */
   bracketEngine?: BracketEngineRules;
@@ -296,44 +303,66 @@ interface BracketSchedule {
  * pages pick them up automatically. Without `engine`, the table is display only and
  * calculateStateIncomeTax uses estimateRate.
  */
+// H.4216, Section 1 (12-6-510(C)): one schedule for every filing status.
+const SC_BRACKETS: TaxBracket[] = [
+  { over: 0, rate: 0.0199 },
+  { over: 30_000, rate: 0.0521 },
+];
+
+// SB 392, 11-21-4j(a): one schedule for single, joint, and head of household returns (separate returns have their own).
+const WV_BRACKETS: TaxBracket[] = [
+  { over: 0, rate: 0.0211 },
+  { over: 10_000, rate: 0.0281 },
+  { over: 25_000, rate: 0.0316 },
+  { over: 40_000, rate: 0.0422 },
+  { over: 60_000, rate: 0.0458 },
+];
+
+/** South Carolina's SCIAD: the reduction is rounded down to a multiple of $10 ($8,190 at $65,000 of federal AGI, single). */
+const SCIAD = (max: number, phaseoutStart: number, phaseoutEnd: number): StateDeduction => ({
+  kind: 'phaseout',
+  max,
+  phaseoutStart,
+  phaseoutEnd,
+  roundDownTo: 10,
+  label: 'South Carolina income adjusted deduction (SCIAD)',
+});
+
 const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
   SC: {
-    // H.4216: the SCIAD reduction is rounded down to a multiple of $10 ($8,190 at $65,000 of federal AGI).
+    // H.4216, Section 3 (12-6-1140(15)): $15,000 single, $22,500 head of household, $30,000 joint, each reduced by the
+    // share of federal AGI above $40,000 / $60,000 / $80,000 over $55,000 / $82,500 / $110,000.
     engine: {
-      deduction: {
-        kind: 'phaseout',
-        max: 15_000,
-        phaseoutStart: 40_000,
-        phaseoutEnd: 95_000,
-        roundDownTo: 10,
-        label: 'South Carolina income adjusted deduction (SCIAD)',
-      },
+      deduction: SCIAD(15_000, 40_000, 95_000),
+      bracketsByStatus: { mfj: SC_BRACKETS, hoh: SC_BRACKETS },
+      deductionByStatus: { mfj: SCIAD(30_000, 80_000, 190_000), hoh: SCIAD(22_500, 60_000, 142_500) },
     },
     year: 2026,
     source: 'https://www.scstatehouse.gov/sess126_2025-2026/bills/4216.htm',
-    brackets: [
-      { over: 0, rate: 0.0199 },
-      { over: 30_000, rate: 0.0521 },
-    ],
-    note: 'Brackets apply to South Carolina taxable income, after the SCIAD deduction: $15,000 for single filers, reduced by the share of federal AGI above $40,000 over $55,000 (so $8,190 at $65,000 and $0 from $95,000).',
+    brackets: SC_BRACKETS,
+    note: 'The same brackets apply to every filing status, on South Carolina taxable income after the SCIAD deduction: $15,000 for single filers, reduced by the share of federal AGI above $40,000 over $55,000 (so $8,190 at $65,000 and $0 from $95,000). The SCIAD is $30,000 on a joint return (reduced between $80,000 and $190,000) and $22,500 for a head of household (reduced between $60,000 and $142,500).',
   },
   WV: {
-    engine: { deduction: { kind: 'fixed', amount: 2_000, label: 'Personal exemption' } },
+    // W. Va. Code 11-21-16 (https://code.wvlegislature.gov/11-21-16/): $2,000 for each federal exemption, so $4,000 on a
+    // joint return. Dependents aren't counted: a head of household gets $2,000 for the filer only.
+    engine: {
+      deduction: { kind: 'fixed', amount: 2_000, label: 'Personal exemption' },
+      bracketsByStatus: { mfj: WV_BRACKETS, hoh: WV_BRACKETS },
+      deductionByStatus: { mfj: { kind: 'fixed', amount: 4_000, label: 'Personal exemptions (2 × $2,000)' } },
+    },
     year: 2026,
     source: 'https://www.wvlegislature.gov/Bill_Text_HTML/2026_SESSIONS/RS/bills/sb392%20sub1%20enr.htm',
-    brackets: [
-      { over: 0, rate: 0.0211 },
-      { over: 10_000, rate: 0.0281 },
-      { over: 25_000, rate: 0.0316 },
-      { over: 40_000, rate: 0.0422 },
-      { over: 60_000, rate: 0.0458 },
-    ],
-    note: 'Brackets apply to West Virginia taxable income, after the $2,000 personal exemption.',
+    brackets: WV_BRACKETS,
+    note: 'The same brackets apply to single, joint, and head of household returns, on West Virginia taxable income after the $2,000 personal exemption ($4,000 on a joint return). Each dependent adds another $2,000, which we don’t include.',
   },
   CA: {
     // 2025 single standard deduction (Form 540 instructions, https://www.ftb.ca.gov/forms/2025/2025-540-instructions.html)
     // and personal exemption credit, $6 less for each $2,500 or part of federal AGI over $252,203
     // (540 2EZ tax table, https://www.ftb.ca.gov/forms/2025/2025-540-2ez-taxtable-single.pdf).
+    // Joint and head of household: Schedules Y and Z of the same PDF, the $11,412 standard deduction (Form 540 instructions,
+    // line 18), and the AGI Limitation Worksheet: credits reduced above $504,411 (joint) or $378,310 (head of household)
+    // of federal AGI, $6 per credit for each $2,500 or part. Form 540, line 7: 2 personal credits on a joint return, 1 for
+    // a head of household. Dependent exemption credits aren't included. The 1% surcharge is the same for every status.
     engine: {
       deduction: { kind: 'fixed', amount: 5_706, label: 'Standard deduction' },
       surcharges: [{ over: 1_000_000, rate: 0.01, label: 'Behavioral Health Services Tax' }],
@@ -341,6 +370,46 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
         amount: 153,
         label: 'Personal exemption credit',
         phaseout: { start: 252_203, stepSize: 2_500, reductionPerStep: 6 },
+      },
+      bracketsByStatus: {
+        mfj: [
+          { over: 0, rate: 0.01 },
+          { over: 22_158, rate: 0.02 },
+          { over: 52_528, rate: 0.04 },
+          { over: 82_904, rate: 0.06 },
+          { over: 115_084, rate: 0.08 },
+          { over: 145_448, rate: 0.093 },
+          { over: 742_958, rate: 0.103 },
+          { over: 891_542, rate: 0.113 },
+          { over: 1_485_906, rate: 0.123 },
+        ],
+        hoh: [
+          { over: 0, rate: 0.01 },
+          { over: 22_173, rate: 0.02 },
+          { over: 52_530, rate: 0.04 },
+          { over: 67_716, rate: 0.06 },
+          { over: 83_805, rate: 0.08 },
+          { over: 98_990, rate: 0.093 },
+          { over: 505_208, rate: 0.103 },
+          { over: 606_251, rate: 0.113 },
+          { over: 1_010_417, rate: 0.123 },
+        ],
+      },
+      deductionByStatus: {
+        mfj: { kind: 'fixed', amount: 11_412, label: 'Standard deduction' },
+        hoh: { kind: 'fixed', amount: 11_412, label: 'Standard deduction' },
+      },
+      personalCreditsByStatus: {
+        mfj: {
+          amount: 306,
+          label: 'Personal exemption credits (2 × $153)',
+          phaseout: { start: 504_411, stepSize: 2_500, reductionPerStep: 12 },
+        },
+        hoh: {
+          amount: 153,
+          label: 'Personal exemption credit',
+          phaseout: { start: 378_310, stepSize: 2_500, reductionPerStep: 6 },
+        },
       },
     },
     year: 2025,
@@ -356,7 +425,7 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
       { over: 445_771, rate: 0.113 },
       { over: 742_953, rate: 0.123 },
     ],
-    note: 'California adds a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) on taxable income over $1,000,000, for a top marginal rate of 13.3%.',
+    note: 'California adds a 1% Behavioral Health Services Tax (formerly the Mental Health Services Tax) on taxable income over $1,000,000, for a top marginal rate of 13.3%, whatever your filing status. Joint and head of household returns have a $11,412 standard deduction; a joint return gets two $153 personal exemption credits.',
   },
   VT: {
     year: 2025,
@@ -370,8 +439,41 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     note: 'If your adjusted gross income is over $150,000, Vermont tax is the greater of 3% of AGI or the rate schedule amount.',
   },
   NY: {
+    // Joint and head of household: Tax Law 601(a) and (b), item (vii), "taxable years beginning after 2025 and before
+    // 2027" (https://www.nysenate.gov/legislation/laws/TAX/601; its single table, 601(c), matches the one below).
+    // Standard deductions: IT-201 instructions 2025, page 11 ($16,050 joint, $11,200 head of household; not indexed).
     // Tax benefit recapture isn't calculated; the bracket note mentions it.
-    engine: { deduction: { kind: 'fixed', amount: 8_000, label: 'Standard deduction' } },
+    engine: {
+      deduction: { kind: 'fixed', amount: 8_000, label: 'Standard deduction' },
+      bracketsByStatus: {
+        mfj: [
+          { over: 0, rate: 0.039 },
+          { over: 17_150, rate: 0.044 },
+          { over: 23_600, rate: 0.0515 },
+          { over: 27_900, rate: 0.054 },
+          { over: 161_550, rate: 0.059 },
+          { over: 323_200, rate: 0.0685 },
+          { over: 2_155_350, rate: 0.0965 },
+          { over: 5_000_000, rate: 0.103 },
+          { over: 25_000_000, rate: 0.109 },
+        ],
+        hoh: [
+          { over: 0, rate: 0.039 },
+          { over: 12_800, rate: 0.044 },
+          { over: 17_650, rate: 0.0515 },
+          { over: 20_900, rate: 0.054 },
+          { over: 107_650, rate: 0.059 },
+          { over: 269_300, rate: 0.0685 },
+          { over: 1_616_450, rate: 0.0965 },
+          { over: 5_000_000, rate: 0.103 },
+          { over: 25_000_000, rate: 0.109 },
+        ],
+      },
+      deductionByStatus: {
+        mfj: { kind: 'fixed', amount: 16_050, label: 'Standard deduction' },
+        hoh: { kind: 'fixed', amount: 11_200, label: 'Standard deduction' },
+      },
+    },
     year: 2026,
     source: 'https://www.tax.ny.gov/pdf/publications/withholding/nys50_t_nys.pdf',
     brackets: [
@@ -385,7 +487,7 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
       { over: 5_000_000, rate: 0.103 },
       { over: 25_000_000, rate: 0.109 },
     ],
-    note: "New York cut its five lowest rates by 0.1 percentage point for 2026. New York's tax benefit recapture starts to apply once New York AGI is over $107,650. We don't calculate it, so above that income our figure is lower than the actual tax. New York City and Yonkers residents pay local income tax on top of these rates.",
+    note: "New York cut its five lowest rates by 0.1 percentage point for 2026. New York's tax benefit recapture starts to apply once New York AGI is over $107,650, for every filing status. We don't calculate it, so above that income our figure is lower than the actual tax. The joint and head of household brackets are from New York Tax Law § 601(a) and (b), with standard deductions of $16,050 and $11,200. New York City and Yonkers residents pay local income tax on top of these rates.",
   },
 };
 
@@ -539,10 +641,14 @@ export interface StateTaxEstimate {
   tax: number;
   /** Tips and overtime subtracted before the estimate (state-tips-overtime-subtraction.ts); 0 if none. */
   stateDeduction: number;
-  /** True when the tax comes from the state's single-filer brackets (bracket engine), not the simplified estimate. */
+  /** True when the tax comes from the state's brackets (bracket engine), not the simplified estimate. */
   usesBrackets: boolean;
+  /** stateTaxMethod(): how the tax was worked out, e.g. "brackets for your filing status". */
+  method: string;
   /** SINGLE_RATES_WARNING when the filing status isn't single and the state has no rates of its own for it. */
   singleRatesWarning?: string;
+  /** DEPENDENTS_NOTE for filing statuses other than single (dependentsNote()). */
+  dependentsNote?: string;
 }
 
 /** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
@@ -562,19 +668,36 @@ export function estimateStateTax(
     tax: calculateStateIncomeTax(income - deduction, stateCode, filingStatus),
     stateDeduction: deduction,
     usesBrackets: Boolean(s.bracketEngine),
+    method: stateTaxMethod(stateCode, filingStatus),
     singleRatesWarning: singleRatesWarning(stateCode, filingStatus),
+    dependentsNote: dependentsNote(stateCode, filingStatus),
   };
 }
 
-/** Assumption shown wherever a bracket-engine state's tax appears. */
-export const SINGLE_BRACKETS_NOTE = 'Calculated with the state’s single-filer brackets for every filing status.';
+/**
+ * How a state's tax was worked out, for the calculators' detail lines: "brackets for your filing status" in the
+ * bracket-engine states that have rules for it, else single-filer brackets or the simplified single-filer estimate.
+ */
+export function stateTaxMethod(stateCode: StateCode, filingStatus: FilingStatus): string {
+  if (!STATES_BY_CODE[stateCode].bracketEngine) return 'simplified single-filer estimate';
+  return singleRatesWarning(stateCode, filingStatus) ? 'single-filer brackets' : 'brackets for your filing status';
+}
+
+/** Assumption shown next to the state tax for joint and head of household filers, who often have dependents. */
+export const DEPENDENTS_NOTE = 'Doesn’t include dependent credits or exemptions.';
+
+/** DEPENDENTS_NOTE when the state taxes wages and the filing status isn't single. */
+export function dependentsNote(stateCode: StateCode | null, filingStatus: FilingStatus): string | undefined {
+  if (!stateCode || filingStatus === 'single' || STATES_BY_CODE[stateCode].structure === 'none') return undefined;
+  return DEPENDENTS_NOTE;
+}
 
 /** Shown next to the state tax result whenever the filing status isn't single (see singleRatesWarning). */
 export const SINGLE_RATES_WARNING = 'State tax uses single-filer rates for now, so it may be too high for married couples.';
 
 /**
- * SINGLE_RATES_WARNING when a state that taxes wages has no brackets of its own for `filingStatus`
- * (today none has: the bracket engine and the simplified estimate both use single-filer figures).
+ * SINGLE_RATES_WARNING when a state that taxes wages has no brackets of its own for `filingStatus`: every
+ * state on the simplified estimate, and married filing separately in the bracket-engine states.
  */
 export function singleRatesWarning(stateCode: StateCode | null, filingStatus: FilingStatus): string | undefined {
   if (!stateCode || filingStatus === 'single') return undefined;
