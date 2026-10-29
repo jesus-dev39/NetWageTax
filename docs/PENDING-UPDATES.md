@@ -34,8 +34,8 @@ publish the next year's numbers, and all states every January.
       and 5-1; `exemptAmount` updated on 2026-10-29) and rises $375 a year from 2027 up to $18,000, with
       each step also tied to revenue: set `exemptAmount` to $15,375 if the 2027 step happens. The state's own
       tips/overtime exclusion ($1,750 each) runs through 2028. Source: `RATE_SOURCES.GA`.
-- [ ] **Arizona: confirm the 2026 single standard deduction when ADOR publishes the 2026 forms.** The site
-      uses $16,100: A.R.S. 43-1041 (https://www.azleg.gov/ars/43/01041.htm) lists $15,750 for a single
+- [ ] **Arizona: confirm the 2026 standard deductions when ADOR publishes the 2026 forms.** The site
+      uses $16,100 single, $32,200 married filing jointly, and $24,150 head of household (`BRACKETS.AZ`): A.R.S. 43-1041 (https://www.azleg.gov/ars/43/01041.htm) lists $15,750 for a single
       filer, indexed "in the same manner" as the federal standard deduction (subsection H), and HB 4168
       (2026, signed June 13, 2026) conforms to the IRC as of January 1, 2026. Check the figure against the
       2026 Form 140 instructions or withholding tables. HB 4168 also adds a state subtraction for
@@ -133,8 +133,20 @@ publish the next year's numbers, and all states every January.
       - [x] Phase 2: MFJ and HoH rules (`bracketsByStatus`, `deductionByStatus`, `personalCreditsByStatus`)
             for California, New York, South Carolina, and West Virginia. Married filing separately still uses
             the single rules there, with the single-rates warning.
+      - [x] Five more states (2026-10-29): Arizona, Georgia, Maryland, North Carolina, and Oregon on the engine with
+            single, MFJ, and HoH rules; Oregon's federal income tax subtraction is on.
       - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFS
-            where it differs, turn on the federal income tax subtraction for Oregon, Alabama, and Missouri.
+            where it differs, turn on the federal income tax subtraction for Alabama and Missouri.
+      - [ ] **Maryland: confirm the 2026 standard deduction with the 2026 Form 502 instructions.** The site uses
+            $3,350 single and $6,700 joint or head of household, from the Comptroller's 2026 Payment Voucher
+            Worksheet; the 2026 MW507 instructions say "Standard deduction is $3,400". HB 411 (2026, $4,100)
+            stayed in committee.
+      - [ ] **Oregon: head of household standard deduction for 2026.** `BRACKETS.OR` uses the 2025 figure
+            ($4,560, OR-40 instructions, Table 5); the 2026 withholding formulas only give single ($2,910) and
+            married ($5,820). Update it from the 2026 OR-40 instructions (around January 2027).
+      - [ ] **Georgia: how the tips and overtime caps work on a joint return.** HB 463 says overtime "received by a
+            full-time employee" (applied per spouse when both have it) and tips "up to $1,750" with no person
+            (one cap per return). Check the 2026 IT-511 instructions.
       - [ ] **Maryland FAMLI (January 2027):** contributions start January 1, 2027. Add its employee rate and
             wage cap to `STATE_PAYROLL_RULES.MD` and drop the note-only entry.
       - [ ] Future improvement: a "number of dependents" field in the paycheck and tips calculators, to apply

@@ -64,6 +64,7 @@ export const TIPS_OVERTIME_GUIDE_PATH = '/guides/which-states-tax-tips-and-overt
 
 const C1004 = '2026-10-04';
 const C1008 = '2026-10-08';
+const C1029 = '2026-10-29';
 
 export const TIPS_OVERTIME_RULES: Record<StateCode, TipsOvertimeRule> = {
   AL: {
@@ -158,11 +159,13 @@ export const TIPS_OVERTIME_RULES: Record<StateCode, TipsOvertimeRule> = {
     treatment: 'own',
     detail:
       'HB 463 (2026) excludes up to $1,750 of qualified overtime for full-time hourly employees and up to $1,750 of tips, cash or charged, in a tipped occupation, for 2026 through 2028.',
-    own: { tipsCap: 1_750, overtimeCap: 1_750 },
+    // Overtime: "up to $1,750.00 received by a full-time employee", so per employee (both spouses on a joint return).
+    // Tips: "any amount up to $1,750.00 received in cash tips", with nothing per person: one cap per return. DOR hasn't said.
+    own: { tipsCap: 1_750, overtimeCap: 1_750, perTaxpayer: true },
     calculatorNote:
-      'Georgia has its own exclusion: up to $1,750 of tips and up to $1,750 of qualified overtime. The overtime exclusion is only for full-time employees paid by the hour; we assume you are one.',
+      'Georgia has its own exclusion: up to $1,750 of tips and up to $1,750 of qualified overtime per employee, so up to $3,500 of overtime on a joint return when both spouses have it. The overtime exclusion is only for full-time employees paid by the hour; we assume you are one. We apply one $1,750 tips cap per return: Georgia’s Department of Revenue hasn’t said how either cap works on a joint return.',
     sources: [{ label: 'HB 463 (2026), as passed (PDF)', url: 'https://gov.georgia.gov/document/2026-signed-legislation/hb-463/download' }],
-    checked: C1008,
+    checked: C1029,
   },
   HI: {
     treatment: 'tips-only',

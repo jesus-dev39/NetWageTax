@@ -274,6 +274,12 @@ const revenueLink = s.sourceUrl
                     <th scope="row" class={`${td} text-left font-normal`}>{breakdown.deductionLabel}</th>
                     <td class={`${td} text-right`}>−{formatUSDCents(breakdown.deduction)}</td>
                   </tr>
+                  {breakdown.federalTaxSubtracted > 0 && (
+                    <tr>
+                      <th scope="row" class={`${td} text-left font-normal`}>Federal income tax subtracted</th>
+                      <td class={`${td} text-right`}>−{formatUSDCents(breakdown.federalTaxSubtracted)}</td>
+                    </tr>
+                  )}
                   <tr>
                     <th scope="row" class={`${td} text-left font-semibold`}>Taxable income</th>
                     <td class={`${td} text-right font-semibold`}>{formatUSDCents(breakdown.taxableIncome)}</td>

@@ -108,7 +108,7 @@ describe('single-rates warning', () => {
       expect(singleRatesWarning(code, 'mfs')).toBeDefined();
       expect(estimateStateTax(120_000, code, 0, 'mfj').singleRatesWarning).toBeUndefined();
     }
-    expect(singleRatesWarning('GA', 'mfj')).toBeDefined();
+    expect(singleRatesWarning('IL', 'mfj')).toBeDefined();
   });
 });
 
@@ -121,7 +121,7 @@ describe('how the calculators describe the state tax', async () => {
     expect(stateTaxMethod('CA', 'mfj')).toBe('brackets for your filing status');
     expect(stateTaxMethod('CA', 'single')).toBe('brackets for your filing status');
     expect(stateTaxMethod('CA', 'mfs')).toBe('single-filer brackets');
-    expect(stateTaxMethod('GA', 'mfj')).toBe('simplified single-filer estimate');
+    expect(stateTaxMethod('IL', 'mfj')).toBe('simplified single-filer estimate');
     expect(estimateStateTax(65_000, 'NY', 0, 'hoh').method).toBe('brackets for your filing status');
   });
 

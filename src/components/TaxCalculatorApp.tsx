@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateObbbaDeduction } from '../lib/obbba-calculator';
 import { PARAMS_BY_YEAR, type CategoryResult, type FilingStatus, type IneligibilityReason } from '../lib/obbba-params';
-import { estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
+import { compareFederalTax, estimateFederalTaxSavings, isCoveredByStandardDeduction } from '../lib/marginal-rate';
 import { STANDARD_DEDUCTION_COVERS_NOTICE } from '../lib/deduction-summary';
 import { W2_PREFILL_EVENT, type W2PrefillDetail } from '../lib/w2-events';
 import { estimateStateTax, findState, STATES, type StateCode } from '../lib/state-tax-data';
@@ -127,7 +127,9 @@ export default function TaxCalculatorApp() {
       filingStatus,
       bothSpousesHaveOvertime: askBothSpouses && bothSpousesOvertime,
     });
-    return estimateStateTax(magiValue, stateCode, subtraction.total, filingStatus);
+    // Oregon subtracts the federal income tax actually paid: after the Schedule 1-A deduction.
+    const federalTaxPaid = compareFederalTax(magiValue, result.totalCombinedDeduction, filingStatus).after;
+    return estimateStateTax(magiValue, stateCode, subtraction.total, filingStatus, federalTaxPaid);
   }, [stateCode, magiValue, result, tipsQualified, overtimeQualified, filingStatus, askBothSpouses, bothSpousesOvertime]);
 
   const phaseoutStart =

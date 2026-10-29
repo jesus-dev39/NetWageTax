@@ -31,6 +31,7 @@ import {
   type Surcharge,
   type TaxBracket,
 } from './state-bracket-engine';
+import { computeFederalIncomeTax, STANDARD_DEDUCTION_2026 } from './marginal-rate';
 import { TIPS_OVERTIME_RULES, type TipsOvertimeRule } from './state-tips-overtime';
 
 export type { TaxBracket };
@@ -149,9 +150,8 @@ const ROWS: Row[] = [
   // $26,050 0% band + the $2,150 personal exemption for MAGI of $40,000–$80,000 (the tier of the reference wage).
   FLAT('OH', 'Ohio', 0.0275, 28_200, 'New flat 2.75% for 2026 on income above $26,050, after a personal exemption that depends on income: $2,400 up to $40,000 of modified AGI, $2,150 from $40,000 to $80,000, and $1,900 from $80,000 to $500,000. Our estimate uses the $2,150 exemption at every income.', 'Most cities and many school districts levy income taxes of 1%–2.5%.'),
   GRAD('OK', 'Oklahoma', 0.041, 7_350, [0.025, 0.045], 'Brackets consolidated and the top rate cut to 4.5% for 2026.'),
-  // estimateRate: 2026 brackets (4.75% / 6.75% over $4,550 / 8.75% over $11,400) on $65,000 − $2,910 − $5,620 of federal
-  // income tax (the subtraction is under its cap at this income), less the $256 exemption credit: $4,366 ÷ $62,090.
-  GRAD('OR', 'Oregon', 0.0703, 2_910, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. You can subtract part of the federal income tax you paid, up to a limit that shrinks at higher incomes. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
+  // Calculated with the bracket engine (BRACKETS.OR); estimateRate and exemptAmount are only a fallback.
+  GRAD('OR', 'Oregon', 0.0703, 2_910, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. You can subtract the federal income tax you paid, up to $8,750 for 2026, a limit that shrinks at higher incomes. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
   FLAT('PA', 'Pennsylvania', 0.0307, 0, 'Flat 3.07% with no standard deduction or personal exemption.', 'Most municipalities levy an earned income tax (usually ~1%; Philadelphia 3.74%).'),
   // $11,200 standard deduction + $5,250 exemption; $48,550 taxable stays in the 3.75% bracket.
   GRAD('RI', 'Rhode Island', 0.0375, 16_450, [0.0375, 0.0599], 'Three brackets (3.75%–5.99%).'),
@@ -328,6 +328,43 @@ const SCIAD = (max: number, phaseoutStart: number, phaseoutEnd: number): StateDe
   label: 'South Carolina income adjusted deduction (SCIAD)',
 });
 
+// One-rate states on the bracket engine: the same schedule for every filing status.
+const AZ_BRACKETS: TaxBracket[] = [{ over: 0, rate: 0.025 }];
+const NC_BRACKETS: TaxBracket[] = [{ over: 0, rate: 0.0399 }];
+const GA_BRACKETS: TaxBracket[] = [{ over: 0, rate: 0.0499 }];
+
+// Maryland Tax Rate Schedule II: married filing jointly, head of household, qualifying surviving spouse.
+const MD_JOINT_BRACKETS: TaxBracket[] = [
+  { over: 0, rate: 0.02 },
+  { over: 1_000, rate: 0.03 },
+  { over: 2_000, rate: 0.04 },
+  { over: 3_000, rate: 0.0475 },
+  { over: 150_000, rate: 0.05 },
+  { over: 175_000, rate: 0.0525 },
+  { over: 225_000, rate: 0.055 },
+  { over: 300_000, rate: 0.0575 },
+  { over: 600_000, rate: 0.0625 },
+  { over: 1_200_000, rate: 0.065 },
+];
+
+// Oregon Chart J: joint, head of household, and qualifying surviving spouse returns.
+const OR_JOINT_BRACKETS: TaxBracket[] = [
+  { over: 0, rate: 0.0475 },
+  { over: 9_100, rate: 0.0675 },
+  { over: 22_800, rate: 0.0875 },
+  { over: 250_000, rate: 0.099 },
+];
+
+/** Oregon's 2026 federal tax subtraction cap: $8,750 below `start` of federal AGI, $1,750 less for each `step` from there. */
+const OR_SUBTRACTION_CAPS = (start: number, step: number) => [
+  { below: start, cap: 8_750 },
+  { below: start + step, cap: 7_000 },
+  { below: start + 2 * step, cap: 5_250 },
+  { below: start + 3 * step, cap: 3_500 },
+  { below: start + 4 * step, cap: 1_750 },
+  { below: Infinity, cap: 0 },
+];
+
 const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
   SC: {
     // H.4216, Section 3 (12-6-1140(15)): $15,000 single, $22,500 head of household, $30,000 joint, each reduced by the
@@ -489,6 +526,139 @@ const BRACKETS: Partial<Record<StateCode, BracketSchedule>> = {
     ],
     note: "New York cut its five lowest rates by 0.1 percentage point for 2026. New York's tax benefit recapture starts to apply once New York AGI is over $107,650, for every filing status. We don't calculate it, so above that income our figure is lower than the actual tax. The joint and head of household brackets are from New York Tax Law § 601(a) and (b), with standard deductions of $16,050 and $11,200. New York City and Yonkers residents pay local income tax on top of these rates.",
   },
+  AZ: {
+    // A.R.S. 43-1041 (HB 4168, 2026): $15,750 / $31,500 / $23,625, indexed like the federal standard deduction (subsection H),
+    // so the 2026 federal amounts. ADOR hasn't published the 2026 forms yet (PENDING-UPDATES). Rate: 2.5% (ADOR 2026 Form 140ES).
+    engine: {
+      deduction: { kind: 'fixed', amount: 16_100, label: 'Standard deduction' },
+      bracketsByStatus: { mfj: AZ_BRACKETS, hoh: AZ_BRACKETS },
+      deductionByStatus: {
+        mfj: { kind: 'fixed', amount: 32_200, label: 'Standard deduction' },
+        hoh: { kind: 'fixed', amount: 24_150, label: 'Standard deduction' },
+      },
+    },
+    year: 2026,
+    source: 'https://www.azleg.gov/ars/43/01041.htm',
+    brackets: AZ_BRACKETS,
+    note: 'One 2.5% rate for every filing status, after the standard deduction: $16,100 single, $32,200 married filing jointly, $24,150 head of household.',
+  },
+  NC: {
+    // NCDOR: "For Taxable Years after 2025, the North Carolina individual income tax rate is 3.99%"; standard deduction chart.
+    engine: {
+      deduction: { kind: 'fixed', amount: 12_750, label: 'Standard deduction' },
+      bracketsByStatus: { mfj: NC_BRACKETS, hoh: NC_BRACKETS },
+      deductionByStatus: {
+        mfj: { kind: 'fixed', amount: 25_500, label: 'Standard deduction' },
+        hoh: { kind: 'fixed', amount: 19_125, label: 'Standard deduction' },
+      },
+    },
+    year: 2026,
+    source: 'https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-standard-deduction-or-north-carolina-itemized-deductions',
+    brackets: NC_BRACKETS,
+    note: 'One 3.99% rate for every filing status, after the standard deduction: $12,750 single, $25,500 married filing jointly, $19,125 head of household.',
+  },
+  GA: {
+    // HB 463, Section 2-3: $15,000 for single, head of household, and married filing separately; $30,000 joint (Section 5-1: from 2026).
+    engine: {
+      deduction: { kind: 'fixed', amount: 15_000, label: 'Standard deduction' },
+      bracketsByStatus: { mfj: GA_BRACKETS, hoh: GA_BRACKETS },
+      deductionByStatus: { mfj: { kind: 'fixed', amount: 30_000, label: 'Standard deduction' } },
+    },
+    year: 2026,
+    source: 'https://gov.georgia.gov/document/2026-signed-legislation/hb-463/download',
+    brackets: GA_BRACKETS,
+    note: 'One 4.99% rate for every filing status, after the standard deduction: $15,000 single or head of household, $30,000 married filing jointly.',
+  },
+  MD: {
+    // Comptroller, 2026 Payment Voucher Worksheet: Tax Rate Schedules I and II (Budget Reconciliation and Financing Act of 2025),
+    // $3,350 / $6,700 standard deduction, and $3,200 per exemption reduced by federal AGI. The MW507 instructions say $3,400:
+    // to confirm with the 2026 Form 502 instructions (PENDING-UPDATES). County income tax isn't included.
+    engine: {
+      deduction: {
+        kind: 'tiers',
+        // $3,350 + one exemption: $3,200 up to $100,000 of federal AGI, $1,600 to $125,000, $800 to $150,000, then $0.
+        tiers: [
+          { upTo: 100_000, amount: 6_550 },
+          { upTo: 125_000, amount: 4_950 },
+          { upTo: 150_000, amount: 4_150 },
+          { upTo: Infinity, amount: 3_350 },
+        ],
+        label: 'Standard deduction and personal exemption',
+      },
+      bracketsByStatus: { mfj: MD_JOINT_BRACKETS, hoh: MD_JOINT_BRACKETS },
+      deductionByStatus: {
+        // $6,700 + $3,200 per exemption up to $150,000, $1,600 to $175,000, $800 to $200,000, then $0.
+        mfj: {
+          kind: 'tiers',
+          tiers: [
+            { upTo: 150_000, amount: 13_100 },
+            { upTo: 175_000, amount: 9_900 },
+            { upTo: 200_000, amount: 8_300 },
+            { upTo: Infinity, amount: 6_700 },
+          ],
+          label: 'Standard deduction and personal exemptions (2)',
+        },
+        hoh: {
+          kind: 'tiers',
+          tiers: [
+            { upTo: 150_000, amount: 9_900 },
+            { upTo: 175_000, amount: 8_300 },
+            { upTo: 200_000, amount: 7_500 },
+            { upTo: Infinity, amount: 6_700 },
+          ],
+          label: 'Standard deduction and personal exemption',
+        },
+      },
+    },
+    year: 2026,
+    source: 'https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/forms/worksheets/2026-pv-worksheet.pdf',
+    brackets: [
+      { over: 0, rate: 0.02 },
+      { over: 1_000, rate: 0.03 },
+      { over: 2_000, rate: 0.04 },
+      { over: 3_000, rate: 0.0475 },
+      { over: 100_000, rate: 0.05 },
+      { over: 125_000, rate: 0.0525 },
+      { over: 150_000, rate: 0.055 },
+      { over: 250_000, rate: 0.0575 },
+      { over: 500_000, rate: 0.0625 },
+      { over: 1_000_000, rate: 0.065 },
+    ],
+    note: 'State tax only: every county and Baltimore City add their own income tax. The standard deduction is a flat $3,350 ($6,700 for joint and head of household returns), plus a $3,200 personal exemption per person that shrinks once federal AGI passes $100,000 ($150,000 for joint and head of household returns) and is gone above $150,000 ($200,000).',
+  },
+  OR: {
+    // DOR Withholding Tax Formulas 2026 (150-206-436, rev. 12-31-25): brackets, $2,910 / $5,820 standard deduction, $263 exemption
+    // credit, and the $8,750 federal tax subtraction with its phase-out. 2025 OR-40 instructions: head of household uses Chart J
+    // (the joint brackets) and the joint phase-out; its $4,560 standard deduction is the 2025 figure (PENDING-UPDATES); the
+    // exemption credit isn't allowed above $100,000 of federal AGI ($200,000 for joint and head of household returns).
+    engine: {
+      deduction: { kind: 'fixed', amount: 2_910, label: 'Standard deduction' },
+      federalTaxSubtraction: { capByAgi: OR_SUBTRACTION_CAPS(125_000, 5_000) },
+      personalCredits: { amount: 263, label: 'Exemption credit', incomeLimit: 100_000 },
+      bracketsByStatus: { mfj: OR_JOINT_BRACKETS, hoh: OR_JOINT_BRACKETS },
+      deductionByStatus: {
+        mfj: { kind: 'fixed', amount: 5_820, label: 'Standard deduction' },
+        hoh: { kind: 'fixed', amount: 4_560, label: 'Standard deduction' },
+      },
+      federalTaxSubtractionByStatus: {
+        mfj: { capByAgi: OR_SUBTRACTION_CAPS(250_000, 10_000) },
+        hoh: { capByAgi: OR_SUBTRACTION_CAPS(250_000, 10_000) },
+      },
+      personalCreditsByStatus: {
+        mfj: { amount: 526, label: 'Exemption credits (2 × $263)', incomeLimit: 200_000 },
+        hoh: { amount: 263, label: 'Exemption credit', incomeLimit: 200_000 },
+      },
+    },
+    year: 2026,
+    source: 'https://www.oregon.gov/dor/forms/FormsPubs/withholding-tax-formulas_206-436_2026.pdf',
+    brackets: [
+      { over: 0, rate: 0.0475 },
+      { over: 4_550, rate: 0.0675 },
+      { over: 11_400, rate: 0.0875 },
+      { over: 125_000, rate: 0.099 },
+    ],
+    note: 'Joint and head of household returns use brackets twice as wide. You can subtract the federal income tax you paid, up to $8,750, less $1,750 for each $5,000 of federal AGI from $125,000 ($10,000 from $250,000 on joint and head of household returns), so nothing from $145,000 ($290,000). The $263 exemption credit ($526 on a joint return) isn’t allowed above $100,000 of federal AGI ($200,000 on joint and head of household returns).',
+  },
 };
 
 /** Land borders (plus DC–MD/VA). Four Corners point contacts (AZ–CO, NM–UT) are not counted. */
@@ -603,17 +773,48 @@ export function findState(value: string | null | undefined): StateTaxInfo | unde
  * Estimated state income tax on wages (USD). States with a `bracketEngine` run it; the rest use the
  * simplified model at the top of this file. `filingStatus` only matters once a state has brackets for it.
  */
-export function calculateStateIncomeTax(taxableIncome: number, stateCode: StateCode, filingStatus: FilingStatus = 'single'): number {
+/**
+ * What the bracket engine needs besides the state income: federal AGI (for income-based reductions; defaults to the
+ * state income) and the federal income tax actually paid (Oregon's subtraction; defaults to federalTaxOnWages()).
+ */
+export interface StateTaxOptions {
+  agi?: number;
+  federalTax?: number;
+}
+
+/** Federal income tax on wages with the 2026 standard deduction and brackets, before credits. */
+export function federalTaxOnWages(wages: number, filingStatus: FilingStatus): number {
+  return computeFederalIncomeTax(Math.max(0, wages - STANDARD_DEDUCTION_2026[filingStatus]), filingStatus);
+}
+
+function engineInput(income: number, rules: BracketEngineRules, filingStatus: FilingStatus, options: StateTaxOptions) {
+  const agi = options.agi ?? income;
+  const needsFederal = Boolean(rules.federalTaxSubtraction || rules.federalTaxSubtractionByStatus);
+  const federalTax = needsFederal ? (options.federalTax ?? federalTaxOnWages(agi, filingStatus)) : undefined;
+  return { income, filingStatus, agi, federalTax };
+}
+
+export function calculateStateIncomeTax(
+  taxableIncome: number,
+  stateCode: StateCode,
+  filingStatus: FilingStatus = 'single',
+  options: StateTaxOptions = {},
+): number {
   const s = STATES_BY_CODE[stateCode];
-  if (s.bracketEngine) return computeBracketTax(s.bracketEngine, { income: taxableIncome, filingStatus }).tax;
+  if (s.bracketEngine) return computeBracketTax(s.bracketEngine, engineInput(taxableIncome, s.bracketEngine, filingStatus, options)).tax;
   const base = Math.max(0, taxableIncome - s.exemptAmount);
   return base * s.estimateRate + (s.surtax ? Math.max(0, base - s.surtax.over) * s.surtax.rate : 0);
 }
 
 /** Step-by-step bracket calculation for states that use the engine; undefined for the rest. */
-export function stateTaxBreakdown(income: number, stateCode: StateCode, filingStatus: FilingStatus = 'single'): BracketEngineResult | undefined {
+export function stateTaxBreakdown(
+  income: number,
+  stateCode: StateCode,
+  filingStatus: FilingStatus = 'single',
+  options: StateTaxOptions = {},
+): BracketEngineResult | undefined {
   const rules = STATES_BY_CODE[stateCode].bracketEngine;
-  return rules && computeBracketTax(rules, { income, filingStatus });
+  return rules && computeBracketTax(rules, engineInput(income, rules, filingStatus, options));
 }
 
 const pct = (r: number) => `${+(r * 100).toFixed(2)}%`;
@@ -651,12 +852,17 @@ export interface StateTaxEstimate {
   dependentsNote?: string;
 }
 
-/** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
+/**
+ * `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. `income` is also the
+ * federal AGI for income-based reductions. `federalTax`: federal income tax actually paid (after the Schedule 1-A
+ * deduction in the tips calculator), for Oregon's subtraction; defaults to federalTaxOnWages(income).
+ */
 export function estimateStateTax(
   income: number,
   stateCode: StateCode,
   stateDeduction = 0,
   filingStatus: FilingStatus = 'single',
+  federalTax?: number,
 ): StateTaxEstimate {
   const s = STATES_BY_CODE[stateCode];
   const deduction = s.structure === 'none' ? 0 : Math.max(0, Math.min(stateDeduction, income));
@@ -665,7 +871,7 @@ export function estimateStateTax(
     name: s.name,
     structure: s.structure,
     rateLabel: formatStateRate(s),
-    tax: calculateStateIncomeTax(income - deduction, stateCode, filingStatus),
+    tax: calculateStateIncomeTax(income - deduction, stateCode, filingStatus, { agi: income, federalTax }),
     stateDeduction: deduction,
     usesBrackets: Boolean(s.bracketEngine),
     method: stateTaxMethod(stateCode, filingStatus),
