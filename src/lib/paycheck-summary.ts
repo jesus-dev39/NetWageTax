@@ -8,7 +8,7 @@ import { formatUSD, formatUSDCents } from '../components/CurrencyInput';
 import { referenceFor } from './deduction-summary';
 import { ADDITIONAL_MEDICARE_THRESHOLD, SOCIAL_SECURITY_WAGE_BASE_2026 } from './fica';
 import { PAY_FREQUENCIES, PAYCHECK_FILING_STATUSES, type PaycheckInput, type PaycheckResult } from './paycheck';
-import { formatStateRate, STATES_BY_CODE } from './state-tax-data';
+import { formatStateRate, singleRatesWarning, STATES_BY_CODE } from './state-tax-data';
 
 export const PAYCHECK_TAX_YEAR = 2026;
 export const PAYCHECK_DOCX_FILENAME = 'NetWageTax_2026_Paycheck_Estimate.docx';
@@ -29,6 +29,8 @@ export interface PaycheckSummaryRow {
   perPeriod: number;
   annual: number;
   kind: PaycheckRowKind;
+  /** Caveat shown in warning style next to the row (SINGLE_RATES_WARNING on the state row). */
+  warning?: string;
 }
 
 export interface PaycheckSummary {
@@ -88,14 +90,17 @@ export function buildPaycheckRows(input: PaycheckInput, r: PaycheckResult): Payc
       'tax',
       r.additionalMedicare > 0 ? `1.45% + 0.9% Additional Medicare above ${formatUSD(addlThreshold)}` : '1.45% of all wages',
     ),
-    row(
-      state ? `State income tax (${state.code})` : 'State income tax',
-      r.stateTax,
-      'tax',
-      state
-        ? `${state.name} · ${formatStateRate(state)}${state.bracketEngine ? ' · single-filer brackets' : ''} · excludes local taxes`
-        : 'No state selected',
-    ),
+    {
+      ...row(
+        state ? `State income tax (${state.code})` : 'State income tax',
+        r.stateTax,
+        'tax',
+        state
+          ? `${state.name} · ${formatStateRate(state)}${state.bracketEngine ? ' · single-filer brackets' : ''} · excludes local taxes`
+          : 'No state selected',
+      ),
+      warning: singleRatesWarning(input.stateCode, input.filingStatus),
+    },
     row('Total taxes withheld (est.)', r.totalTax, 'subtotal'),
     row('Net take-home pay', r.netAnnual, 'net'),
   ];

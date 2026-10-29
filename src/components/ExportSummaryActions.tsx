@@ -126,9 +126,10 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
                 detail={
                   summary.stateTax.structure === 'none'
                     ? 'No state income tax on wages'
-                    : `${summary.stateTax.rateLabel} · simplified single-filer estimate, excludes local taxes`
+                    : `${summary.stateTax.rateLabel} · ${summary.stateTax.usesBrackets ? 'single-filer brackets' : 'simplified single-filer estimate'}, excludes local taxes`
                 }
                 note={summary.stateTipsOvertimeNote}
+                warning={summary.stateTax.singleRatesWarning}
                 value={formatUSD(summary.stateTax.tax)}
               />
             )}
@@ -151,13 +152,16 @@ export function PrintVoucher({ summary }: { summary: DeductionSummary }) {
   );
 }
 
-function ImpactRow(props: { label: string; detail: string; note?: string; value: string }) {
+function ImpactRow(props: { label: string; detail: string; note?: string; warning?: string; value: string }) {
   return (
     <tr className="border-b border-line">
       <th scope="row" className="px-3 py-2 font-semibold">
         {props.label}
         <span className="block text-[11px] font-normal text-ink-2">{props.detail}</span>
         {props.note && <span className="mt-0.5 block text-[11px] font-normal text-ink-2">{props.note}</span>}
+        {props.warning && (
+          <span className="mt-1 block border-l-4 border-warning bg-warning-tint px-2 py-0.5 text-[11px] font-semibold text-ink">{props.warning}</span>
+        )}
       </th>
       <td className="px-3 py-2 text-right font-semibold">{props.value}</td>
     </tr>

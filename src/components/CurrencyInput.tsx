@@ -39,10 +39,12 @@ interface CurrencyInputProps {
   placeholder?: string;
   describedBy?: string;
   disabled?: boolean;
+  /** Marks the field as failing validation (error border, aria-invalid). */
+  invalid?: boolean;
 }
 
 const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(function CurrencyInput(
-  { id, value, onValueChange, placeholder, describedBy, disabled },
+  { id, value, onValueChange, placeholder, describedBy, disabled, invalid = false },
   ref,
 ) {
   const [display, setDisplay] = useState(value === null ? '' : withThousands(String(value)));
@@ -63,7 +65,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(function 
   // Money field (docs/DESIGN.md §6): "$" in its own box, 2px field border, tabular figures.
   // The focus outline goes on the wrapper so it surrounds the prefix too.
   return (
-    <div className="flex h-11 overflow-hidden rounded-control border-2 border-field bg-page focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-link has-disabled:bg-surface">
+    <div className={`flex h-11 overflow-hidden rounded-control border-2 ${invalid ? 'border-error' : 'border-field'} bg-page focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-link has-disabled:bg-surface`}>
       <span aria-hidden="true" className="flex shrink-0 items-center border-r border-line bg-surface px-3 font-semibold text-ink-2">
         $
       </span>
@@ -77,6 +79,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(function 
         onChange={handleChange}
         placeholder={placeholder}
         aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         disabled={disabled}
         className="num min-w-0 flex-1 bg-transparent px-3 text-lg text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-muted"
       />

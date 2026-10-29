@@ -67,6 +67,16 @@ function headerRow(): TableRow {
   });
 }
 
+/** Caveat under a table row label: warning left border and tint, like the notices (docs/DESIGN.md §6). */
+export function warningParagraph(value: string): Paragraph {
+  return new Paragraph({
+    spacing: { before: 40 },
+    shading: { type: ShadingType.CLEAR, fill: WARNING_TINT, color: 'auto' },
+    border: { left: { style: BorderStyle.SINGLE, size: 18, color: WARNING, space: 4 } },
+    children: [text(value, { bold: true, size: 17 })],
+  });
+}
+
 function lineRow(line: SummaryLine): TableRow {
   const borders = line.total ? { top: totalBorder } : undefined;
   const margins = { top: 90, bottom: 90, left: 140, right: 140 };
@@ -74,6 +84,7 @@ function lineRow(line: SummaryLine): TableRow {
   if (line.detail) {
     labelChildren.push(new Paragraph({ children: [text(line.detail, { size: 17, color: INK_2 })] }));
   }
+  if (line.warning) labelChildren.push(warningParagraph(line.warning));
   return new TableRow({
     cantSplit: true,
     children: [

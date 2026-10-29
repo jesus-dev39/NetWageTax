@@ -68,7 +68,8 @@ describe('buildDeductionSummary', () => {
     );
     expect(s.stateTipsOvertimeNote).toMatch(/^Includes your \$1,750 state deduction\. Georgia has its own exclusion/);
     const line = s.lines.find((l) => l.label === 'Estimated state income tax (GA)')!;
-    expect(line.value).toBe('$1,909');
+    // (52,000 − 1,750 − 15,000) × 4.99% = $1,758.98.
+    expect(line.value).toBe('$1,759');
     expect(line.detail).toContain('simplified single-filer estimate');
     expect(line.detail).toContain('Includes your $1,750 state deduction.');
   });

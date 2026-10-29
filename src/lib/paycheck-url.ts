@@ -7,12 +7,11 @@
  * left out of the parsed result, so the calculator keeps its own default for it.
  */
 
-import { PAY_FREQUENCIES, PAYCHECK_FILING_STATUSES, type PaycheckInput } from './paycheck';
+import { MAX_HOURS_PER_WEEK, PAY_FREQUENCIES, PAYCHECK_FILING_STATUSES, type PaycheckInput } from './paycheck';
 import { findState } from './state-tax-data';
 
 export type PaycheckUrlInput = Omit<PaycheckInput, 'overtimeHoursPerWeek'> & { overtimeHoursPerWeek?: number };
 
-const MAX_HOURS_PER_WEEK = 168;
 
 /** Only the fields that matter for the chosen mode, with no zero or default noise. */
 export function toPaycheckSearchParams(input: PaycheckUrlInput): URLSearchParams {

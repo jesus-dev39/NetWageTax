@@ -38,7 +38,16 @@ export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stat
     },
     { key: 'fica', label: 'Social Security & Medicare', hint: 'Still owed on tips and overtime', value: b.fica, color: 'bg-data-fica' },
     ...(stateTax
-      ? [{ key: 'state', label: `${stateTax.name} income tax (est.)`, hint: stateTaxHint(stateTax), value: b.state, color: 'bg-data-state' }]
+      ? [
+          {
+            key: 'state',
+            label: `${stateTax.name} income tax (est.)`,
+            hint: stateTaxHint(stateTax),
+            warning: stateTax.singleRatesWarning,
+            value: b.state,
+            color: 'bg-data-state',
+          },
+        ]
       : []),
   ];
   const bar = [{ key: 'net', value: b.takeHome, color: 'bg-data-net' }, ...rows];
@@ -63,7 +72,7 @@ export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stat
         <>
           <dl className="num mt-3">
             {rows.map((r) => (
-              <Row key={r.key} color={r.color} label={r.label} hint={r.hint} value={r.value} percent={pct(r.value)} />
+              <Row key={r.key} color={r.color} label={r.label} hint={r.hint} warning={'warning' in r ? r.warning : undefined} value={r.value} percent={pct(r.value)} />
             ))}
             <Row color="bg-data-net" label="Take-home" value={b.takeHome} percent={pct(b.takeHome)} total />
           </dl>
@@ -88,8 +97,8 @@ export default function IncomeBreakdownBar({ magi, deduction, filingStatus, stat
   );
 }
 
-function Row(props: { color: string; label: string; hint?: string; value: number; percent: number; total?: boolean }) {
-  const { color, label, hint, value, percent, total = false } = props;
+function Row(props: { color: string; label: string; hint?: string; warning?: string; value: number; percent: number; total?: boolean }) {
+  const { color, label, hint, warning, value, percent, total = false } = props;
   return (
     <div className={`flex items-start justify-between gap-4 py-2.5 ${total ? 'border-t-2 border-ink font-bold' : 'border-b border-line'}`}>
       <dt className="flex min-w-0 items-start gap-2.5">
@@ -97,6 +106,9 @@ function Row(props: { color: string; label: string; hint?: string; value: number
         <span>
           <span className="text-ink">{label}</span>
           {hint && <span className="block text-sm font-normal text-ink-2">{hint}</span>}
+          {warning && (
+            <span className="mt-1 block border-l-4 border-warning bg-warning-tint px-2 py-1 text-sm font-semibold text-ink">{warning}</span>
+          )}
         </span>
       </dt>
       <dd className="shrink-0 text-right">

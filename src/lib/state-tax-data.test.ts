@@ -196,10 +196,10 @@ describe('bracket schedules', () => {
 describe('Georgia (HB 463, 2026)', () => {
   const ga = STATES_BY_CODE.GA;
 
-  it('uses the 4.99% rate and the 2026 $12,000 single standard deduction', () => {
+  it('uses the 4.99% rate and the 2026 $15,000 single standard deduction (Sections 2-3 and 5-1)', () => {
     expect(ga.estimateRate).toBe(0.0499);
-    expect(ga.exemptAmount).toBe(12_000);
-    expect(calculateStateIncomeTax(65_000, 'GA')).toBeCloseTo((65_000 - 12_000) * 0.0499);
+    expect(ga.exemptAmount).toBe(15_000);
+    expect(calculateStateIncomeTax(65_000, 'GA')).toBeCloseTo(2_495);
     expect(formatStateRate(ga)).toBe('4.99% flat tax');
   });
 

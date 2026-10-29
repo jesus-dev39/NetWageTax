@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { calculatePaycheck, type PayFrequency, type PaycheckFilingStatus, type PaycheckInput, type PayMode } from '../lib/paycheck';
+import { calculatePaycheck, hasErrors, validateHourlyFields, type PayFrequency, type PaycheckFilingStatus, type PaycheckInput, type PayMode } from '../lib/paycheck';
 import { toPaycheckSearchParams } from '../lib/paycheck-url';
-import { STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
+import { singleRatesWarning, STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
 import BreakdownBar from './BreakdownBar';
 import CurrencyInput, { formatUSD, formatUSDCents } from './CurrencyInput';
-import { HoursInput, RadioGroup } from './form';
+import { describedBy, FieldError, HoursInput, RadioGroup } from './form';
 import NativeSelect from './NativeSelect';
 import { FILING_OPTIONS, FREQUENCY_OPTIONS, PAY_MODE_OPTIONS } from './paycheck-options';
 
@@ -25,18 +25,23 @@ export default function HomePaycheckEstimate() {
   const [filingStatus, setFilingStatus] = useState<PaycheckFilingStatus>('single');
   const [stateCode, setStateCode] = useState<StateCode | null>(null);
 
+  const errors = mode === 'hourly' ? validateHourlyFields(hourlyRate, hoursPerWeek, '0') : {};
+  const invalid = hasErrors(errors);
+
+  // Invalid hourly fields aren't calculated: with no pay, the result shows the empty state.
   const input: PaycheckInput = {
     mode,
     annualSalary: annualSalary ?? 0,
-    hourlyRate: hourlyRate ?? 0,
+    hourlyRate: invalid ? 0 : (hourlyRate ?? 0),
     hoursPerWeek: Number(hoursPerWeek) || 0,
     overtimeHoursPerWeek: 0,
     frequency,
     filingStatus,
     stateCode,
   };
-  const r = useMemo(() => calculatePaycheck(input), [mode, annualSalary, hourlyRate, hoursPerWeek, frequency, filingStatus, stateCode]);
+  const r = useMemo(() => calculatePaycheck(input), [mode, invalid, annualSalary, hourlyRate, hoursPerWeek, frequency, filingStatus, stateCode]);
   const state = stateCode ? STATES_BY_CODE[stateCode] : null;
+  const stateWarning = singleRatesWarning(stateCode, filingStatus);
   const hasPay = r.grossAnnual > 0;
   const per = (annual: number) => annual / r.periods;
   const fica = r.socialSecurity + r.medicare;
@@ -71,13 +76,29 @@ export default function HomePaycheckEstimate() {
               <label htmlFor="home-rate" className="mb-1.5 block font-semibold text-ink">
                 Hourly rate
               </label>
-              <CurrencyInput id="home-rate" value={hourlyRate} onValueChange={setHourlyRate} placeholder="25.00" />
+              <CurrencyInput
+                id="home-rate"
+                value={hourlyRate}
+                onValueChange={setHourlyRate}
+                placeholder="25.00"
+                describedBy={describedBy(errors.hourlyRate && 'home-rate-error')}
+                invalid={Boolean(errors.hourlyRate)}
+              />
+              {errors.hourlyRate && <FieldError id="home-rate-error">{errors.hourlyRate}</FieldError>}
             </div>
             <div>
               <label htmlFor="home-hours" className="mb-1.5 block font-semibold text-ink">
                 Hours a week
               </label>
-              <HoursInput id="home-hours" value={hoursPerWeek} onChange={setHoursPerWeek} unit="hrs" />
+              <HoursInput
+                id="home-hours"
+                value={hoursPerWeek}
+                onChange={setHoursPerWeek}
+                describedBy={describedBy(errors.hoursPerWeek && 'home-hours-error')}
+                invalid={Boolean(errors.hoursPerWeek)}
+                unit="hrs"
+              />
+              {errors.hoursPerWeek && <FieldError id="home-hours-error">{errors.hoursPerWeek}</FieldError>}
             </div>
           </div>
         )}
@@ -146,9 +167,12 @@ export default function HomePaycheckEstimate() {
               )}
               <Row color="bg-data-net" label="Take-home" value={formatUSDCents(r.netPerPeriod)} strong />
             </dl>
+            {stateWarning && (
+              <p className="mt-3 border-l-4 border-warning bg-warning-tint px-3 py-2 text-sm font-semibold text-ink">{stateWarning}</p>
+            )}
           </>
         ) : (
-          <p className="mt-2 text-ink-2">Enter your pay to see what you take home.</p>
+          <p className="mt-2 text-ink-2">{invalid ? 'Fix the fields marked in red to see what you take home.' : 'Enter your pay to see what you take home.'}</p>
         )}
 
         <p className="sr-only" aria-live="polite">

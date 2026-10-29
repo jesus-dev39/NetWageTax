@@ -6,7 +6,9 @@ import type { ReactNode } from 'react';
  * toggle switches.
  */
 
-export function Field({ id, label, hint, children, className = '' }: { id: string; label: ReactNode; hint?: ReactNode; children: ReactNode; className?: string }) {
+/** `error`: validation message under the input, with id `${id}-error` (add it to the input's aria-describedby). */
+export function Field(props: { id: string; label: ReactNode; hint?: ReactNode; error?: string; children: ReactNode; className?: string }) {
+  const { id, label, hint, error, children, className = '' } = props;
   return (
     <div className={className}>
       <label htmlFor={id} className="block font-semibold text-ink">
@@ -18,9 +20,21 @@ export function Field({ id, label, hint, children, className = '' }: { id: strin
         </p>
       )}
       <div className="mt-1.5">{children}</div>
+      {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
     </div>
   );
 }
+
+export function FieldError({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <p id={id} className="mt-1.5 text-[15px] font-semibold text-error">
+      {children}
+    </p>
+  );
+}
+
+/** "a b" from the ids that are set, for aria-describedby. */
+export const describedBy = (...ids: (string | false | undefined)[]) => ids.filter(Boolean).join(' ') || undefined;
 
 /** 22px radio: ink ring, filled ink dot when checked. */
 export const RADIO_CLASS =
@@ -117,10 +131,13 @@ export function Reveal({ id, open, children }: { id: string; open: boolean; chil
   );
 }
 
-/** Numeric text field with a unit after the number ("hours"), 0–168. */
-export function HoursInput({ id, value, onChange, describedBy, unit = 'hours' }: { id: string; value: string; onChange: (v: string) => void; describedBy?: string; unit?: string }) {
+/** Hours a week as typed (digits and one point). Range checks are the caller's (validateHourlyFields); `invalid` marks the field. */
+export function HoursInput(props: { id: string; value: string; onChange: (v: string) => void; describedBy?: string; unit?: string; invalid?: boolean }) {
+  const { id, value, onChange, describedBy, unit = 'hours', invalid = false } = props;
   return (
-    <div className="flex h-11 overflow-hidden rounded-control border-2 border-field bg-page focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-link">
+    <div
+      className={`flex h-11 overflow-hidden rounded-control border-2 bg-page focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-link ${invalid ? 'border-error' : 'border-field'}`}
+    >
       <input
         id={id}
         type="text"
@@ -128,10 +145,8 @@ export function HoursInput({ id, value, onChange, describedBy, unit = 'hours' }:
         autoComplete="off"
         value={value}
         aria-describedby={describedBy}
-        onChange={(e) => {
-          const cleaned = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-          onChange(Number(cleaned) > 168 ? '168' : cleaned);
-        }}
+        aria-invalid={invalid || undefined}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
         className="num min-w-0 flex-1 bg-transparent px-3 text-lg text-ink outline-none"
       />
       <span aria-hidden="true" className="flex shrink-0 items-center border-l border-line bg-surface px-3 text-ink-2">

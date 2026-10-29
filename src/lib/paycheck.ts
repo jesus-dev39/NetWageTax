@@ -23,6 +23,8 @@ export type PaycheckFilingStatus = 'single' | 'mfj' | 'hoh';
 
 export const WEEKS_PER_YEAR = 52;
 export const OVERTIME_MULTIPLIER = 1.5;
+/** Hours in a week: the most regular plus overtime hours can add up to. */
+export const MAX_HOURS_PER_WEEK = 168;
 
 export const PAY_FREQUENCIES: { value: PayFrequency; label: string; periods: number; short: string }[] = [
   { value: 'weekly', label: 'Weekly', periods: 52, short: 'weekly' },
@@ -67,6 +69,42 @@ export interface PaycheckResult {
   netPerPeriod: number;
 }
 
+/** Error message for each invalid hourly field, as typed; an empty object means every field is valid. */
+export interface HourlyFieldErrors {
+  hourlyRate?: string;
+  hoursPerWeek?: string;
+  overtimeHours?: string;
+}
+
+const hoursValue = (raw: string): number | null => {
+  const n = Number(raw.trim());
+  return raw.trim() === '' || raw.trim() === '.' || !Number.isFinite(n) ? null : n;
+};
+
+/**
+ * Hourly mode: the rate must be over $0, regular hours 0–168, and overtime 0 to 168 minus the regular hours.
+ * A rate not entered yet (null) isn't an error: there's just nothing to calculate.
+ */
+export function validateHourlyFields(hourlyRate: number | null, hoursPerWeek: string, overtimeHours: string): HourlyFieldErrors {
+  const errors: HourlyFieldErrors = {};
+  if (hourlyRate !== null && !(hourlyRate > 0)) errors.hourlyRate = 'Enter an hourly rate greater than $0.';
+
+  const regular = hoursValue(hoursPerWeek);
+  const regularValid = regular !== null && regular >= 0 && regular <= MAX_HOURS_PER_WEEK;
+  if (!regularValid) errors.hoursPerWeek = `Enter regular hours from 0 to ${MAX_HOURS_PER_WEEK} a week.`;
+
+  const overtime = hoursValue(overtimeHours);
+  const maxOvertime = MAX_HOURS_PER_WEEK - (regularValid ? regular : 0);
+  if (overtime === null || overtime < 0 || overtime > maxOvertime) {
+    errors.overtimeHours = regularValid
+      ? `Enter overtime from 0 to ${+maxOvertime.toFixed(2)} hours a week (${MAX_HOURS_PER_WEEK} minus your regular hours).`
+      : `Enter overtime from 0 to ${MAX_HOURS_PER_WEEK} hours a week.`;
+  }
+  return errors;
+}
+
+export const hasErrors = (errors: HourlyFieldErrors) => Object.keys(errors).length > 0;
+
 const clamp = (n: number, max = Infinity) => (Number.isFinite(n) ? Math.min(Math.max(0, n), max) : 0);
 
 export function periodsFor(frequency: PayFrequency): number {
@@ -80,8 +118,8 @@ export function calculatePaycheck(input: PaycheckInput): PaycheckResult {
   let overtimePay = 0;
   if (input.mode === 'hourly') {
     const rate = clamp(input.hourlyRate);
-    regularPay = rate * clamp(input.hoursPerWeek, 168) * WEEKS_PER_YEAR;
-    overtimePay = rate * OVERTIME_MULTIPLIER * clamp(input.overtimeHoursPerWeek, 168) * WEEKS_PER_YEAR;
+    regularPay = rate * clamp(input.hoursPerWeek, MAX_HOURS_PER_WEEK) * WEEKS_PER_YEAR;
+    overtimePay = rate * OVERTIME_MULTIPLIER * clamp(input.overtimeHoursPerWeek, MAX_HOURS_PER_WEEK) * WEEKS_PER_YEAR;
   } else {
     regularPay = clamp(input.annualSalary);
   }

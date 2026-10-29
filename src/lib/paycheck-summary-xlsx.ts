@@ -28,11 +28,14 @@ export function buildPaycheckWorkbook(s: PaycheckSummary): WorkBook {
     [],
     [wide('Withholding', COLS)],
     ['Item', 'Per paycheck', 'Annual', '% of gross'],
-    ...s.rows.map((r): Cell[] => [
-      r.kind === 'earning' ? `   ${r.label}` : r.label,
-      usd(r.kind === 'tax' ? -r.perPeriod : r.perPeriod),
-      usd(r.kind === 'tax' ? -r.annual : r.annual),
-      s.gross.annual > 0 ? pctCell(r.annual / s.gross.annual) : null,
+    ...s.rows.flatMap((r): Cell[][] => [
+      [
+        r.kind === 'earning' ? `   ${r.label}` : r.label,
+        usd(r.kind === 'tax' ? -r.perPeriod : r.perPeriod),
+        usd(r.kind === 'tax' ? -r.annual : r.annual),
+        s.gross.annual > 0 ? pctCell(r.annual / s.gross.annual) : null,
+      ],
+      ...(r.warning ? [[wide(`   ${r.warning}`, COLS)]] : []),
     ]),
     [],
     [wide('Net take-home pay', COLS)],
