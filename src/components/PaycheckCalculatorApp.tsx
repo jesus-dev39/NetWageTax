@@ -1,16 +1,26 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { SOCIAL_SECURITY_WAGE_BASE_2026 } from '../lib/fica';
-import { calculatePaycheck, type PayFrequency, type PaycheckFilingStatus, type PaycheckInput, type PayMode } from '../lib/paycheck';
+import {
+  calculatePaycheck,
+  hasErrors,
+  validateHourlyFields,
+  type PayFrequency,
+  type PaycheckFilingStatus,
+  type PaycheckInput,
+  type PayMode,
+} from '../lib/paycheck';
 import { buildPaycheckRows, PAYCHECK_TAX_YEAR } from '../lib/paycheck-summary';
 import { parsePaycheckSearchParams } from '../lib/paycheck-url';
 import { formatStateRate, STATES, STATES_BY_CODE, type StateCode } from '../lib/state-tax-data';
 import BreakdownBar from './BreakdownBar';
 import CurrencyInput, { formatUSD, formatUSDCents } from './CurrencyInput';
-import { Field, HoursInput, RadioGroup } from './form';
+import { describedBy, Field, HoursInput, RadioGroup } from './form';
 import NativeSelect from './NativeSelect';
 import NoStateTaxBadge from './NoStateTaxBadge';
 import PaycheckExportActions from './PaycheckExportActions';
 import { FILING_OPTIONS, FREQUENCY_OPTIONS, PAY_MODE_OPTIONS } from './paycheck-options';
+
+const FIX_FIELDS = 'Fix the fields marked in red to see your take-home pay.';
 
 const pct = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0);
 
@@ -37,10 +47,14 @@ export default function PaycheckCalculatorApp() {
     if (p.stateCode) setStateCode(p.stateCode);
   }, []);
 
+  const errors = mode === 'hourly' ? validateHourlyFields(hourlyRate, hoursPerWeek, overtimeHours) : {};
+  const invalid = hasErrors(errors);
+
+  // Invalid hourly fields aren't calculated: with no pay, the results show the empty state and exports stay off.
   const input: PaycheckInput = useMemo(
     () => ({
       mode,
-      hourlyRate: hourlyRate ?? 0,
+      hourlyRate: invalid ? 0 : (hourlyRate ?? 0),
       hoursPerWeek: Number(hoursPerWeek) || 0,
       overtimeHoursPerWeek: Number(overtimeHours) || 0,
       annualSalary: annualSalary ?? 0,
@@ -48,7 +62,7 @@ export default function PaycheckCalculatorApp() {
       filingStatus,
       stateCode,
     }),
-    [mode, hourlyRate, hoursPerWeek, overtimeHours, annualSalary, frequency, filingStatus, stateCode],
+    [mode, invalid, hourlyRate, hoursPerWeek, overtimeHours, annualSalary, frequency, filingStatus, stateCode],
   );
   const result = useMemo(() => calculatePaycheck(input), [input]);
   const rows = useMemo(() => buildPaycheckRows(input, result), [input, result]);
@@ -78,14 +92,35 @@ export default function PaycheckCalculatorApp() {
 
           {mode === 'hourly' ? (
             <div className="grid gap-5 sm:grid-cols-3 sm:gap-4">
-              <Field id="hourly-rate" label="Hourly rate" hint="Before taxes">
-                <CurrencyInput id="hourly-rate" value={hourlyRate} onValueChange={setHourlyRate} placeholder="25.00" describedBy="hourly-rate-hint" />
+              <Field id="hourly-rate" label="Hourly rate" hint="Before taxes" error={errors.hourlyRate}>
+                <CurrencyInput
+                  id="hourly-rate"
+                  value={hourlyRate}
+                  onValueChange={setHourlyRate}
+                  placeholder="25.00"
+                  describedBy={describedBy('hourly-rate-hint', errors.hourlyRate && 'hourly-rate-error')}
+                  invalid={Boolean(errors.hourlyRate)}
+                />
               </Field>
-              <Field id="hours-per-week" label="Hours a week" hint="Regular hours">
-                <HoursInput id="hours-per-week" value={hoursPerWeek} onChange={setHoursPerWeek} describedBy="hours-per-week-hint" unit="hrs" />
+              <Field id="hours-per-week" label="Hours a week" hint="Regular hours" error={errors.hoursPerWeek}>
+                <HoursInput
+                  id="hours-per-week"
+                  value={hoursPerWeek}
+                  onChange={setHoursPerWeek}
+                  describedBy={describedBy('hours-per-week-hint', errors.hoursPerWeek && 'hours-per-week-error')}
+                  invalid={Boolean(errors.hoursPerWeek)}
+                  unit="hrs"
+                />
               </Field>
-              <Field id="overtime-hours" label="Overtime a week" hint="Paid at 1.5×">
-                <HoursInput id="overtime-hours" value={overtimeHours} onChange={setOvertimeHours} describedBy="overtime-hours-hint" unit="hrs" />
+              <Field id="overtime-hours" label="Overtime a week" hint="Paid at 1.5×" error={errors.overtimeHours}>
+                <HoursInput
+                  id="overtime-hours"
+                  value={overtimeHours}
+                  onChange={setOvertimeHours}
+                  describedBy={describedBy('overtime-hours-hint', errors.overtimeHours && 'overtime-hours-error')}
+                  invalid={Boolean(errors.overtimeHours)}
+                  unit="hrs"
+                />
               </Field>
             </div>
           ) : (
@@ -157,12 +192,14 @@ export default function PaycheckCalculatorApp() {
                 </ul>
               </>
             ) : (
-              <p className="mt-2 text-ink-2">Enter your pay to see what you take home.</p>
+              <p className="mt-2 text-ink-2">{invalid ? FIX_FIELDS : 'Enter your pay to see what you take home.'}</p>
             )}
             <p className="sr-only" aria-live="polite">
               {hasPay
                 ? `Take-home pay ${formatUSDCents(result.netPerPeriod)} per paycheck, ${formatUSD(result.netAnnual)} a year${beforeState}.`
-                : 'Enter your pay to see your take-home pay.'}
+                : invalid
+                  ? FIX_FIELDS
+                  : 'Enter your pay to see your take-home pay.'}
             </p>
           </div>
 
@@ -193,6 +230,7 @@ export default function PaycheckCalculatorApp() {
                       <tr key={r.label} className={net ? 'border-t-2 border-ink font-bold' : 'border-t border-line'}>
                         <th scope="row" className={`px-3 py-2 text-left ${r.kind === 'tax' ? 'font-normal' : net ? 'font-bold' : 'font-semibold'} text-ink`}>
                           {r.label}
+                          {r.warning && <SingleRatesWarning text={r.warning} />}
                         </th>
                         {noState ? (
                           <td colSpan={2} className="px-3 py-2 text-right text-ink-2">
@@ -247,6 +285,10 @@ export default function PaycheckCalculatorApp() {
       </div>
     </section>
   );
+}
+
+function SingleRatesWarning({ text }: { text: string }) {
+  return <span className="mt-1 block border-l-4 border-warning bg-warning-tint px-2 py-1 text-sm font-semibold text-ink">{text}</span>;
 }
 
 // ---------------------------------------------------------------------------

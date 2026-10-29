@@ -115,6 +115,9 @@ function VoucherRow({ row: r, gross }: { row: PaycheckSummaryRow; gross: number 
         {r.label}
         {/* Gross pay's detail repeats the "Earnings" line above the figures. */}
         {r.detail && r.kind !== 'gross' && <span className="block text-[10.5px] font-normal leading-tight text-ink-2">{r.detail}</span>}
+        {r.warning && (
+          <span className="mt-0.5 block border-l-4 border-warning bg-warning-tint px-1.5 text-[10.5px] font-semibold leading-tight text-ink">{r.warning}</span>
+        )}
       </th>
       <td className="px-3 py-1.5 text-right">{formatUSDCents(r.perPeriod)}</td>
       <td className="px-3 py-1.5 text-right">{formatUSDCents(r.annual)}</td>

@@ -54,6 +54,8 @@ export interface SummaryLine {
   label: string;
   value: string;
   detail?: string;
+  /** Caveat shown in warning style under the line (SINGLE_RATES_WARNING on the state line). */
+  warning?: string;
   /** Marks the headline result row. */
   total?: boolean;
 }
@@ -205,6 +207,7 @@ export function buildDeductionSummary(input: SummaryInput, generatedAt: Date): D
                 stateTax.structure === 'none'
                   ? 'No state income tax'
                   : `${stateTax.rateLabel} · ${stateTax.usesBrackets ? 'single-filer brackets for every filing status' : 'simplified single-filer estimate'}, excludes local taxes${stateNote ? `. ${stateNote}` : ''}`,
+              warning: stateTax.singleRatesWarning,
             },
           ]
         : []),

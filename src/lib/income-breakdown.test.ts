@@ -4,7 +4,7 @@ import { estimateFederalTaxSavings } from './marginal-rate';
 import { calculateStateIncomeTax } from './state-tax-data';
 
 describe('buildIncomeBreakdown', () => {
-  // Single filer, $52,000 MAGI, $8,000 qualified tips, Georgia (4.99% above $12,000).
+  // Single filer, $52,000 MAGI, $8,000 qualified tips, Georgia (4.99% above $15,000).
   const state = calculateStateIncomeTax(52_000, 'GA');
   const b = buildIncomeBreakdown(52_000, 8_000, 'single', state);
 
@@ -21,9 +21,10 @@ describe('buildIncomeBreakdown', () => {
 
   it('splits the income into federal, FICA, state, and take-home with nothing left over', () => {
     expect(b.fica).toBeCloseTo(52_000 * 0.0765);
-    expect(b.state).toBeCloseTo(40_000 * 0.0499);
+    expect(b.state).toBeCloseTo(37_000 * 0.0499);
     expect(b.federalWithDeduction + b.fica + b.state + b.takeHome).toBeCloseTo(b.total);
-    expect(b.takeHome).toBeCloseTo(42_926);
+    // 52,000 − 3,100 − 3,978 FICA − 1,846.30 state.
+    expect(b.takeHome).toBeCloseTo(43_075.7);
   });
 
   it('is all zeros with no income', () => {

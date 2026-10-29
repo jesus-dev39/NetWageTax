@@ -3,8 +3,9 @@
  * Title, description, and FAQ for the /state-taxes/ directory (the map page), built from
  * state-tax-data.ts so the lists and counts follow the data.
  */
+import { formatUSD } from '../components/CurrencyInput';
 import { pct } from './state-page-content';
-import { statePagePath, STATES, type StateTaxInfo } from './state-tax-data';
+import { MA_SURTAX_THRESHOLD, statePagePath, STATES, type StateTaxInfo } from './state-tax-data';
 import { TIPS_OVERTIME_GUIDE_PATH } from './state-tips-overtime';
 
 /** Complete <title>, without "| NetWageTax": with it the title would pass 60 characters (MAX_TITLE_LENGTH). */
@@ -58,7 +59,7 @@ export function directoryFaqs(): DirectoryFaq[] {
           '.',
         ],
         [
-          'Massachusetts adds a 4% surtax on income above about $1.08 million. Most of these states exempt some income first through a standard deduction or personal exemption, so the share of your wages you pay is lower than the rate.',
+          `Massachusetts adds a 4% surtax on taxable income above ${formatUSD(MA_SURTAX_THRESHOLD)} for 2026. Most of these states exempt some income first through a standard deduction or personal exemption, so the share of your wages you pay is lower than the rate.`,
         ],
       ],
     },

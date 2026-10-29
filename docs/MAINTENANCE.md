@@ -371,7 +371,7 @@ GRAD(código, nombre, tipoMedio, exentoAprox, [tipoMín, tipoMáx], nota, notaLo
 Ejemplo real:
 
 ```ts
-FLAT('GA', 'Georgia', 0.0499, 12_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). ...'),
+FLAT('GA', 'Georgia', 0.0499, 15_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). ...'),
 ```
 
 Qué significa cada campo (los tipos se escriben en tanto por uno: 4.99% = `0.0499`):
@@ -390,7 +390,16 @@ Hay dos formas de calcular el impuesto de un estado:
   los tramos de `BRACKETS` y suma los recargos. Lo usan los estados cuya entrada de `BRACKETS` tiene
   `engine` (ahora California, New York, South Carolina y West Virginia). En ellos, `estimateRate` y
   `exemptAmount` ya no se usan: se quedan en `ROWS` solo por si hubiera que volver a la estimación.
-- **Estimación simplificada**, en todos los demás: `(salario − exemptAmount) × estimateRate`.
+- **Estimación simplificada**, en todos los demás: `(salario − exemptAmount) × estimateRate`, más el
+  recargo de la tabla `SURTAXES` si el estado tiene uno (hoy solo Massachusetts).
+
+**Estados civiles.** Ningún estado tiene todavía tramos de casados: todos se calculan con las cifras de
+*single*. Por eso, si el estado civil no es *Single*, las calculadoras de nómina (también la de la
+portada) y de propinas, y sus exportaciones (impresión, Word y Excel), muestran junto al impuesto
+estatal el aviso `SINGLE_RATES_WARNING` ("State tax uses single-filer rates for now, so it may be too
+high for married couples."). Lo decide `singleRatesWarning()` en `state-tax-data.ts`: cuando un estado
+del motor tenga tramos propios para un estado civil en `bracketsByStatus`, el aviso desaparece solo
+para ese estado y ese estado civil.
 
 En la estimación simplificada, en los estados `GRAD`, cuando
 cambian los tramos hay que **recalcular** `estimateRate`: aplica los tramos nuevos a
@@ -404,6 +413,7 @@ En el mismo archivo hay otras tablas por estado:
 | `SOURCE_URLS` | Web oficial del departamento de hacienda de cada estado |
 | `LOCAL_TAX_LABELS` | Texto corto para "Local income taxes" cuando hay impuestos locales |
 | `RATE_SOURCES` | Documento oficial del tipo actual (ley o publicación del estado) |
+| `SURTAXES` | Recargos que se suman a la estimación simplificada (el 4% de Massachusetts por encima de `MA_SURTAX_THRESHOLD`) |
 | `BRACKETS` | Tabla completa de tramos para *single*, cuando está verificada |
 | `NEIGHBORS` | Estados vecinos (no cambia) |
 
@@ -521,9 +531,9 @@ estados y en la calculadora de propinas. Después de cambiarlos, repite el caso 
 | **Maine** (`ME`) | La deducción estándar ($15,700) y la exención ($5,300) se reducen por encima de $102,250 de ingresos; `exemptAmount` = $21,000 solo vale por debajo de ese umbral | Toma las cifras nuevas de las tablas de retención de Maine (MRS) y comprueba que $65,000 sigue por debajo del umbral |
 | **Nebraska** (`NE`) | El crédito por exención personal ($176) no se aplica. La cuenta de `estimateRate` está en el comentario | Aplica los tramos nuevos a $65,000 − `exemptAmount`, sin el crédito |
 | **Alabama** (`AL`) y **Missouri** (`MO`) | Permiten restar el impuesto federal, como Oregon, pero el modelo no lo calcula aparte. Alabama, además, tiene su propia exención de horas extra: $1,000 por contribuyente (`TIPS_OVERTIME_RULES.AL`) | Si cambias sus cifras, ten en cuenta la resta del impuesto federal al calibrar `estimateRate` |
-| **Georgia** (`GA`) | Exención propia de propinas y horas extra ($1,750 cada una, `TIPS_OVERTIME_RULES.GA.own`). La deducción estándar sube a $15,000 en 2027 y el tipo puede bajar 0.125 puntos al año según la recaudación | Cada enero, confirma el tipo y la deducción (`exemptAmount`). Después, repite el caso de referencia 2 de la sección 2.4: si cambias el tipo, el texto de la línea estatal cambia, pero el ahorro federal ($960) no |
+| **Georgia** (`GA`) | Exención propia de propinas y horas extra ($1,750 cada una, `TIPS_OVERTIME_RULES.GA.own`). La deducción estándar es de $15,000 desde 2026 (HB 463, secciones 2-3 y 5-1) y sube $375 al año desde 2027 hasta $18,000; esas subidas y la bajada del tipo (0.125 puntos al año) dependen de la recaudación | Cada enero, confirma el tipo y la deducción (`exemptAmount`). Después, repite el caso de referencia 2 de la sección 2.4: si cambias el tipo, el texto de la línea estatal cambia, pero el ahorro federal ($960) no |
 | **California** (`CA`) | Recargo del 1% (Behavioral Health Services Tax) por encima de $1 millón de base imponible; el tipo máximo de `bracketRange` (13.3%) lo incluye. Se calcula con el motor de tramos, con el recargo en `BRACKETS.CA.engine.surcharges`. `BRACKETS.CA` es todavía la tabla de 2025, igual que la deducción estándar ($5,706) y el crédito por exención personal ($153, que se reduce por encima de $252,203 de AGI federal), que están en `engine` | Actualiza `BRACKETS.CA`, la deducción, el crédito y su reducción cuando la FTB publique las cifras de 2026 (instrucciones del Form 540 y tablas del 540 2EZ; los enlaces están en el comentario de `BRACKETS.CA`), y luego los valores de referencia de CA en los tests. El 12.3% y el "$1 million" también están escritos en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
-| **Massachusetts** (`MA`) | Recargo del 4% por encima de unos $1.08 millones, que la estimación no aplica | El umbral se ajusta por inflación: actualízalo en la `note` y en la FAQ del directorio (`src/lib/state-directory-content.ts`) |
+| **Massachusetts** (`MA`) | Recargo del 4% sobre la base imponible por encima de $1,107,750 en 2026 ($1,083,150 en 2025). La estimación lo aplica (tabla `SURTAXES`) | El umbral se ajusta por inflación cada año (fuente: <https://www.mass.gov/info-details/massachusetts-tax-rates>): cambia `MA_SURTAX_THRESHOLD` (la FAQ del directorio lo toma de ahí), la cifra escrita en la `note` de MA y los valores de MA en `src/lib/external-review-fixes.test.ts` |
 | **New York** (`NY`) y **Connecticut** (`CT`) | Tienen *recapture* (los contribuyentes con ingresos altos pierden la ventaja de los tramos bajos), que no se calcula: solo se menciona en la nota. New York se calcula con el motor de tramos (sin el *recapture*) | `BRACKETS.NY` sale ahora de las tablas de retención: cámbialo a las instrucciones del IT-201 cuando se publiquen (`docs/PENDING-UPDATES.md`) |
 | **Oregon**, deducción del coche | Oregon no permite la deducción de intereses del coche en su impuesto (SB 1507), y se dice en `CAR_LOAN_STATE_NOTE` (`src/lib/state-page-content.ts`) y en la FAQ de la calculadora del coche | Después del referéndum sobre SB 1507, actualiza las dos cosas si el resultado cambia la regla |
 
@@ -566,7 +576,7 @@ demás se repiten cada año. Marca cada tarea en `docs/PENDING-UPDATES.md` cuand
 | Mes | Qué revisar |
 | :-- | :-- |
 | **Todos los meses** | Search Console (errores de indexación y páginas que pierden posiciones). Comprobaciones de producción de la sección 2.3. AdSense: que no haya avisos de política ni de `ads.txt` |
-| **Enero** | **Revisión completa de los estados** (hacia el 15): tipos, `exemptAmount`, `estimateRate`, `bracketRange`, notas, impuestos locales, tablas de tramos y `sourceUrl` de los 50 estados + DC. **Guía de propinas y horas extra:** revisa la categoría, el detalle, la fuente y la fecha de cada estado, sobre todo los marcados como *inferred* (AR, CT, IL, KS, LA, OH, OK, UT, WI, WV). Actualiza `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` y las fechas `checked`. Decide si cambias `SITE_TAX_YEAR` al año nuevo. **(solo 2026–2027)** Vermont: tramos y deducción estándar de 2026 (`BRACKETS.VT`). Carolina del Sur: tramo de 2027 indexado (`BRACKETS.SC`). Georgia: confirma el tipo de 2027 (4.865% o 4.99%) y la deducción estándar de $15,000 |
+| **Enero** | **Revisión completa de los estados** (hacia el 15): tipos, `exemptAmount`, `estimateRate`, `bracketRange`, notas, impuestos locales, tablas de tramos y `sourceUrl` de los 50 estados + DC. **Guía de propinas y horas extra:** revisa la categoría, el detalle, la fuente y la fecha de cada estado, sobre todo los marcados como *inferred* (AR, CT, IL, KS, LA, OH, OK, UT, WI, WV). Actualiza `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` y las fechas `checked`. Decide si cambias `SITE_TAX_YEAR` al año nuevo. **(solo 2026–2027)** Vermont: tramos y deducción estándar de 2026 (`BRACKETS.VT`). Carolina del Sur: tramo de 2027 indexado (`BRACKETS.SC`). Georgia: confirma el tipo de 2027 (4.865% o 4.99%) y si la deducción estándar sube a $15,375 |
 | **Febrero** | Formularios estatales definitivos del año anterior: confirma las cifras que se basaban en borradores. **(solo 2026–2027)** Schedule 1-A definitivo de 2026 y sus instrucciones: revisa las calculadoras de mayores y de coche y retira `SCHEDULE_1A_DRAFT_NOTICE` |
 | **Marzo–abril** | Temporada de declaraciones: es cuando más visitas hay; vigila que todo funcione. Algunos estados publican sus tipos del año (Michigan publicó el de 2026 el 15 de abril) |
 | **Mayo–junio** | Terminan las sesiones legislativas de muchos estados: busca leyes nuevas que cambien tipos o la deducción de propinas y horas extra (en 2026, Arizona firmó HB 4168 el 13 de junio) |

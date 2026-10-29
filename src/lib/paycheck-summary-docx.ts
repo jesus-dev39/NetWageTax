@@ -20,7 +20,7 @@ import {
 } from 'docx';
 import { saveBlob } from './save-blob';
 import { formatUSDCents } from '../components/CurrencyInput';
-import { cellBorder, FONT, GREEN, GREEN_TINT, INK, INK_2, LINE, metaRow, noBorder, SURFACE, text, totalBorder } from './deduction-summary-docx';
+import { cellBorder, FONT, GREEN, GREEN_TINT, INK, INK_2, LINE, metaRow, noBorder, SURFACE, text, totalBorder, warningParagraph } from './deduction-summary-docx';
 import {
   PAYCHECK_DISCLAIMER,
   PAYCHECK_DOCX_FILENAME,
@@ -65,6 +65,7 @@ function bodyRow(r: PaycheckSummaryRow): TableRow {
   const fill = net ? GREEN_TINT : undefined;
   const label = [new Paragraph({ children: [text(r.label, { bold: strong })] })];
   if (r.detail) label.push(new Paragraph({ children: [text(r.detail, { size: 17, color: INK_2 })] }));
+  if (r.warning) label.push(warningParagraph(r.warning));
   const money = (n: number) =>
     new Paragraph({ alignment: AlignmentType.RIGHT, children: [text(formatUSDCents(n), { bold: strong })] });
   return new TableRow({

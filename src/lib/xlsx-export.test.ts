@@ -93,14 +93,14 @@ describe('paycheck .xlsx', () => {
     expect(federal[2]).toBe(-5_230);
     expect(federal[1]).toBeCloseTo(-5_230 / 26, 2);
     const net = find(rows, 'Net take-home pay')!;
-    // Georgia 2026: 4.99% on $61,750 − $12,000 = $2,482.53 (HB 463).
-    expect(net[2]).toBeCloseTo(49_313.6, 2);
+    // Georgia 2026: 4.99% on $61,750 − $15,000 = $2,332.83 (HB 463).
+    expect(net[2]).toBeCloseTo(49_463.3, 2);
     const r = rows.findIndex((row) => row[0] === 'Federal income tax');
     expect(ws[utils.encode_cell({ r, c: 3 })].z).toBe(FMT_PCT);
   });
 
   it('ends with the take-home totals', () => {
-    expect(find(rows, 'Per biweekly paycheck')?.[1]).toBeCloseTo(1_896.68, 2);
-    expect(find(rows, 'Per year')?.[1]).toBeCloseTo(49_313.6, 2);
+    expect(find(rows, 'Per biweekly paycheck')?.[1]).toBeCloseTo(1_902.43, 2);
+    expect(find(rows, 'Per year')?.[1]).toBeCloseTo(49_463.3, 2);
   });
 });

@@ -23,7 +23,7 @@
  */
 
 import type { FilingStatus } from './obbba-params';
-import { computeBracketTax, type BracketEngineResult, type BracketEngineRules, type TaxBracket } from './state-bracket-engine';
+import { computeBracketTax, type BracketEngineResult, type BracketEngineRules, type Surcharge, type TaxBracket } from './state-bracket-engine';
 import { TIPS_OVERTIME_RULES, type TipsOvertimeRule } from './state-tips-overtime';
 
 export type { TaxBracket };
@@ -67,6 +67,8 @@ export interface StateTaxInfo {
   brackets?: TaxBracket[];
   /** Set when the state is calculated bracket by bracket (state-bracket-engine.ts) instead of with estimateRate. */
   bracketEngine?: BracketEngineRules;
+  /** Extra rate on income above `over` after exemptAmount, added to the simplified estimate (Massachusetts). */
+  surtax?: Surcharge;
   /** Tax year of `brackets` (set whenever `brackets` is). */
   bracketsYear?: number;
   /** Official document the `brackets` were taken from. */
@@ -77,7 +79,7 @@ export interface StateTaxInfo {
   neighbors: StateCode[];
 }
 
-type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime'>;
+type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime' | 'surtax'>;
 
 const NO_TAX = (code: StateCode, name: string, note: string): Row => ({
   code, name, structure: 'none', estimateRate: 0, exemptAmount: 0, note,
@@ -105,8 +107,9 @@ const ROWS: Row[] = [
   GRAD('DE', 'Delaware', 0.048, 3_250, [0.022, 0.066], 'Brackets from 2.2% to 6.6% above $60,000. Delaware has no state sales tax.', 'Wilmington levies a 1.25% city wage tax.'),
   GRAD('DC', 'District of Columbia', 0.057, 16_100, [0.04, 0.1075], 'Seven brackets from 4% to 10.75%. Uses the federal standard deduction.'),
   NO_TAX('FL', 'Florida', 'Florida has no personal income tax. Article VII, Section 5 of the Florida Constitution prohibits one.'),
-  // HB 463 (2026): 4.99% from January 1, 2026. The $15,000 single standard deduction starts in 2027, so 2026 keeps $12,000.
-  FLAT('GA', 'Georgia', 0.0499, 12_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). Further cuts of 0.125 point a year toward 3.99% depend on state revenue.'),
+  // HB 463 (2026): 4.99% and the $15,000 single standard deduction ($30,000 joint), Section 2-3, for taxable years from
+  // January 1, 2026 (Section 5-1). The deduction then rises $375 a year from 2027, up to $18,000, unless revenue triggers delay it.
+  FLAT('GA', 'Georgia', 0.0499, 15_000, 'Flat 4.99% tax from January 1, 2026, under HB 463 (2026). Further cuts of 0.125 point a year toward 3.99% depend on state revenue.'),
   // Act 46 (2024): $8,000 single standard deduction for 2026 (Announcement 2024-03) + the $1,144 personal exemption.
   GRAD('HI', 'Hawaii', 0.064, 9_144, [0.014, 0.11], 'Twelve brackets up to 11%. Recent laws are doubling the standard deduction and widening brackets through 2031.'),
   FLAT('ID', 'Idaho', 0.053, 20_900, 'Flat 5.3% on income above a 0% band, after the federal standard deduction.'),
@@ -119,7 +122,8 @@ const ROWS: Row[] = [
   // MRS 2026 withholding tables (August 2026): $15,700 basic standard deduction + $5,300 personal exemption, phased out above $102,250.
   GRAD('ME', 'Maine', 0.062, 21_000, [0.058, 0.0715], 'Three brackets (5.8%–7.15%). Maine has its own standard deduction plus a personal exemption, both phased out at higher incomes.'),
   GRAD('MD', 'Maryland', 0.047, 6_550, [0.02, 0.065], 'State brackets from 2% to 6.5%, with new top brackets added in 2025.', 'Every county and Baltimore City add a local income tax of 2.25%–3.3%, not included here.'),
-  FLAT('MA', 'Massachusetts', 0.05, 4_400, 'Flat 5%, plus a 4% surtax on income above about $1.08 million (the "millionaires tax").'),
+  // The surtax threshold is indexed every year: $1,083,150 in 2025, $1,107,750 in 2026 (MA_SURTAX_THRESHOLD).
+  FLAT('MA', 'Massachusetts', 0.05, 4_400, 'Flat 5%, plus a 4% surtax on taxable income above $1,107,750 for 2026 (the "millionaires tax"). Our estimate includes the surtax.'),
   // 4.25% for 2026 confirmed by Treasury's rate notice of April 15, 2026.
   FLAT('MI', 'Michigan', 0.0425, 5_900, 'Flat 4.25%.', 'Detroit (2.4%) and about 20 other cities levy their own income tax.'),
   GRAD('MN', 'Minnesota', 0.059, 15_300, [0.0535, 0.0985], 'Four brackets from 5.35% to 9.85%.'),
@@ -265,6 +269,14 @@ const RATE_SOURCES: Partial<Record<StateCode, { url: string; label: string }>> =
     url: 'https://www.wvlegislature.gov/Bill_Text_HTML/2026_SESSIONS/RS/bills/sb392%20sub1%20enr.htm',
     label: 'SB 392 (2026), enrolled',
   },
+};
+
+/** Massachusetts 4% surtax threshold for 2026 (mass.gov, "Massachusetts tax rates"; $1,083,150 in 2025). */
+export const MA_SURTAX_THRESHOLD = 1_107_750;
+
+/** Surtaxes added to the simplified estimate. Bracket-engine states use `engine.surcharges` instead. */
+const SURTAXES: Partial<Record<StateCode, Surcharge>> = {
+  MA: { over: MA_SURTAX_THRESHOLD, rate: 0.04, label: 'Millionaires surtax' },
 };
 
 interface BracketSchedule {
@@ -446,6 +458,7 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   bracketsSource: BRACKETS[r.code]?.source,
   bracketsNote: BRACKETS[r.code]?.note,
   bracketEngine: engineRules(BRACKETS[r.code]),
+  surtax: SURTAXES[r.code],
   neighbors: NEIGHBORS[r.code],
 })).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -491,7 +504,8 @@ export function findState(value: string | null | undefined): StateTaxInfo | unde
 export function calculateStateIncomeTax(taxableIncome: number, stateCode: StateCode, filingStatus: FilingStatus = 'single'): number {
   const s = STATES_BY_CODE[stateCode];
   if (s.bracketEngine) return computeBracketTax(s.bracketEngine, { income: taxableIncome, filingStatus }).tax;
-  return Math.max(0, taxableIncome - s.exemptAmount) * s.estimateRate;
+  const base = Math.max(0, taxableIncome - s.exemptAmount);
+  return base * s.estimateRate + (s.surtax ? Math.max(0, base - s.surtax.over) * s.surtax.rate : 0);
 }
 
 /** Step-by-step bracket calculation for states that use the engine; undefined for the rest. */
@@ -527,6 +541,8 @@ export interface StateTaxEstimate {
   stateDeduction: number;
   /** True when the tax comes from the state's single-filer brackets (bracket engine), not the simplified estimate. */
   usesBrackets: boolean;
+  /** SINGLE_RATES_WARNING when the filing status isn't single and the state has no rates of its own for it. */
+  singleRatesWarning?: string;
 }
 
 /** `stateDeduction`: the state's tips and overtime subtraction, taken off income before the estimate. */
@@ -546,8 +562,23 @@ export function estimateStateTax(
     tax: calculateStateIncomeTax(income - deduction, stateCode, filingStatus),
     stateDeduction: deduction,
     usesBrackets: Boolean(s.bracketEngine),
+    singleRatesWarning: singleRatesWarning(stateCode, filingStatus),
   };
 }
 
 /** Assumption shown wherever a bracket-engine state's tax appears. */
 export const SINGLE_BRACKETS_NOTE = 'Calculated with the state’s single-filer brackets for every filing status.';
+
+/** Shown next to the state tax result whenever the filing status isn't single (see singleRatesWarning). */
+export const SINGLE_RATES_WARNING = 'State tax uses single-filer rates for now, so it may be too high for married couples.';
+
+/**
+ * SINGLE_RATES_WARNING when a state that taxes wages has no brackets of its own for `filingStatus`
+ * (today none has: the bracket engine and the simplified estimate both use single-filer figures).
+ */
+export function singleRatesWarning(stateCode: StateCode | null, filingStatus: FilingStatus): string | undefined {
+  if (!stateCode || filingStatus === 'single') return undefined;
+  const s = STATES_BY_CODE[stateCode];
+  if (s.structure === 'none' || s.bracketEngine?.bracketsByStatus?.[filingStatus]) return undefined;
+  return SINGLE_RATES_WARNING;
+}

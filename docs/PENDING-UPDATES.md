@@ -30,8 +30,9 @@ publish the next year's numbers, and all states every January.
       disappears on its own (it only shows when `bracketsYear` is before 2026).
 - [ ] **Georgia: check the 2027 rate and standard deduction (January 2027).** HB 463 (2026) cuts the
       rate by 0.125 point a year toward 3.99% only if state revenue conditions are met: confirm whether
-      2027 is 4.865% or stays at 4.99%. The single standard deduction rises to $15,000 in 2027 (update
-      `exemptAmount` from $12,000), with later $375 steps also tied to revenue. The state's own
+      2027 is 4.865% or stays at 4.99%. The single standard deduction is $15,000 from 2026 (Sections 2-3
+      and 5-1; `exemptAmount` updated on 2026-10-29) and rises $375 a year from 2027 up to $18,000, with
+      each step also tied to revenue: set `exemptAmount` to $15,375 if the 2027 step happens. The state's own
       tips/overtime exclusion ($1,750 each) runs through 2028. Source: `RATE_SOURCES.GA`.
 - [ ] **Arizona: confirm the 2026 single standard deduction when ADOR publishes the 2026 forms.** The site
       uses $16,100: A.R.S. 43-1041 (https://www.azleg.gov/ars/43/01041.htm) lists $15,750 for a single
