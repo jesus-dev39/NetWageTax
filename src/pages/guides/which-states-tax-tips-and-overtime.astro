@@ -4,10 +4,11 @@ import PageHeader from '../../components/PageHeader.astro';
 import FaqList from '../../components/FaqList.astro';
 import AdSlot from '../../components/AdSlot';
 import TipsOvertimeExplorer from '../../components/TipsOvertimeExplorer';
-import { CONTACT_EMAIL, formatLongDate } from '../../lib/site';
+import { CONTACT_EMAIL, formatDateRange } from '../../lib/site';
 import { STATES, STATES_BY_CODE } from '../../lib/state-tax-data';
 import {
   TIPS_OVERTIME_GUIDE_PATH,
+  TIPS_OVERTIME_FIRST_CHECKED,
   TIPS_OVERTIME_LAST_CHECKED,
   TREATMENT_LABEL,
   TREATMENT_ORDER,
@@ -19,7 +20,7 @@ const title = 'Which States Tax Tips and Overtime in 2026? All 50 States and DC'
 const description =
   'See how every state treats the federal no tax on tips and overtime deduction in 2026: which states follow it, which tax tips and overtime anyway, and which have their own break, with official sources.';
 const PUBLISHED = '2026-10-08';
-const checkedLabel = formatLongDate(TIPS_OVERTIME_LAST_CHECKED);
+const checkedLabel = formatDateRange(TIPS_OVERTIME_FIRST_CHECKED, TIPS_OVERTIME_LAST_CHECKED);
 
 const inGroup = (t: TipsOvertimeTreatment) => STATES.filter((s) => s.tipsOvertime.treatment === t);
 const names = (t: TipsOvertimeTreatment) => inGroup(t).map((s) => s.name);
@@ -92,7 +93,7 @@ const faqs = [
   {
     question: 'How often is this page checked?',
     answer: [
-      `Every row shows the date we last checked it against the official source. We review all 50 states and DC each January, when legislatures meet and the new state forms come out, and update a state sooner when its law changes. Rules last checked ${checkedLabel}.`,
+      `Every row shows the date we last checked it against the official source. We review all 50 states and DC each January, when legislatures meet and the new state forms come out, and update a state sooner when its law changes. Rows checked ${checkedLabel}.`,
     ],
   },
 ];
@@ -161,8 +162,8 @@ const h2Class = 'scroll-mt-20 text-2xl/[1.2] font-bold tracking-[-0.01em] text-i
       }
     </dl>
     <p class="mt-4 text-[15px] text-ink-2">
-      By <a href="/about/" class={linkClass}>NetWageTax</a>. Rules last checked{' '}
-      <time datetime={TIPS_OVERTIME_LAST_CHECKED}>{checkedLabel}</time>. Sources: state tax agencies and legislatures.
+      By <a href="/about/" class={linkClass}>NetWageTax</a>. Rows checked {checkedLabel}. Sources: state tax agencies and
+      legislatures.
     </p>
   </PageHeader>
 

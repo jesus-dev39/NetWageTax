@@ -2,8 +2,10 @@
 
 Tasks for keeping the tax data current. Federal figures live in `src/lib/marginal-rate.ts` and
 `src/lib/fica.ts`; state data lives in `src/lib/state-tax-data.ts`, with bracket tables in its
-`BRACKETS` map. Tick an item when it's done, and update `STATE_TAX_LAST_UPDATED` after every review
-(the status strip and /methodology/ show it as "rules last checked").
+`BRACKETS` map. Tick an item when it's done, and record every review: move each state you checked to
+that day's group in `STATE_REVIEWS` (`state-tax-data.ts`), and update `FEDERAL_INCOME_TAX_CHECKED` or
+`FICA_FIGURES_CHECKED` (`review-dates.ts`) after a federal or FICA check (the status strip and
+/methodology/ show the federal date; each state page shows its own date).
 
 The review schedule is published on /methodology/: federal and FICA figures when the IRS and SSA
 publish the next year's numbers, and all states every January.
@@ -97,7 +99,8 @@ publish the next year's numbers, and all states every January.
       reference values in `state-tax-data.test.ts` once SCDOR publishes the 2027 figure.
 - [ ] **All states: review the 2027 data (January 15, 2027).** Rates, `exemptAmount`, `estimateRate`,
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
-      Then update `STATE_TAX_DATA_AS_OF`, `STATE_TAX_LAST_UPDATED` and the tax year shown on the pages.
+      Then update `STATE_TAX_DATA_AS_OF`, move every state to the review date in `STATE_REVIEWS`, set
+      `NEXT_FULL_STATE_REVIEW` to the next full review, and update the tax year shown on the pages.
 
 - [ ] **Schedule 1-A: final 2026 form and instructions (when the IRS publishes them).** The senior deduction
       and car loan interest calculators follow the 2026 draft Schedule 1-A (https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf)
