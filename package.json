@@ -13,6 +13,7 @@
     "astro": "astro",
     "test": "vitest run",
     "check:prod": "node scripts/run-bash.mjs scripts/check-production.sh",
+    "check:ref": "node scripts/check-reference-cases.mjs",
     "generate:map": "node scripts/generate-state-paths.mjs"
   },
   "dependencies": {

@@ -32,7 +32,9 @@ publish the next year's numbers, and all states every January.
         calculation at the `_2027` constants (brackets, standard deduction, age addition, Social
         Security wage base), update the header comment of `marginal-rate.ts` to Rev. Proc. 2026-35,
         then recalculate the four reference cases (MAINTENANCE.md, section 2.4) and update them and the
-        tests. Before that, download rp-26-35.pdf again (https://www.irs.gov/pub/irs-drop/rp-26-35.pdf)
+        tests. Then reread `/guides/2027-tax-brackets/` (its "still calculates 2026" sentences switch on
+        `SITE_TAX_YEAR` by themselves) and the 2027 sentence in the "How often we review the data"
+        section of `/methodology/`. Before that, download rp-26-35.pdf again (https://www.irs.gov/pub/irs-drop/rp-26-35.pdf)
         and check whether the IRS has corrected two things: the start of the head of household 37%
         bracket ($661,350 against $661,375 for single; the two were equal in 2025 and 2026) and the
         "[Release Date, 2026]" placeholder in section 1. If the HoH figure changes, update

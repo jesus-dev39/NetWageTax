@@ -12,7 +12,7 @@
 
 import type { FilingStatus } from './obbba-params';
 
-interface Bracket {
+export interface Bracket {
   /** Límite superior del tramo (renta imponible), Infinity para el último. */
   upTo: number;
   rate: number;
@@ -62,16 +62,21 @@ export const STANDARD_DEDUCTION_2027: Record<FilingStatus, number> = {
   mfs: 16_600,
 };
 
-/** Impuesto federal sobre la renta (ordinaria) para una renta imponible dada. */
-export function computeFederalIncomeTax(taxableIncome: number, filingStatus: FilingStatus): number {
+/** Impuesto sobre una renta imponible con una tabla de tramos cualquiera (2026, 2027…). */
+export function taxFromBrackets(taxableIncome: number, brackets: readonly Bracket[]): number {
   let tax = 0;
   let lower = 0;
-  for (const { upTo, rate } of TAX_BRACKETS_2026[filingStatus]) {
+  for (const { upTo, rate } of brackets) {
     if (taxableIncome <= lower) break;
     tax += (Math.min(taxableIncome, upTo) - lower) * rate;
     lower = upTo;
   }
   return tax;
+}
+
+/** Impuesto federal sobre la renta (ordinaria) para una renta imponible dada. */
+export function computeFederalIncomeTax(taxableIncome: number, filingStatus: FilingStatus): number {
+  return taxFromBrackets(taxableIncome, TAX_BRACKETS_2026[filingStatus]);
 }
 
 /** Tipo marginal aplicable a una renta imponible dada. */
