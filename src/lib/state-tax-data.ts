@@ -115,7 +115,9 @@ const ROWS: Row[] = [
   FLAT('CO', 'Colorado', 0.044, 16_100, 'Flat 4.4%, calculated from federal taxable income. TABOR refunds can temporarily lower the rate.', 'Denver and a few other cities charge a small monthly occupational privilege tax.'),
   GRAD('CT', 'Connecticut', 0.0435, 0, [0.02, 0.0699], 'Seven brackets (2%–6.99%). The personal exemption phases out by about $44,000 for single filers.'),
   GRAD('DE', 'Delaware', 0.048, 3_250, [0.022, 0.066], 'Brackets from 2.2% to 6.6% above $60,000. Delaware has no state sales tax.', 'Wilmington levies a 1.25% city wage tax.'),
-  GRAD('DC', 'District of Columbia', 0.057, 16_100, [0.04, 0.1075], 'Seven brackets from 4% to 10.75%. Uses the federal standard deduction.'),
+  // H.J.Res. 142 (Pub. L. 119-78, February 2026) overturned the decoupling law that set DC's own $15,000 deduction; the
+  // 2025 D-40 booklet still shows $15,000. Keep the federal amount until the 2026 instructions confirm it.
+  GRAD('DC', 'District of Columbia', 0.057, 16_100, [0.04, 0.1075], 'Seven brackets from 4% to 10.75%. Uses the federal standard deduction: Congress overturned the 2025 law that set DC’s own $15,000 deduction. The DC Council is discussing a response, and we’ll confirm with the 2026 instructions.'),
   NO_TAX('FL', 'Florida', 'Florida has no personal income tax. Article VII, Section 5 of the Florida Constitution prohibits one.'),
   // HB 463 (2026): 4.99% and the $15,000 single standard deduction ($30,000 joint), Section 2-3, for taxable years from
   // January 1, 2026 (Section 5-1). The deduction then rises $375 a year from 2027, up to $18,000, unless revenue triggers delay it.
@@ -138,7 +140,9 @@ const ROWS: Row[] = [
   FLAT('MI', 'Michigan', 0.0425, 5_900, 'Flat 4.25%.', 'Detroit (2.4%) and about 20 other cities levy their own income tax.'),
   GRAD('MN', 'Minnesota', 0.059, 15_300, [0.0535, 0.0985], 'Four brackets from 5.35% to 9.85%.'),
   FLAT('MS', 'Mississippi', 0.04, 18_300, 'The first $10,000 of taxable income is exempt, then 4% for 2026, stepping down to 3% by 2030.'),
-  GRAD('MO', 'Missouri', 0.044, 16_100, [0.02, 0.047], 'Brackets up to 4.7%, reached at a low income. Uses the federal standard deduction.', 'Kansas City and St. Louis charge a 1% earnings tax.'),
+  // Form 4282 (2026 withholding formula, rev. 03-2026): $16,100 standard deduction; 0% up to $1,348, then 2% to 4.5% in
+  // $1,348 steps and 4.7% over $9,436. Tax on $65,000 − $16,100 = $2,117.67 → estimateRate 4.33%.
+  GRAD('MO', 'Missouri', 0.0433, 16_100, [0.02, 0.047], 'Brackets up to 4.7%, reached at a low income. Uses the federal standard deduction.', 'Kansas City and St. Louis charge a 1% earnings tax.'),
   GRAD('MT', 'Montana', 0.052, 16_100, [0.047, 0.0565], 'Two brackets; the top rate drops to 5.65% for 2026. Starts from federal taxable income.'),
   // estimateRate: 2026 brackets (2.46% / 3.51% over $4,130 / 4.55% over $24,760) on $65,000 − $8,850.
   GRAD('NE', 'Nebraska', 0.0401, 8_850, [0.0246, 0.0455], 'The top rate drops to 4.55% for 2026 on the way to 3.99%.'),
@@ -154,7 +158,7 @@ const ROWS: Row[] = [
   GRAD('OK', 'Oklahoma', 0.041, 7_350, [0.025, 0.045], 'Brackets consolidated and the top rate cut to 4.5% for 2026.'),
   // Calculated with the bracket engine (BRACKETS.OR); estimateRate and exemptAmount are only a fallback.
   GRAD('OR', 'Oregon', 0.0703, 2_910, [0.0475, 0.099], 'Four brackets up to 9.9%, with a small standard deduction. You can subtract the federal income tax you paid, up to $8,750 for 2026, a limit that shrinks at higher incomes. Oregon has no sales tax.', 'Portland Metro and Multnomah County add taxes on higher incomes.'),
-  FLAT('PA', 'Pennsylvania', 0.0307, 0, 'Flat 3.07% with no standard deduction or personal exemption.', 'Most municipalities levy an earned income tax (usually ~1%; Philadelphia 3.74%).'),
+  FLAT('PA', 'Pennsylvania', 0.0307, 0, 'Flat 3.07% with no standard deduction or personal exemption.', 'Most municipalities levy an earned income tax (usually ~1%). Philadelphia’s wage tax is 3.735% for residents and 3.425% for nonresidents from July 1, 2026.'),
   // $11,200 standard deduction + $5,250 exemption; $48,550 taxable stays in the 3.75% bracket.
   GRAD('RI', 'Rhode Island', 0.0375, 16_450, [0.0375, 0.0599], 'Three brackets (3.75%–5.99%).'),
   // H.4216 (Act 110 of 2026). exemptAmount = the SCIAD at $65,000 of federal AGI ($15,000 less 25/55, rounded down to $10);
@@ -170,7 +174,8 @@ const ROWS: Row[] = [
   GRAD('VT', 'Vermont', 0.0351, 13_050, [0.0335, 0.0875], 'Four brackets from 3.35% to 8.75%.'),
   // $8,750 standard deduction + $930 exemption; estimateRate: 2% / 3% / 5% / 5.75% over $17,000 on $55,320.
   GRAD('VA', 'Virginia', 0.0528, 9_680, [0.02, 0.0575], 'Four brackets; the 5.75% top rate starts at just $17,000 of taxable income.'),
-  NO_TAX('WA', 'Washington', 'No tax on wages. Washington taxes only long-term capital gains above a large exemption.'),
+  // SB 6346: Governor signed March 30, 2026 (Chapter 238, 2026 Laws); DOR: the tax takes effect January 1, 2028.
+  NO_TAX('WA', 'Washington', 'No tax on wages. Washington taxes only long-term capital gains above a large exemption. From January 1, 2028, a new 9.9% tax on income over $1 million applies (SB 6346, signed March 2026); legal challenges are expected.'),
   // SB 392 (2026): estimateRate = the 2026 schedule on $65,000 − $2,000.
   GRAD('WV', 'West Virginia', 0.0331, 2_000, [0.0211, 0.0458], 'Five brackets from 2.11% to 4.58% for 2026, under SB 392 (2026), applied back to January 1.'),
   // Form 1-ES 2026: $13,960 standard deduction less 12% of income over $20,120 ($8,574 at $65,000) + the $700 exemption.
@@ -193,8 +198,9 @@ const STATE_REVIEWS: Record<string, StateCode[]> = {
   // Review of the states left from the initial data; only those confirmed unchanged for 2026:
   // AK (DOR personal income page), FL (Constitution Art. VII §5), SD (DOR), TN (DOR, Hall tax repealed
   // from 2021), TX (Constitution Art. VIII §24-a), WY (W.S. 39-7-101 repealed, 39-12-101), and MS
-  // (DOR: 0% on the first $10,000, 4% for 2026; $2,300 standard deduction, $6,000 exemption).
-  '2026-11-12': ['AK', 'FL', 'MS', 'SD', 'TN', 'TX', 'WY'],
+  // (DOR: 0% on the first $10,000, 4% for 2026; $2,300 standard deduction, $6,000 exemption). Updated the same day:
+  // DC (rates; deduction note), MO (2026 brackets), PA (Philadelphia wage tax), WA (2028 tax note).
+  '2026-11-12': ['AK', 'DC', 'FL', 'MO', 'MS', 'PA', 'SD', 'TN', 'TX', 'WA', 'WY'],
 };
 const REVIEWED_ON = Object.fromEntries(
   Object.entries(STATE_REVIEWS).flatMap(([date, codes]) => codes.map((c) => [c, date])),
