@@ -190,6 +190,11 @@ const STATE_REVIEWS: Record<string, StateCode[]> = {
   '2026-10-04': ['AR', 'HI', 'IL', 'KY', 'LA', 'ME', 'MI', 'NE', 'OH', 'RI', 'UT', 'VA', 'VT', 'WI'],
   // Bracket engine (CA, NY, SC, WV; AZ, GA, MD, NC, OR) and the external review (Massachusetts surtax, Georgia deduction).
   '2026-10-29': ['AZ', 'CA', 'GA', 'MA', 'MD', 'NC', 'NY', 'OR', 'SC', 'WV'],
+  // Review of the states left from the initial data; only those confirmed unchanged for 2026:
+  // AK (DOR personal income page), FL (Constitution Art. VII §5), SD (DOR), TN (DOR, Hall tax repealed
+  // from 2021), TX (Constitution Art. VIII §24-a), WY (W.S. 39-7-101 repealed, 39-12-101), and MS
+  // (DOR: 0% on the first $10,000, 4% for 2026; $2,300 standard deduction, $6,000 exemption).
+  '2026-11-12': ['AK', 'FL', 'MS', 'SD', 'TN', 'TX', 'WY'],
 };
 const REVIEWED_ON = Object.fromEntries(
   Object.entries(STATE_REVIEWS).flatMap(([date, codes]) => codes.map((c) => [c, date])),
