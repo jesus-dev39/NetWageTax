@@ -233,8 +233,10 @@ const isActive = (section: string) => section === activeSection;
     <!-- Status strip (docs/DESIGN.md §6): the tax year and when the rules were last reviewed. -->
     <div class="border-b border-line bg-surface text-sm text-ink-2 sm:text-[15px]">
       <p class="container-page py-2.5">
-        <strong class="font-semibold text-ink">Tax year {SITE_TAX_YEAR}.</strong> {strip.federal}{' '}
-        <time datetime={FEDERAL_INCOME_TAX_CHECKED}>{strip.federalDate}</time>. {strip.state}{' '}
+        <strong class="font-semibold text-ink">Tax year {SITE_TAX_YEAR}</strong>
+        <span aria-hidden="true"> · </span>{strip.federal}{' '}
+        <time datetime={FEDERAL_INCOME_TAX_CHECKED}>{strip.federalDate}</time>
+        <span aria-hidden="true"> · </span>
         <a href="/methodology/" class="text-link underline underline-offset-[3px] hover:decoration-2">How we calculate</a>
       </p>
     </div>

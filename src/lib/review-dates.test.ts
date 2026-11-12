@@ -29,8 +29,8 @@ describe('review dates in the data', () => {
   it('has the federal check of November 12, 2026 and leaves FICA out until it is rechecked', () => {
     expect(FEDERAL_INCOME_TAX_CHECKED).toBe('2026-11-12');
     expect(FICA_FIGURES_CHECKED).toBe('2026-09-26');
-    expect(federalFiguresLabel()).toBe('Federal income tax figures');
-    expect(federalFiguresLabel('2026-11-12', '2026-11-12')).toBe('Federal income tax and FICA figures');
+    expect(federalFiguresLabel()).toBe('Federal figures');
+    expect(federalFiguresLabel('2026-11-12', '2026-11-12')).toBe('Federal and FICA figures');
     expect(nextFullStateReviewLabel()).toBe('January 2027');
   });
 
@@ -81,12 +81,11 @@ describe('rendered pages', () => {
   it('shows the new status strip and the methodology summary', async () => {
     const t = await render(Methodology, '/methodology/');
     const strip = statusStripText();
-    const expected =
-      'Tax year 2026. Federal income tax figures checked November 12, 2026. State rules: review date shown on each state page; full review January 2027. How we calculate';
-    expect(`Tax year 2026. ${strip.federal} ${strip.federalDate}. ${strip.state} How we calculate`).toBe(expected);
+    const expected = 'Tax year 2026 · Federal figures checked November 12, 2026 · How we calculate';
+    expect(`Tax year 2026 · ${strip.federal} ${strip.federalDate} · How we calculate`).toBe(expected);
     expect(t).toContain(expected);
     expect(t).not.toContain('Federal, FICA, and state rules last checked');
-    expect(t).toContain('Federal income tax figures checked November 12, 2026');
+    expect(t).toContain('Federal figures checked November 12, 2026');
     expect(t).toContain('State rules Review date shown on each state page Full review January 2027.');
   });
 

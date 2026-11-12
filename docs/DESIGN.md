@@ -168,11 +168,11 @@ figure (it's hard to read and delays the number).
   links ("Paycheck", "Tips & overtime", "State taxes", "W-2 codes", "About"), and the dark mode
   toggle. "Contact" lives in the footer only. On mobile, the toggle plus a "Menu" text button.
 - **Status strip** (replaces the "2026 OBBBA TAX LAW ACTIVE" pill): a `surface` band under the
-  header on every page: "**Tax year 2026.** Federal income tax figures checked November 12,
-  2026. State rules: review date shown on each state page; full review January 2027. How we
-  calculate". The wording and dates come from `src/lib/review-dates.ts` ("and FICA" is added only
-  when `FICA_FIGURES_CHECKED` matches the federal date); each state page shows its own `reviewed`
-  date. The link goes to `/methodology/`.
+  header on every page: "**Tax year 2026** · Federal figures checked November 12, 2026 · How we
+  calculate", at most two lines at 390px. The wording and date come from `src/lib/review-dates.ts`
+  ("Federal and FICA figures" only when `FICA_FIGURES_CHECKED` matches the federal date). State
+  review dates are explained on `/methodology/` and shown on each state page (`reviewed`). The link
+  goes to `/methodology/`.
 - **Primary button.** `green` fill, white 600 text, 44px tall, 4px radius, flat. One primary
   button per view. **Secondary:** white with a 2px `ink` border. **Tertiary:** underlined link.
 - **Money field.** Input with a `$` prefix in a `surface` box separated by 1px, 2px `field`
