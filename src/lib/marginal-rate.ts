@@ -4,6 +4,8 @@
  * de la deducción OBBBA (SPEC.md §2.2 — TAX_BRACKETS_2026).
  *
  * Fuente: IRS Rev. Proc. 2025-32 (ajustes por inflación 2026).
+ * Las constantes *_2027 (Rev. Proc. 2026-35) ya están añadidas, pero todavía no
+ * se usan: el cálculo sigue en 2026 hasta el cambio de año de enero.
  * Simplificación v1: se asume deducción estándar y MAGI ≈ AGI. La deducción
  * OBBBA reduce la base imponible (Schedule 1-A → Form 1040), no el AGI.
  */
@@ -36,6 +38,30 @@ export const STANDARD_DEDUCTION_2026: Record<FilingStatus, number> = {
   mfs: 16_100,
 };
 
+/**
+ * Tramos federales 2027: IRS Rev. Proc. 2026-35, §3.01, Tables 1-4 (publicada
+ * el 5 de noviembre de 2026: https://www.irs.gov/pub/irs-drop/rp-26-35.pdf).
+ * Not used yet: switch in January (SITE_TAX_YEAR → 2027, MAINTENANCE.md §3.1).
+ */
+export const TAX_BRACKETS_2027: Record<FilingStatus, Bracket[]> = {
+  single: buildBrackets([12_800, 52_025, 109_125, 208_325, 264_550, 661_375]),
+  hoh: buildBrackets([18_250, 69_650, 109_100, 208_300, 264_550, 661_350]),
+  mfj: buildBrackets([25_600, 104_050, 218_250, 416_650, 529_100, 793_650]),
+  mfs: buildBrackets([12_800, 52_025, 109_125, 208_325, 264_550, 396_825]),
+};
+
+/**
+ * Deducción estándar 2027: IRS Rev. Proc. 2026-35, §3.15(1) (publicada el 5 de
+ * noviembre de 2026: https://www.irs.gov/pub/irs-drop/rp-26-35.pdf).
+ * Not used yet: switch in January (SITE_TAX_YEAR → 2027, MAINTENANCE.md §3.1).
+ */
+export const STANDARD_DEDUCTION_2027: Record<FilingStatus, number> = {
+  single: 16_600,
+  hoh: 24_925,
+  mfj: 33_200,
+  mfs: 16_600,
+};
+
 /** Impuesto federal sobre la renta (ordinaria) para una renta imponible dada. */
 export function computeFederalIncomeTax(taxableIncome: number, filingStatus: FilingStatus): number {
   let tax = 0;
@@ -59,6 +85,15 @@ export function getMarginalRate(taxableIncome: number, filingStatus: FilingStatu
  * $2,050 para quien no está casado (ni es surviving spouse) y $1,650 por cónyuge casado.
  */
 export const ADDITIONAL_STANDARD_DEDUCTION_AGED_2026 = { unmarried: 2_050, married: 1_650 } as const;
+
+/**
+ * Deducción estándar adicional por edad (65+) en 2027, IRC §63(f), IRS Rev. Proc.
+ * 2026-35 §3.15(3) (publicada el 5 de noviembre de 2026:
+ * https://www.irs.gov/pub/irs-drop/rp-26-35.pdf): $2,100 para quien no está casado
+ * (ni es surviving spouse) y $1,700 por cónyuge casado.
+ * Not used yet: switch in January (SITE_TAX_YEAR → 2027, MAINTENANCE.md §3.1).
+ */
+export const ADDITIONAL_STANDARD_DEDUCTION_AGED_2027 = { unmarried: 2_100, married: 1_700 } as const;
 
 /** Deducción estándar adicional por edad para `people65` personas de 65+ en la declaración. */
 export function agedAdditionalStandardDeduction(filingStatus: FilingStatus, people65: number): number {
