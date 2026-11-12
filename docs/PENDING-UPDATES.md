@@ -18,8 +18,23 @@ publish the next year's numbers, and all states every January.
   - [x] **Social Security wage base 2027:** $192,300 (SSA, October 14, 2026,
         https://www.ssa.gov/oact/cola/cbb.html), added as `SOCIAL_SECURITY_WAGE_BASE_2027` in
         `fica.ts`. Not used yet: switch to it when the site moves to 2027 (MAINTENANCE.md, section 3.2).
-  - [ ] **Federal brackets and standard deductions 2027** (IRS Revenue Procedure), and the tips and
-        overtime parameters in `obbba-params.ts`.
+  - [x] **Federal brackets and standard deductions 2027:** IRS Rev. Proc. 2026-35 (published
+        November 5, 2026, https://www.irs.gov/pub/irs-drop/rp-26-35.pdf; press release IR-2026-133),
+        added as `TAX_BRACKETS_2027`, `STANDARD_DEDUCTION_2027` and
+        `ADDITIONAL_STANDARD_DEDUCTION_AGED_2027` in `marginal-rate.ts` (single $16,600, MFJ $33,200,
+        HoH $24,925, MFS $16,600; age addition $2,100 unmarried / $1,700 married). Not used yet: switch
+        in January (MAINTENANCE.md, section 3.1). Checked in `federal-2027-figures.test.ts`.
+  - [x] **Schedule 1-A 2027 (tips, overtime, seniors, car loan interest):** no change. Rev. Proc.
+        2026-35 doesn't adjust them, and §§224(b), 225(b), 151(d)(5)(C) and 163(h)(4)(C) set fixed
+        amounts with no inflation clause (checked November 12, 2026). `obbba-params.ts` already maps
+        2027 to the same parameters.
+  - [ ] **Switch the site to 2027 (January 2027).** Set `SITE_TAX_YEAR` to 2027 and point the
+        calculation at the `_2027` constants (brackets, standard deduction, age addition, Social
+        Security wage base), update the header comment of `marginal-rate.ts` to Rev. Proc. 2026-35,
+        then recalculate the four reference cases (MAINTENANCE.md, section 2.4) and update them and the
+        tests. Before that, check the head of household top bracket: the Rev. Proc. gives $661,350
+        against $661,375 for single (the two were equal in 2025 and 2026), and the PDF still says
+        "[Release Date, 2026]" in section 1. Look for an updated version or an IRS correction.
 - [ ] **New York: switch the bracket source (Dec 2026–Jan 2027).** Once the 2026 Form IT-201
       instructions are published, replace `bracketsSource` (currently the NYS-50-T-NYS withholding
       tables) with the IT-201 instructions' tax rate schedule, and confirm the single-filer brackets

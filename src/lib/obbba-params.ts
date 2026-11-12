@@ -8,6 +8,10 @@
  * ajustes por inflación en años futuros, actualizar PARAMS_BY_YEAR — el resto
  * del sistema no requiere cambios porque la lógica de cálculo lee siempre de
  * esta tabla, nunca de números embebidos.
+ *
+ * 2027 comprobado el 12-11-2026: la Rev. Proc. 2026-35 no ajusta ningún importe
+ * del Schedule 1-A, y los §§224(b), 225(b), 151(d)(5)(C) y 163(h)(4)(C) fijan las
+ * cantidades sin cláusula de inflación. Por eso 2027 usa los mismos parámetros.
  */
 
 import type { PhaseoutRule } from './phaseout';
