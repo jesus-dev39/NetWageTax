@@ -1,0 +1,389 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import FaqList from '../../components/FaqList.astro';
+import AdSlot from '../../components/AdSlot';
+import { formatUSD } from '../../components/CurrencyInput';
+import { CONTACT_EMAIL, formatLongDate } from '../../lib/site';
+import {
+  AGED_ADDITION_ROWS,
+  BRACKET_TABLES_2027,
+  BRACKETS_2027_DESCRIPTION,
+  BRACKETS_2027_FAQS,
+  BRACKETS_2027_GUIDE_PATH,
+  BRACKETS_2027_GUIDE_TITLE,
+  BRACKETS_2027_LAST_CHECKED,
+  BRACKETS_2027_PUBLISHED,
+  BRACKETS_2027_SOURCES,
+  CALCULATORS_TAX_YEAR,
+  EXAMPLES,
+  formatTaxBelow,
+  HOH_TOP_NOTE,
+  pct,
+  REV_PROC_2026_35_RELEASED,
+  SCHEDULE_1A_2027,
+  signedUSD,
+  SOCIAL_SECURITY_ROW,
+  STANDARD_DEDUCTION_ROWS,
+  TOP_RATE,
+} from '../../lib/guide-2027-brackets';
+
+// Search intent: "2027 tax brackets", "2027 standard deduction", "2027 federal income tax brackets".
+const checkedLabel = formatLongDate(BRACKETS_2027_LAST_CHECKED);
+const releasedLabel = formatLongDate(REV_PROC_2026_35_RELEASED);
+const sd = Object.fromEntries(STANDARD_DEDUCTION_ROWS.map((r) => [r.status, r]));
+const lowRate = BRACKET_TABLES_2027[0].rows[0].rate;
+
+const summary = [
+  { label: 'Standard deduction, single', value: formatUSD(sd.single.y2027) },
+  { label: 'Standard deduction, married filing jointly', value: formatUSD(sd.mfj.y2027) },
+  { label: 'Standard deduction, head of household', value: formatUSD(sd.hoh.y2027) },
+  { label: 'Tax rates', value: `${pct(lowRate)} to ${pct(TOP_RATE)}` },
+];
+
+const toc = [
+  { id: 'what-it-is', label: 'What the 2027 figures are' },
+  { id: 'brackets', label: '2027 tax brackets by filing status' },
+  { id: 'standard-deduction', label: 'Standard deduction: 2026 vs. 2027' },
+  { id: 'examples', label: 'Examples: federal tax in 2026 and 2027' },
+  { id: 'other-2027', label: 'Other 2027 figures' },
+  { id: 'faq', label: 'Frequently asked questions' },
+  { id: 'sources', label: 'Sources and review' },
+];
+
+const url = `https://netwagetax.com${BRACKETS_2027_GUIDE_PATH}`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: BRACKETS_2027_GUIDE_TITLE,
+      description: BRACKETS_2027_DESCRIPTION,
+      datePublished: BRACKETS_2027_PUBLISHED,
+      dateModified: BRACKETS_2027_LAST_CHECKED,
+      author: { '@type': 'Organization', name: 'NetWageTax', url: 'https://netwagetax.com/about/' },
+      publisher: { '@id': 'https://netwagetax.com/#organization' },
+      mainEntityOfPage: url,
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: BRACKETS_2027_FAQS.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer.join(' ') },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://netwagetax.com/' },
+        { '@type': 'ListItem', position: 2, name: '2027 tax brackets', item: url },
+      ],
+    },
+  ],
+};
+
+const linkClass = 'text-link underline underline-offset-[3px] hover:decoration-2';
+const h2Class = 'scroll-mt-20 text-2xl/[1.2] font-bold tracking-[-0.01em] text-ink md:text-[1.75rem]';
+const h3Class = 'scroll-mt-20 text-[1.1875rem]/[1.3] font-bold text-ink md:text-xl/[1.3]';
+const th = 'bg-surface px-2 py-2 text-left font-semibold text-ink sm:px-3';
+const td = 'border-t border-line px-2 py-2 sm:px-3';
+const thNum = `${th} text-right`;
+const tdNum = `${td} num text-right`;
+---
+
+<BaseLayout title={BRACKETS_2027_GUIDE_TITLE} description={BRACKETS_2027_DESCRIPTION} ogType="article" appendSiteName={false}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <PageHeader
+    title="2027 tax brackets and standard deduction"
+    lead={`The IRS published the 2027 federal income tax brackets and standard deduction on ${releasedLabel}, in Revenue Procedure 2026-35. Here they are for every filing status, next to the 2026 figures.`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: '2027 tax brackets' }]}
+  >
+    <dl class="num mt-6 border-t border-line text-[15px] sm:text-base">
+      {
+        summary.map(({ label, value }) => (
+          <div class="flex items-baseline justify-between gap-4 border-b border-line py-2">
+            <dt class="text-ink-2">{label}</dt>
+            <dd class="text-right font-semibold text-ink">{value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <p class="mt-4 text-[15px] text-ink-2">
+      By <a href="/about/" class={linkClass}>NetWageTax</a>. Last checked{' '}
+      <time datetime={BRACKETS_2027_LAST_CHECKED}>{checkedLabel}</time>. Source: IRS Rev. Proc. 2026-35.
+    </p>
+  </PageHeader>
+
+  <div class="container-page py-10">
+    <!-- Ad placement: below the header, md+ only. -->
+    <div class="hidden md:block">
+      <AdSlot client:visible format="leaderboard" placement="guide-2027-brackets-top" className="mb-10" />
+    </div>
+
+    <div class="max-w-3xl">
+      <nav aria-labelledby="toc-heading">
+        <h2 id="toc-heading" class="text-xl/[1.3] font-bold text-ink">On this page</h2>
+        <ol class="mt-3 list-decimal space-y-1.5 pl-6">
+          {
+            toc.map(({ id, label }) => (
+              <li>
+                <a href={`#${id}`} class={linkClass}>
+                  {label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <article class="prose-page mt-12 border-t border-line pt-10">
+        <h2 id="what-it-is">What the 2027 figures are</h2>
+        <p>
+          These are the federal income tax rules for the money you earn in 2027, from January 1 to December 31. You
+          report that income on the tax return you file in 2028. The IRS adjusts the bracket thresholds and the standard
+          deduction for inflation every year and published the 2027 amounts on {releasedLabel} (Revenue Procedure
+          2026-35, announced in news release IR-2026-133). The rates themselves, {pct(lowRate)} to {pct(TOP_RATE)}, don’t
+          change.
+        </p>
+        {
+          CALCULATORS_TAX_YEAR < 2027 ? (
+            <p>
+              Our calculators still use the {CALCULATORS_TAX_YEAR} rules, because the return you file in early 2027 covers{' '}
+              {CALCULATORS_TAX_YEAR} income. They switch to 2027 in January.
+            </p>
+          ) : (
+            <p>Our calculators use these 2027 rules.</p>
+          )
+        }
+      </article>
+
+      <section aria-labelledby="brackets" class="mt-12 border-t border-line pt-10">
+        <h2 id="brackets" class={h2Class}>2027 tax brackets by filing status</h2>
+        <p class="mt-3 text-ink-2">
+          Each rate applies only to the part of your taxable income inside its bracket. Taxable income is your income
+          after the standard deduction (or itemized deductions) and the Schedule 1-A deductions. The last column is the
+          tax on all the brackets below, as in the IRS tables.
+        </p>
+        {
+          BRACKET_TABLES_2027.map((t) => (
+            <>
+              <h3 id={t.id} class={`${h3Class} mt-8`}>
+                {t.name}
+              </h3>
+              <div class="mt-3 overflow-x-auto">
+                <table class="w-full text-[15px]">
+                  <caption class="sr-only">2027 federal tax brackets, {t.name.toLowerCase()}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" class={th}>Rate</th>
+                      <th scope="col" class={thNum}>Taxable income over</th>
+                      <th scope="col" class={thNum}>Up to</th>
+                      <th scope="col" class={thNum}>Tax below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {t.rows.map((r) => (
+                      <tr>
+                        <td class={`${td} num font-semibold`}>{pct(r.rate)}</td>
+                        <td class={tdNum}>{formatUSD(r.over)}</td>
+                        <td class={tdNum}>{r.upTo === null ? 'No limit' : formatUSD(r.upTo)}</td>
+                        <td class={tdNum}>{formatTaxBelow(r.taxBelow)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ))
+        }
+        <div class="mt-6 border-l-4 border-warning bg-warning-tint px-4 py-3 text-[15px] text-ink">
+          <p>
+            <strong class="font-semibold">Head of household, {pct(TOP_RATE)} bracket.</strong> Rev. Proc. 2026-35 starts the{' '}
+            {pct(TOP_RATE)} rate at {formatUSD(HOH_TOP_NOTE.hoh2027)} for heads of household and at{' '}
+            {formatUSD(HOH_TOP_NOTE.single2027)} for single filers.{' '}
+            {HOH_TOP_NOTE.equalIn2026 && `In 2026 both started at ${formatUSD(HOH_TOP_NOTE.start2026)}. `}We use the
+            official figure and will update it if the IRS corrects it.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="standard-deduction" class="mt-12 border-t border-line pt-10">
+        <h2 id="standard-deduction" class={h2Class}>Standard deduction: 2026 vs. 2027</h2>
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full text-[15px]">
+            <caption class="sr-only">Standard deduction by filing status, 2026 and 2027</caption>
+            <thead>
+              <tr>
+                <th scope="col" class={th}>Filing status</th>
+                <th scope="col" class={thNum}>2026</th>
+                <th scope="col" class={thNum}>2027</th>
+                <th scope="col" class={thNum}>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                STANDARD_DEDUCTION_ROWS.map((r) => (
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>{r.name}</th>
+                    <td class={tdNum}>{formatUSD(r.y2026)}</td>
+                    <td class={`${tdNum} font-semibold`}>{formatUSD(r.y2027)}</td>
+                    <td class={tdNum}>{signedUSD(r.change)}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="age-65" class={`${h3Class} mt-8`}>Additional standard deduction for age 65 or older</h3>
+        <p class="mt-3 text-ink-2">
+          Added to the standard deduction for each person 65 or older (and again for blindness). It is separate from the
+          Schedule 1-A deduction for seniors below.
+        </p>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full text-[15px]">
+            <caption class="sr-only">Additional standard deduction for age 65 or older, 2026 and 2027</caption>
+            <thead>
+              <tr>
+                <th scope="col" class={th}>Who</th>
+                <th scope="col" class={thNum}>2026</th>
+                <th scope="col" class={thNum}>2027</th>
+                <th scope="col" class={thNum}>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                AGED_ADDITION_ROWS.map((r) => (
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>{r.name}</th>
+                    <td class={tdNum}>{formatUSD(r.y2026)}</td>
+                    <td class={`${tdNum} font-semibold`}>{formatUSD(r.y2027)}</td>
+                    <td class={tdNum}>{signedUSD(r.change)}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="examples" class="mt-12 border-t border-line pt-10">
+        <h2 id="examples" class={h2Class}>Examples: federal tax in 2026 and 2027</h2>
+        <p class="mt-3 text-ink-2">
+          Federal income tax on the same income in both years, with only the standard deduction and no credits,
+          Schedule 1-A deductions, or other adjustments. Your actual tax depends on your whole return.
+        </p>
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full text-[15px]">
+            <caption class="sr-only">Federal income tax in 2026 and 2027 for three example incomes</caption>
+            <thead>
+              <tr>
+                <th scope="col" class={th}>Filing status and income</th>
+                <th scope="col" class={thNum}>2026 tax</th>
+                <th scope="col" class={thNum}>2027 tax</th>
+                <th scope="col" class={thNum}>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                EXAMPLES.map((e) => (
+                  <tr>
+                    <th scope="row" class={`${td} text-left font-normal`}>
+                      {e.label}
+                      <span class="num mt-0.5 block text-sm text-ink-2">
+                        Taxable {formatUSD(e.taxable2026)} → {formatUSD(e.taxable2027)}
+                      </span>
+                    </th>
+                    <td class={tdNum}>{formatUSD(e.tax2026)}</td>
+                    <td class={`${tdNum} font-semibold`}>{formatUSD(e.tax2027)}</td>
+                    <td class={tdNum}>{signedUSD(e.change)}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 text-[15px] text-ink-2">
+          Want your own figure for this year? The <a href="/tools/paycheck-calculator/" class={linkClass}>paycheck
+          calculator</a> works out your {CALCULATORS_TAX_YEAR} federal tax, Social Security, Medicare, and state tax.
+        </p>
+      </section>
+
+      <section aria-labelledby="other-2027" class="mt-12 border-t border-line pt-10">
+        <h2 id="other-2027" class={h2Class}>Other 2027 figures</h2>
+
+        <h3 id="social-security" class={`${h3Class} mt-6`}>Social Security wage base</h3>
+        <p class="mt-3 text-ink-2">
+          The {pct(SOCIAL_SECURITY_ROW.rate)} Social Security tax applies to wages up to this amount. The Social Security Administration announced
+          the 2027 figure in October 2026. Medicare has no wage limit.
+        </p>
+        <dl class="num mt-3 border-t border-line text-[15px] sm:text-base">
+          <div class="flex items-baseline justify-between gap-4 border-b border-line py-2">
+            <dt class="text-ink-2">2026</dt>
+            <dd class="text-right font-semibold text-ink">{formatUSD(SOCIAL_SECURITY_ROW.y2026)}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-line py-2">
+            <dt class="text-ink-2">2027</dt>
+            <dd class="text-right font-semibold text-ink">
+              {formatUSD(SOCIAL_SECURITY_ROW.y2027)}
+              <span class="font-normal text-ink-2"> ({signedUSD(SOCIAL_SECURITY_ROW.change)})</span>
+            </dd>
+          </div>
+        </dl>
+
+        <h3 id="schedule-1a" class={`${h3Class} mt-8`}>Schedule 1-A deductions: no change in 2027</h3>
+        <p class="mt-3 text-ink-2">
+          The law sets these four deductions in dollars, with no inflation adjustment, for 2025 through 2028. The
+          income phase-outs don’t change either.
+        </p>
+        <ul class="mt-3 border-t border-line">
+          {
+            SCHEDULE_1A_2027.map((d) => (
+              <li class="flex flex-col gap-1 border-b border-line py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                <span class="text-ink">
+                  <span class="font-semibold">{d.label}:</span> <span class="num">{d.value}</span>
+                </span>
+                <a href={d.href} class={`${linkClass} text-[15px] sm:shrink-0`}>
+                  {d.linkLabel}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section aria-labelledby="faq" class="mt-12 border-t border-line pt-10">
+        <h2 id="faq" class={h2Class}>Frequently asked questions</h2>
+        <div class="mt-5">
+          <FaqList faqs={BRACKETS_2027_FAQS} />
+        </div>
+      </section>
+
+      <!-- Ad placement: after the FAQ, before the sources. -->
+      <AdSlot client:visible format="leaderboard" placement="guide-2027-brackets-bottom" className="mt-10" />
+
+      <article class="prose-page mt-12">
+        <h2 id="sources">Sources and review</h2>
+        <p>
+          Every figure on this page comes from the official sources below and is the same data our calculators use. It
+          is educational information, not tax advice.
+        </p>
+        <ul>
+          {
+            BRACKETS_2027_SOURCES.map(({ label, href }) => (
+              <li>
+                <a href={href} rel="noopener" target="_blank">{label}</a>
+              </li>
+            ))
+          }
+        </ul>
+        <p>
+          See <a href="/methodology/">how we calculate</a> for the rules our estimates follow. Spotted something out of
+          date? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we’ll review it.
+        </p>
+      </article>
+    </div>
+  </div>
+</BaseLayout>
