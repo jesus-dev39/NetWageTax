@@ -101,6 +101,27 @@ publish the next year's numbers, and all states every January.
       `bracketRange`, notes, local tax notes, bracket tables and `sourceUrl` for all 50 states + DC.
       Then update `STATE_TAX_DATA_AS_OF`, move every state to the review date in `STATE_REVIEWS`, set
       `NEXT_FULL_STATE_REVIEW` to the next full review, and update the tax year shown on the pages.
+  - [ ] **16 states not confirmed in the November 12, 2026 review** (still dated 2026-09-27). What's missing:
+        - **Nevada, New Hampshire:** an official statement of no wage tax for 2026 (leg.state.nv.us and
+          revenue.nh.gov returned 403 to automated requests; check in a browser).
+        - **Idaho:** everything (tax.idaho.gov didn't respond): 5.3% rate, 0% band, $20,900 untaxed.
+        - **Minnesota:** the 2026 indexed bracket thresholds and the $15,300 standard deduction (the DOR site
+          has a bot check; the rates in Minn. Stat. 290.06 subd. 2c match).
+        - **North Dakota:** the 2026 single brackets (indexed yearly; our $48,475 0% band is the 2025 figure).
+        - **Montana, New Jersey, New Mexico:** the 2026 rates, brackets, and deduction or exemption (no readable
+          2026 source yet); New Jersey: also the Newark and Jersey City payroll tax note.
+        - **Oklahoma:** the 2026 single brackets and the $6,350 standard deduction (the $1,000 exemption matches).
+        - **Colorado:** the 2026 rate (the 2025 booklet says 4.4%) and the Denver occupational privilege tax.
+        - **Connecticut:** the 2026 brackets and the personal exemption phase-out (only the 2025 CT-1040
+          instructions so far).
+        - **Alabama:** the standard deduction at $65,000, the federal income tax deduction, and the Birmingham
+          1% occupational tax (rates and the $1,500 exemption match).
+        - **Delaware:** the Wilmington 1.25% wage tax (rates and the $3,250 standard deduction match the
+          Delaware Code as of October 1, 2026).
+        - **Indiana:** the $1,000 exemption and the county tax note (2.95% for 2026 matches).
+        - **Iowa:** a 2026 source for the 3.8% rate (the 2025 instructions match; the school district surtax
+          note matches).
+        - **Kansas:** the local tax note (rates, $3,605 standard deduction, and $9,160 exemption match K.S.A.).
 
 - [ ] **Schedule 1-A: final 2026 form and instructions (when the IRS publishes them).** The senior deduction
       and car loan interest calculators follow the 2026 draft Schedule 1-A (https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf)
@@ -159,6 +180,9 @@ publish the next year's numbers, and all states every January.
             single, MFJ, and HoH rules; Oregon's federal income tax subtraction is on.
       - [ ] Next: move more states as their `BRACKETS` are verified (MAINTENANCE.md, section 3.4), add MFS
             where it differs, turn on the federal income tax subtraction for Alabama and Missouri.
+      - [ ] Phase 3 candidates: **Missouri**, with the 2026 brackets from Form 4282 (rev. 03-2026): $16,100
+            standard deduction, 0% up to $1,348, 2% to 4.5% in $1,348 steps, 4.7% over $9,436. Its
+            `estimateRate` (4.33%) was recalibrated to these brackets on November 12, 2026.
       - [ ] **Maryland: confirm the 2026 standard deduction with the 2026 Form 502 instructions.** The site uses
             $3,350 single and $6,700 joint or head of household, from the Comptroller's 2026 Payment Voucher
             Worksheet; the 2026 MW507 instructions say "Standard deduction is $3,400". HB 411 (2026, $4,100)

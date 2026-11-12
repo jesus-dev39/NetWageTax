@@ -34,12 +34,13 @@ describe('review dates in the data', () => {
     expect(nextFullStateReviewLabel()).toBe('January 2027');
   });
 
-  it('gives every state its own review date, in three groups', () => {
+  it('gives every state its own review date, in four groups', () => {
     const byDate = (d: string) => STATES.filter((s) => s.reviewed === d).map((s) => s.code).sort();
     expect(byDate('2026-10-29')).toEqual(['AZ', 'CA', 'GA', 'MA', 'MD', 'NC', 'NY', 'OR', 'SC', 'WV']);
     expect(byDate('2026-10-04')).toEqual(['AR', 'HI', 'IL', 'KY', 'LA', 'ME', 'MI', 'NE', 'OH', 'RI', 'UT', 'VA', 'VT', 'WI']);
     expect(STATE_DATA_INITIAL_REVIEW).toBe('2026-09-27');
-    expect(byDate('2026-09-27')).toHaveLength(27);
+    expect(byDate('2026-11-12')).toEqual(['AK', 'DC', 'FL', 'MO', 'MS', 'PA', 'SD', 'TN', 'TX', 'WA', 'WY']);
+    expect(byDate('2026-09-27')).toEqual(['AL', 'CO', 'CT', 'DE', 'IA', 'ID', 'IN', 'KS', 'MN', 'MT', 'ND', 'NH', 'NJ', 'NM', 'NV', 'OK']);
     expect(STATES).toHaveLength(51);
   });
 
@@ -95,10 +96,11 @@ describe('rendered pages', () => {
     expect(t).toContain(`Last reviewed ${formatLongDate(s.reviewed)}.`);
   });
 
-  it('shows the date groups on the state pages: October 29, October 4, and the initial data', () => {
+  it('shows the date groups on the state pages: November 12, October 29, October 4, and the initial data', () => {
     expect(formatLongDate(STATES_BY_CODE.CA.reviewed)).toBe('October 29, 2026');
     expect(formatLongDate(STATES_BY_CODE.IL.reviewed)).toBe('October 4, 2026');
-    expect(formatLongDate(STATES_BY_CODE.TX.reviewed)).toBe('September 27, 2026');
+    expect(formatLongDate(STATES_BY_CODE.TX.reviewed)).toBe('November 12, 2026');
+    expect(formatLongDate(STATES_BY_CODE.NJ.reviewed)).toBe('September 27, 2026');
   });
 
   it('shows the checked range on the tips and overtime guide', async () => {
