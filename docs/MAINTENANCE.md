@@ -12,6 +12,8 @@ Documentos relacionados:
 - `SPEC.md`: especificación original de la calculadora de propinas y horas extra.
 - `README.md`: descripción general del proyecto.
 - `scripts/check-production.sh` (`npm run check:prod`): comprobaciones de producción (sección 2.3).
+- `scripts/check-reference-cases.mjs` (`npm run check:ref`): los cuatro casos de referencia en la web
+  real (secciones 2.3 y 2.4).
 
 > **Regla de oro:** cualquier cifra fiscal que cambies tiene que venir de una fuente oficial (IRS,
 > SSA, el departamento de hacienda del estado o el texto de la ley). Guarda el enlace en el código,
@@ -181,7 +183,26 @@ npm run check:prod -- https://otra-direccion.vercel.app
 ```
 
 Los casos de referencia 2, 3 y 4 (las calculadoras) no se pueden comprobar con `curl` porque se
-calculan en el navegador: hazlos a mano (sección 2.4).
+calculan en el navegador. Para eso está el segundo comando:
+
+```sh
+npm run check:ref
+```
+
+`scripts/check-reference-cases.mjs` abre un Chrome sin ventana, rellena la portada y las tres
+calculadoras con los datos de la sección 2.4, como lo haría una persona, y lee la cifra del
+resultado. Tarda unos 15 segundos. Igual que `check:prod`, termina con **`TODO OK`** o con
+**`HA FALLADO (N):`** y la lista de casos que no dan la cifra esperada. Solo necesita Node y Chrome
+instalado. Si Chrome no está en su ruta habitual, indícala con la variable `CHROME_PATH`
+(`CHROME_PATH="/ruta/a/chrome" npm run check:ref` en Git Bash). Para otra dirección, también se
+pasa detrás de `--`:
+
+```sh
+npm run check:ref -- https://otra-direccion.vercel.app
+npm run check:ref -- http://localhost:4321     # con `npx astro preview` en marcha
+```
+
+Después de cada publicación, ejecuta los dos: `npm run check:prod` y `npm run check:ref`.
 
 Si quieres entender qué hace el script, o te falla y quieres repetir una comprobación suelta, estos
 son los comandos equivalentes:
@@ -223,8 +244,9 @@ curl -s https://netwagetax.com/ads.txt
 
 Son cálculos conocidos que deben dar siempre la misma cifra mientras no cambien las reglas fiscales
 de 2026. Si alguno da otra cosa después de publicar, algo se ha roto (o has cambiado cifras fiscales
-y tienes que verificar el resultado nuevo a mano). Los tests (`npm test`) ya cubren los tres
-últimos, pero conviene verlos también en la web real.
+y tienes que verificar el resultado nuevo a mano). Los tests (`npm test`) ya cubren los cuatro, y
+`npm run check:ref` los comprueba en la web real (sección 2.3). Abajo están los pasos por si
+quieres repetirlos a mano.
 
 **1. Portada: $2,092.60.** La estimación de la portada viene rellenada con un salario de $65,000,
 pago cada dos semanas (*biweekly*), *Single* y sin estado. Debe mostrar **Take-home per paycheck
