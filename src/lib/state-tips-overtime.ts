@@ -485,8 +485,9 @@ export const TIPS_OVERTIME_RULES: Record<StateCode, TipsOvertimeRule> = {
   },
 };
 
-/** Most recent `checked` date across all states (YYYY-MM-DD), for the guide's "last checked" line. */
-export const TIPS_OVERTIME_LAST_CHECKED = Object.values(TIPS_OVERTIME_RULES)
+const checkedDates = Object.values(TIPS_OVERTIME_RULES)
   .map((r) => r.checked)
-  .sort()
-  .at(-1)!;
+  .sort();
+/** Earliest and most recent `checked` dates across all states (YYYY-MM-DD): the guide shows the range. */
+export const TIPS_OVERTIME_FIRST_CHECKED = checkedDates[0];
+export const TIPS_OVERTIME_LAST_CHECKED = checkedDates.at(-1)!;

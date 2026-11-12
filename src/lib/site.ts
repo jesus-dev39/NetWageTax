@@ -31,3 +31,16 @@ export const SCHEDULE_1A_DRAFT_NOTICE =
 export function formatLongDate(isoDate: string): string {
   return new Date(`${isoDate}T12:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
+
+/**
+ * A span of dates in the house style: "October 4–29, 2026", "September 27 – October 29, 2026", or a
+ * single date when both are the same day.
+ */
+export function formatDateRange(fromIso: string, toIso: string): string {
+  if (fromIso === toIso) return formatLongDate(fromIso);
+  const [a, b] = [new Date(`${fromIso}T12:00:00`), new Date(`${toIso}T12:00:00`)];
+  const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'long' });
+  if (a.getFullYear() !== b.getFullYear()) return `${formatLongDate(fromIso)} – ${formatLongDate(toIso)}`;
+  if (a.getMonth() === b.getMonth()) return `${month(a)} ${a.getDate()}–${b.getDate()}, ${b.getFullYear()}`;
+  return `${month(a)} ${a.getDate()} – ${month(b)} ${b.getDate()}, ${b.getFullYear()}`;
+}

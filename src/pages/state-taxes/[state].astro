@@ -10,7 +10,6 @@ import {
   relatedStates,
   statePagePath,
   STATE_TAX_DATA_AS_OF,
-  STATE_TAX_LAST_UPDATED,
   STATES,
   stateTaxBreakdown,
   type StateTaxInfo,
@@ -68,7 +67,7 @@ const TIPS_HEADLINE: Record<Exclude<TipsOvertimeTreatment, 'no-wage-tax'>, strin
   unconfirmed: `We haven’t confirmed how ${s.name} treats the federal tips and overtime deduction for 2026.`,
 };
 const tipsHeadline = tipsStatus === 'no-wage-tax' ? '' : TIPS_HEADLINE[tipsStatus];
-const updatedLabel = formatLongDate(STATE_TAX_LAST_UPDATED);
+const updatedLabel = formatLongDate(s.reviewed);
 
 // Both calculators preselect the state from ?state=<postal code>.
 const obbbaHref = `/tools/obbba-tax-calculator/?state=${s.code}#calculator`;
@@ -137,7 +136,7 @@ const revenueLink = s.sourceUrl
     breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'State taxes', href: '/state-taxes/' }, { label: s.name }]}
   >
     <p class="mt-3 text-[15px] text-ink-2">
-      Last reviewed <time datetime={STATE_TAX_LAST_UPDATED}>{updatedLabel}</time>. Data: {STATE_TAX_DATA_AS_OF}.
+      Last reviewed <time datetime={s.reviewed}>{updatedLabel}</time>. Data: {STATE_TAX_DATA_AS_OF}.
     </p>
 
     <dl class="num mt-6 border-t border-line">

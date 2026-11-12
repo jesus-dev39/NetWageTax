@@ -85,9 +85,11 @@ export interface StateTaxInfo {
   bracketsNote?: string;
   /** Bordering states (DC counts as bordering MD and VA). */
   neighbors: StateCode[];
+  /** Date the state's tax data was last reviewed by hand (ISO), from STATE_REVIEWS. */
+  reviewed: string;
 }
 
-type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime' | 'surtax'>;
+type Row = Omit<StateTaxInfo, 'slug' | 'sourceUrl' | 'neighbors' | 'localTaxLabel' | 'tipsOvertime' | 'surtax' | 'reviewed'>;
 
 const NO_TAX = (code: StateCode, name: string, note: string): Row => ({
   code, name, structure: 'none', estimateRate: 0, exemptAmount: 0, note,
@@ -177,10 +179,21 @@ const ROWS: Row[] = [
 ];
 
 /**
- * Date the rules behind the estimates (federal, FICA, and state) were last reviewed by hand (ISO).
- * Shown in the site-wide status strip, on /methodology/, and on the state pages. Update it after every review.
+ * Date each state's tax data was last reviewed by hand against an official source (ISO). Shown on the
+ * state page as "Last reviewed". When you review a state, move it to the group of that day's date.
+ * The federal date is separate: FEDERAL_INCOME_TAX_CHECKED in review-dates.ts.
  */
-export const STATE_TAX_LAST_UPDATED = '2026-10-04';
+/** States not reviewed since the initial data (the original "rules last checked" date). */
+export const STATE_DATA_INITIAL_REVIEW = '2026-09-27';
+const STATE_REVIEWS: Record<string, StateCode[]> = {
+  // Flat-tax review (IL, KY, LA, MI, OH, UT) and progressive-state updates (AR, NE, RI, VA, VT, ME, HI, WI).
+  '2026-10-04': ['AR', 'HI', 'IL', 'KY', 'LA', 'ME', 'MI', 'NE', 'OH', 'RI', 'UT', 'VA', 'VT', 'WI'],
+  // Bracket engine (CA, NY, SC, WV; AZ, GA, MD, NC, OR) and the external review (Massachusetts surtax, Georgia deduction).
+  '2026-10-29': ['AZ', 'CA', 'GA', 'MA', 'MD', 'NC', 'NY', 'OR', 'SC', 'WV'],
+};
+const REVIEWED_ON = Object.fromEntries(
+  Object.entries(STATE_REVIEWS).flatMap(([date, codes]) => codes.map((c) => [c, date])),
+) as Partial<Record<StateCode, string>>;
 
 /**
  * Official revenue department sites. Leave '' when unsure; pages then omit the link.
@@ -732,6 +745,7 @@ export const STATES: readonly StateTaxInfo[] = ROWS.map((r) => ({
   bracketEngine: engineRules(BRACKETS[r.code]),
   surtax: SURTAXES[r.code],
   neighbors: NEIGHBORS[r.code],
+  reviewed: REVIEWED_ON[r.code] ?? STATE_DATA_INITIAL_REVIEW,
 })).sort((a, b) => a.name.localeCompare(b.name));
 
 function engineRules(schedule: BracketSchedule | undefined): BracketEngineRules | undefined {

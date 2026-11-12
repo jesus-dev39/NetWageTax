@@ -2,8 +2,8 @@
 import '@fontsource-variable/public-sans';
 import '../styles/global.css';
 import Logo from '../components/Logo';
-import { ADSENSE_CLIENT, formatLongDate, GOOGLE_SITE_VERIFICATION, SITE_TAX_YEAR } from '../lib/site';
-import { STATE_TAX_LAST_UPDATED } from '../lib/state-tax-data';
+import { ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION, SITE_TAX_YEAR } from '../lib/site';
+import { FEDERAL_INCOME_TAX_CHECKED, statusStripText } from '../lib/review-dates';
 
 interface Props {
   title: string;
@@ -70,7 +70,7 @@ const footerGroups = [
 ];
 
 // Status strip: when the rules behind the estimates were last reviewed.
-const rulesCheckedLabel = formatLongDate(STATE_TAX_LAST_UPDATED);
+const strip = statusStripText();
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 const matches = (section: string) => currentPath === section || currentPath.startsWith(`${section}/`);
@@ -233,8 +233,8 @@ const isActive = (section: string) => section === activeSection;
     <!-- Status strip (docs/DESIGN.md §6): the tax year and when the rules were last reviewed. -->
     <div class="border-b border-line bg-surface text-sm text-ink-2 sm:text-[15px]">
       <p class="container-page py-2.5">
-        <strong class="font-semibold text-ink">Tax year {SITE_TAX_YEAR}.</strong> Federal, FICA, and state rules last
-        checked <time datetime={STATE_TAX_LAST_UPDATED}>{rulesCheckedLabel}</time>.{' '}
+        <strong class="font-semibold text-ink">Tax year {SITE_TAX_YEAR}.</strong> {strip.federal}{' '}
+        <time datetime={FEDERAL_INCOME_TAX_CHECKED}>{strip.federalDate}</time>. {strip.state}{' '}
         <a href="/methodology/" class="text-link underline underline-offset-[3px] hover:decoration-2">How we calculate</a>
       </p>
     </div>
