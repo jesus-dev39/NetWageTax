@@ -32,9 +32,11 @@ publish the next year's numbers, and all states every January.
         calculation at the `_2027` constants (brackets, standard deduction, age addition, Social
         Security wage base), update the header comment of `marginal-rate.ts` to Rev. Proc. 2026-35,
         then recalculate the four reference cases (MAINTENANCE.md, section 2.4) and update them and the
-        tests. Before that, check the head of household top bracket: the Rev. Proc. gives $661,350
-        against $661,375 for single (the two were equal in 2025 and 2026), and the PDF still says
-        "[Release Date, 2026]" in section 1. Look for an updated version or an IRS correction.
+        tests. Before that, download rp-26-35.pdf again (https://www.irs.gov/pub/irs-drop/rp-26-35.pdf)
+        and check whether the IRS has corrected two things: the start of the head of household 37%
+        bracket ($661,350 against $661,375 for single; the two were equal in 2025 and 2026) and the
+        "[Release Date, 2026]" placeholder in section 1. If the HoH figure changes, update
+        `TAX_BRACKETS_2027.hoh` and `federal-2027-figures.test.ts`.
 - [ ] **New York: switch the bracket source (Dec 2026–Jan 2027).** Once the 2026 Form IT-201
       instructions are published, replace `bracketsSource` (currently the NYS-50-T-NYS withholding
       tables) with the IT-201 instructions' tax rate schedule, and confirm the single-filer brackets
